@@ -1,3 +1,11 @@
+export interface InquiryAttachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  data: string; // base64 encoded
+}
+
 export interface Inquiry {
   id: string;
   name: string;
@@ -8,11 +16,11 @@ export interface Inquiry {
   budget?: string;
   subject: string;
   message: string;
+  attachments?: InquiryAttachment[];
   createdAt: string;
   read: boolean;
   replied: boolean;
 }
-
 
 export const INQUIRY_TYPES = [
   { value: 'project', label: 'Projektanfrage' },

@@ -26,6 +26,13 @@ import { getStorageItem, setStorageItem } from '@/lib/storage';
 import { Inquiry, INQUIRY_TYPES, BUDGET_RANGES } from '@/types/inquiry';
 import { exportInquiryToPDF, exportAllInquiriesToPDF } from '@/lib/pdfExport';
 import { 
+  downloadAttachment, 
+  downloadAllAttachments,
+  downloadAllInquiryAttachments,
+  formatFileSize,
+  getFileTypeLabel 
+} from '@/lib/attachmentUtils';
+import { 
   Mail, 
   Trash2, 
   CheckCircle, 
@@ -36,7 +43,12 @@ import {
   Phone,
   Building2,
   Tag,
-  Wallet
+  Wallet,
+  Paperclip,
+  Download,
+  FileArchive,
+  FileText,
+  Image as ImageIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -115,6 +127,22 @@ export default function AdminInquiries() {
     });
   };
 
+  const handleDownloadAllAttachments = async () => {
+    const success = await downloadAllInquiryAttachments(inquiries);
+    if (success) {
+      toast({
+        title: 'ZIP erstellt',
+        description: 'Alle Anhänge wurden als ZIP heruntergeladen.',
+      });
+    } else {
+      toast({
+        title: 'Keine Anhänge',
+        description: 'Es gibt keine Anhänge zum Herunterladen.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getInquiryTypeLabel = (value?: string) => {
     return INQUIRY_TYPES.find(t => t.value === value)?.label;
   };
@@ -123,7 +151,13 @@ export default function AdminInquiries() {
     return BUDGET_RANGES.find(b => b.value === value)?.label;
   };
 
+  const getAttachmentIcon = (type: string) => {
+    if (type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
+    return <FileText className="h-4 w-4" />;
+  };
+
   const unreadCount = inquiries.filter(i => !i.read).length;
+  const totalAttachments = inquiries.reduce((acc, i) => acc + (i.attachments?.length || 0), 0);
 
   return (
     <AdminLayout title="Anfragen">
@@ -135,8 +169,20 @@ export default function AdminInquiries() {
               {unreadCount} ungelesen
             </Badge>
             <Badge variant="outline">{inquiries.length} gesamt</Badge>
+            {totalAttachments > 0 && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Paperclip className="h-3 w-3" />
+                {totalAttachments} Anhänge
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2">
+            {totalAttachments > 0 && (
+              <Button variant="outline" onClick={handleDownloadAllAttachments}>
+                <FileArchive className="h-4 w-4 mr-2" />
+                Alle Anhänge (ZIP)
+              </Button>
+            )}
             {inquiries.length > 0 && (
               <Button variant="outline" onClick={handleExportAll}>
                 <FileDown className="h-4 w-4 mr-2" />
@@ -185,6 +231,12 @@ export default function AdminInquiries() {
                         {inquiry.inquiryType && (
                           <Badge variant="secondary" className="text-xs">
                             {getInquiryTypeLabel(inquiry.inquiryType)}
+                          </Badge>
+                        )}
+                        {inquiry.attachments && inquiry.attachments.length > 0 && (
+                          <Badge variant="outline" className="text-xs">
+                            <Paperclip className="h-3 w-3 mr-1" />
+                            {inquiry.attachments.length}
                           </Badge>
                         )}
                       </div>
@@ -290,6 +342,52 @@ export default function AdminInquiries() {
                   {selectedInquiry.message}
                 </div>
               </div>
+
+              {/* Attachments */}
+              {selectedInquiry.attachments && selectedInquiry.attachments.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-muted-foreground flex items-center gap-1">
+                      <Paperclip className="h-3 w-3" /> Anhänge ({selectedInquiry.attachments.length})
+                    </Label>
+                    {selectedInquiry.attachments.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => downloadAllAttachments(selectedInquiry)}
+                      >
+                        <FileArchive className="h-4 w-4 mr-1" />
+                        Alle als ZIP
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {selectedInquiry.attachments.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {getAttachmentIcon(attachment.type)}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{attachment.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {getFileTypeLabel(attachment.type)} • {formatFileSize(attachment.size)}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => downloadAttachment(attachment)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex flex-wrap gap-2 pt-4 border-t">
