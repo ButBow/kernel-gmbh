@@ -122,4 +122,19 @@
   .mobile-stack {
     @apply flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-6;
   }
+
+  /* Admin form label styling */
+  .admin-label {
+    @apply text-xs sm:text-sm font-medium mb-1 block;
+  }
+
+  /* Admin form spacing */
+  .admin-form-group {
+    @apply space-y-3 sm:space-y-4;
+  }
+
+  /* Compact buttons on mobile */
+  .btn-mobile-compact {
+    @apply text-xs sm:text-sm px-3 sm:px-4 py-2;
+  }
 }
