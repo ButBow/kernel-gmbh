@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useContent } from "@/contexts/ContentContext";
 import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook } from "lucide-react";
 import { z } from "zod";
+import { getStorageItem, setStorageItem } from "@/lib/storage";
+import { Inquiry } from "@/types/inquiry";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name muss mindestens 2 Zeichen haben").max(100, "Name darf maximal 100 Zeichen haben"),
@@ -62,8 +64,23 @@ export default function Kontakt() {
 
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Save inquiry to localStorage
+    const newInquiry: Inquiry = {
+      id: crypto.randomUUID(),
+      name: formData.name,
+      email: formData.email,
+      subject: formData.subject,
+      message: formData.message,
+      createdAt: new Date().toISOString(),
+      read: false,
+      replied: false,
+    };
+
+    const existingInquiries = getStorageItem<Inquiry[]>('cms_inquiries', []);
+    setStorageItem('cms_inquiries', [...existingInquiries, newInquiry]);
+
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     setIsSubmitting(false);
     setIsSuccess(true);
