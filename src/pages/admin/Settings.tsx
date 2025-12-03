@@ -11,9 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, Target, Heart, Rocket, Award } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, Target, Heart, Rocket, Award, User } from 'lucide-react';
 import { toast } from 'sonner';
-import type { SiteSettings, Milestone, CoreValue, StatItem } from '@/data/initialData';
+import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial } from '@/data/initialData';
 
 const benefitIcons = [Zap, Lightbulb, Shield, CheckCircle];
 const valueIconOptions = ['Star', 'Lightbulb', 'Eye', 'Zap', 'Target', 'Heart', 'Shield', 'Rocket', 'Award'];
@@ -436,6 +436,134 @@ export default function AdminSettings() {
                 ))}
                 {(!form.milestones || form.milestones.length === 0) && (
                   <p className="text-sm text-muted-foreground">Keine Meilensteine. Füge welche hinzu!</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Testimonials */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Kundenstimmen / Testimonials
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm({
+                      ...form,
+                      testimonials: [...(form.testimonials || []), {
+                        name: '',
+                        position: '',
+                        company: '',
+                        image: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&q=80',
+                        quote: '',
+                        rating: 5
+                      }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Hinzufügen
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(form.testimonials || []).map((testimonial, i) => (
+                  <div key={i} className="p-4 border border-border rounded-lg space-y-3">
+                    <div className="flex gap-2 items-start">
+                      <div className="flex-1 space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <Input
+                            value={testimonial.name}
+                            onChange={(e) => {
+                              const newTestimonials = [...(form.testimonials || [])];
+                              newTestimonials[i] = { ...newTestimonials[i], name: e.target.value };
+                              setForm({ ...form, testimonials: newTestimonials });
+                            }}
+                            placeholder="Name"
+                          />
+                          <Input
+                            value={testimonial.company}
+                            onChange={(e) => {
+                              const newTestimonials = [...(form.testimonials || [])];
+                              newTestimonials[i] = { ...newTestimonials[i], company: e.target.value };
+                              setForm({ ...form, testimonials: newTestimonials });
+                            }}
+                            placeholder="Firma"
+                          />
+                        </div>
+                        <Input
+                          value={testimonial.position}
+                          onChange={(e) => {
+                            const newTestimonials = [...(form.testimonials || [])];
+                            newTestimonials[i] = { ...newTestimonials[i], position: e.target.value };
+                            setForm({ ...form, testimonials: newTestimonials });
+                          }}
+                          placeholder="Position / Rolle"
+                        />
+                        <Textarea
+                          value={testimonial.quote}
+                          onChange={(e) => {
+                            const newTestimonials = [...(form.testimonials || [])];
+                            newTestimonials[i] = { ...newTestimonials[i], quote: e.target.value };
+                            setForm({ ...form, testimonials: newTestimonials });
+                          }}
+                          placeholder="Zitat / Bewertung..."
+                          rows={3}
+                        />
+                        <div className="flex gap-2 items-center">
+                          <label className="text-sm font-medium">Bild-URL:</label>
+                          <Input
+                            value={testimonial.image}
+                            onChange={(e) => {
+                              const newTestimonials = [...(form.testimonials || [])];
+                              newTestimonials[i] = { ...newTestimonials[i], image: e.target.value };
+                              setForm({ ...form, testimonials: newTestimonials });
+                            }}
+                            placeholder="https://..."
+                            className="flex-1"
+                          />
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          <label className="text-sm font-medium">Bewertung:</label>
+                          <Select
+                            value={String(testimonial.rating || 5)}
+                            onValueChange={(v) => {
+                              const newTestimonials = [...(form.testimonials || [])];
+                              newTestimonials[i] = { ...newTestimonials[i], rating: Number(v) };
+                              setForm({ ...form, testimonials: newTestimonials });
+                            }}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[5, 4, 3, 2, 1].map(num => (
+                                <SelectItem key={num} value={String(num)}>
+                                  {num} {num === 1 ? 'Stern' : 'Sterne'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newTestimonials = (form.testimonials || []).filter((_, idx) => idx !== i);
+                          setForm({ ...form, testimonials: newTestimonials });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {(!form.testimonials || form.testimonials.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Keine Testimonials. Füge Kundenstimmen hinzu, um Vertrauen aufzubauen!
+                  </p>
                 )}
               </CardContent>
             </Card>

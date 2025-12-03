@@ -15,7 +15,8 @@ import {
   Heart,
   Shield,
   Rocket,
-  Award
+  Award,
+  Quote
 } from "lucide-react";
 
 const skillIcons = [Video, Cpu, Code, Wrench, Users, Star, Lightbulb, Target];
@@ -202,6 +203,76 @@ export default function UeberMich() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Testimonials Section */}
+      {settings.testimonials && settings.testimonials.length > 0 && (
+        <section className="py-16 md:py-24">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+                Was Kunden <span className="text-gradient">sagen</span>
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Echte Erfahrungen von Menschen, die mit mir zusammengearbeitet haben.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {settings.testimonials.map((testimonial, index) => (
+                <Card 
+                  key={index} 
+                  className="group hover:border-primary/50 transition-all duration-300 hover:shadow-glow animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <CardContent className="p-6">
+                    {/* Quote Icon */}
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <Quote className="h-5 w-5 text-primary" />
+                    </div>
+                    
+                    {/* Quote Text */}
+                    <blockquote className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                      "{testimonial.quote}"
+                    </blockquote>
+                    
+                    {/* Rating */}
+                    {testimonial.rating && (
+                      <div className="flex gap-1 mb-4">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < testimonial.rating! ? 'fill-primary text-primary' : 'text-muted-foreground/30'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Author */}
+                    <div className="flex items-center gap-3 pt-4 border-t border-border">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-secondary flex-shrink-0">
+                        <img 
+                          src={testimonial.image} 
+                          alt={testimonial.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{testimonial.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {testimonial.position}
+                        </p>
+                        <p className="text-xs text-primary truncate">{testimonial.company}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
