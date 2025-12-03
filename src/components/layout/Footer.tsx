@@ -1,9 +1,22 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Instagram, Linkedin, Twitter, Youtube, Facebook } from "lucide-react";
 import { useContent } from "@/contexts/ContentContext";
+import { sanitizeUrl, isValidExternalUrl } from "@/lib/security";
 
 export function Footer() {
   const { settings } = useContent();
+
+  // Sanitize social URLs
+  const socialUrls = {
+    instagram: settings.socialInstagram && isValidExternalUrl(settings.socialInstagram) ? sanitizeUrl(settings.socialInstagram) : null,
+    linkedin: settings.socialLinkedin && isValidExternalUrl(settings.socialLinkedin) ? sanitizeUrl(settings.socialLinkedin) : null,
+    twitter: settings.socialTwitter && isValidExternalUrl(settings.socialTwitter) ? sanitizeUrl(settings.socialTwitter) : null,
+    youtube: settings.socialYoutube && isValidExternalUrl(settings.socialYoutube) ? sanitizeUrl(settings.socialYoutube) : null,
+    tiktok: settings.socialTiktok && isValidExternalUrl(settings.socialTiktok) ? sanitizeUrl(settings.socialTiktok) : null,
+    facebook: settings.socialFacebook && isValidExternalUrl(settings.socialFacebook) ? sanitizeUrl(settings.socialFacebook) : null,
+  };
+
+  const hasSocialMedia = Object.values(socialUrls).some(url => url);
 
   return (
     <footer className="border-t border-border bg-card">
@@ -91,13 +104,13 @@ export function Footer() {
             </ul>
 
             {/* Social Media */}
-            {(settings.socialInstagram || settings.socialLinkedin || settings.socialTwitter || settings.socialYoutube || settings.socialTiktok || settings.socialFacebook) && (
+            {hasSocialMedia && (
               <div className="mt-6">
                 <h4 className="font-display font-semibold text-foreground mb-3">Social Media</h4>
                 <div className="flex flex-wrap gap-3">
-                  {settings.socialInstagram && (
+                  {socialUrls.instagram && (
                     <a
-                      href={settings.socialInstagram}
+                      href={socialUrls.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
@@ -105,9 +118,9 @@ export function Footer() {
                       <Instagram size={18} />
                     </a>
                   )}
-                  {settings.socialLinkedin && (
+                  {socialUrls.linkedin && (
                     <a
-                      href={settings.socialLinkedin}
+                      href={socialUrls.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
@@ -115,9 +128,9 @@ export function Footer() {
                       <Linkedin size={18} />
                     </a>
                   )}
-                  {settings.socialTwitter && (
+                  {socialUrls.twitter && (
                     <a
-                      href={settings.socialTwitter}
+                      href={socialUrls.twitter}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
@@ -125,9 +138,9 @@ export function Footer() {
                       <Twitter size={18} />
                     </a>
                   )}
-                  {settings.socialYoutube && (
+                  {socialUrls.youtube && (
                     <a
-                      href={settings.socialYoutube}
+                      href={socialUrls.youtube}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
@@ -135,9 +148,9 @@ export function Footer() {
                       <Youtube size={18} />
                     </a>
                   )}
-                  {settings.socialTiktok && (
+                  {socialUrls.tiktok && (
                     <a
-                      href={settings.socialTiktok}
+                      href={socialUrls.tiktok}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
@@ -148,9 +161,9 @@ export function Footer() {
                       </svg>
                     </a>
                   )}
-                  {settings.socialFacebook && (
+                  {socialUrls.facebook && (
                     <a
-                      href={settings.socialFacebook}
+                      href={socialUrls.facebook}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"

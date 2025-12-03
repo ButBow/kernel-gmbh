@@ -1,9 +1,14 @@
 import { useContent } from '@/contexts/ContentContext';
 import { ExternalLink } from 'lucide-react';
+import { sanitizeUrl, isValidExternalUrl } from '@/lib/security';
 
 export function PartnersSection() {
   const { settings } = useContent();
-  const partners = settings.partners || [];
+  const partners = (settings.partners || []).map(p => ({
+    ...p,
+    // Sanitize URLs on render
+    link: p.link && isValidExternalUrl(p.link) ? sanitizeUrl(p.link) : undefined
+  }));
 
   if (partners.length === 0) return null;
 

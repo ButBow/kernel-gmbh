@@ -50,9 +50,6 @@ export default function AdminLogin() {
               Anmelden
             </Button>
           </form>
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            Standard-Passwort: admin123
-          </p>
         </CardContent>
       </Card>
     </div>
