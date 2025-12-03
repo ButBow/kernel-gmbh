@@ -46,8 +46,8 @@ export default function UeberMich() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h2 className="font-display text-2xl font-bold mb-2">{settings.companyName}</h2>
-                <p className="text-primary font-medium">Gründer & Solo-Unternehmer</p>
+                <h2 className="font-display text-2xl font-bold mb-2">{settings.ownerName}</h2>
+                <p className="text-primary font-medium">Gründer von {settings.companyName}</p>
               </div>
             </div>
 

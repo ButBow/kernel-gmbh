@@ -53,6 +53,7 @@ export interface Post {
 
 export interface SiteSettings {
   companyName: string;
+  ownerName: string;
   heroTitle: string;
   heroSubtitle: string;
   heroCta: string;
@@ -304,6 +305,7 @@ Dieses System erlaubt mir, stabil zu bleiben während ich wachse.`,
 
 export const initialSettings: SiteSettings = {
   companyName: "Mein Firmenname",
+  ownerName: "Max Mustermann",
   heroTitle: "Effizienz durch Technologie & Kreativität",
   heroSubtitle: "Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen. Zusätzlich produziere ich hochwertigen Social Media Content für Events und Marken. Und für die Zukunft entwickle ich Tools und Apps, die produktiver machen.",
   heroCta: "Projekt anfragen",

@@ -171,15 +171,29 @@ export default function AdminSettings() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Profilbild</CardTitle>
+                  <CardTitle>Persönliche Daten</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ImageUpload
-                    value={form.aboutImage}
-                    onChange={(value) => setForm({ ...form, aboutImage: value })}
-                    aspectRatio="square"
-                    placeholder="Profilbild hochladen"
-                  />
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Dein Name</label>
+                    <Input
+                      value={form.ownerName}
+                      onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
+                      placeholder="Max Mustermann"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Dein persönlicher Name (nicht der Firmenname)
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Profilbild</label>
+                    <ImageUpload
+                      value={form.aboutImage}
+                      onChange={(value) => setForm({ ...form, aboutImage: value })}
+                      aspectRatio="square"
+                      placeholder="Profilbild hochladen"
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -238,8 +252,8 @@ export default function AdminSettings() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-white mb-1">{form.companyName}</h3>
-                    <p className="text-xs text-amber-500 mb-2">Gründer & Solo-Unternehmer</p>
+                    <h3 className="font-bold text-white mb-1">{form.ownerName || 'Dein Name'}</h3>
+                    <p className="text-xs text-amber-500 mb-2">Gründer von {form.companyName}</p>
                     <p className="text-xs text-slate-400 line-clamp-3">
                       {form.aboutText || 'Über mich Text...'}
                     </p>
