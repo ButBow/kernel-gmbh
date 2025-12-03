@@ -17,7 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, GripVertical, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { ImportExport } from '@/components/admin/ImportExport';
 import type { Category, Product, Showcase } from '@/data/initialData';
 
 export default function AdminProducts() {
@@ -165,6 +166,10 @@ export default function AdminProducts() {
           <TabsList className="inline-flex w-max min-w-full sm:w-auto">
             <TabsTrigger value="products" className="text-xs sm:text-sm">Produkte ({products.length})</TabsTrigger>
             <TabsTrigger value="categories" className="text-xs sm:text-sm">Kategorien ({categories.length})</TabsTrigger>
+            <TabsTrigger value="import-export" className="text-xs sm:text-sm">
+              <ArrowUpDown className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              Import/Export
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -552,6 +557,10 @@ export default function AdminProducts() {
               );
             })}
           </div>
+        </TabsContent>
+
+        <TabsContent value="import-export">
+          <ImportExport />
         </TabsContent>
       </Tabs>
     </AdminLayout>

@@ -17,11 +17,13 @@ interface ContentContextType {
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
   reorderCategories: (categories: Category[]) => void;
+  importCategories: (categories: Category[], mode: 'add' | 'replace') => void;
   
   // Products
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (id: number, product: Partial<Product>) => void;
   deleteProduct: (id: number) => void;
+  importProducts: (products: Product[], mode: 'add' | 'replace') => void;
   
   // Projects
   addProject: (project: Omit<Project, 'id'>) => void;
@@ -90,6 +92,29 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     setStorageItem(STORAGE_KEYS.CATEGORIES, updated);
   };
 
+  const importCategories = (newCategories: Category[], mode: 'add' | 'replace') => {
+    let updated: Category[];
+    if (mode === 'replace') {
+      updated = newCategories.map((c, i) => ({
+        ...c,
+        id: c.id || `cat_${Date.now()}_${i}`,
+        order: i + 1
+      }));
+    } else {
+      const maxOrder = categories.length > 0 ? Math.max(...categories.map(c => c.order)) : 0;
+      updated = [
+        ...categories,
+        ...newCategories.map((c, i) => ({
+          ...c,
+          id: c.id || `cat_${Date.now()}_${i}`,
+          order: maxOrder + i + 1
+        }))
+      ];
+    }
+    setCategories(updated);
+    setStorageItem(STORAGE_KEYS.CATEGORIES, updated);
+  };
+
   // Products
   const addProduct = (product: Omit<Product, 'id'>) => {
     const newProduct: Product = {
@@ -109,6 +134,26 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const deleteProduct = (id: number) => {
     const updated = products.filter(p => p.id !== id);
+    setProducts(updated);
+    setStorageItem(STORAGE_KEYS.PRODUCTS, updated);
+  };
+
+  const importProducts = (newProducts: Product[], mode: 'add' | 'replace') => {
+    let updated: Product[];
+    if (mode === 'replace') {
+      updated = newProducts.map((p, i) => ({
+        ...p,
+        id: p.id || Date.now() + i
+      }));
+    } else {
+      updated = [
+        ...products,
+        ...newProducts.map((p, i) => ({
+          ...p,
+          id: p.id || Date.now() + i
+        }))
+      ];
+    }
     setProducts(updated);
     setStorageItem(STORAGE_KEYS.PRODUCTS, updated);
   };
@@ -169,8 +214,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   return (
     <ContentContext.Provider value={{
       categories, products, projects, posts, settings,
-      addCategory, updateCategory, deleteCategory, reorderCategories,
-      addProduct, updateProduct, deleteProduct,
+      addCategory, updateCategory, deleteCategory, reorderCategories, importCategories,
+      addProduct, updateProduct, deleteProduct, importProducts,
       addProject, updateProject, deleteProject,
       addPost, updatePost, deletePost,
       updateSettings
