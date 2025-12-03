@@ -1,6 +1,9 @@
 import { Layout } from "@/components/layout/Layout";
+import { useContent } from "@/contexts/ContentContext";
 
 export default function Datenschutz() {
+  const { settings } = useContent();
+
   return (
     <Layout>
       <section className="py-16 md:py-24">
@@ -29,13 +32,16 @@ export default function Datenschutz() {
                 Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:
               </p>
               <p className="text-muted-foreground mb-4">
-                Mein Firmenname<br />
-                Max Mustermann<br />
-                Musterstrasse 123<br />
-                8000 Zürich<br />
-                Schweiz<br />
-                E-Mail: info@beispiel.ch
+                {settings.companyName}<br />
+                {settings.contactLocation}<br />
+                E-Mail: {settings.contactEmail}
               </p>
+
+              {settings.datenschutzText && (
+                <div className="mt-8 whitespace-pre-line text-muted-foreground">
+                  {settings.datenschutzText}
+                </div>
+              )}
 
               <h2 className="font-display text-xl font-bold text-foreground mt-8 mb-4">
                 3. Datenerfassung auf dieser Website
@@ -99,7 +105,7 @@ export default function Datenschutz() {
               </p>
 
               <p className="text-muted-foreground mt-8">
-                <em>Stand: Januar 2024</em>
+                <em>Stand: {new Date().toLocaleDateString('de-CH', { month: 'long', year: 'numeric' })}</em>
               </p>
             </div>
           </div>

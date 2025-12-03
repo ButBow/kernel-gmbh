@@ -3,46 +3,12 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, ExternalLink } from "lucide-react";
-
-// Demo-Projekte
-const projects = [
-  {
-    id: 1,
-    title: "Social Media Kampagne – TechStartup X",
-    category: "Video",
-    description: "Komplette Social Media Video-Kampagne für einen Schweizer Tech-Startup. 15 Kurzvideos für Instagram und TikTok, optimiert für maximales Engagement.",
-    fullDescription: "Für TechStartup X haben wir eine umfassende Social Media Kampagne entwickelt und produziert. Das Projekt umfasste 15 kurze, dynamische Videos, die speziell für Instagram Reels und TikTok optimiert wurden. Jedes Video wurde mit professionellem Color-Grading, Sounddesign und plattformspezifischen Anpassungen versehen. Die Kampagne erzielte eine durchschnittliche Engagement-Rate von 8.5%.",
-    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80",
-    tags: ["Social Media", "Video Production", "Campaign"],
-    relatedProduct: "Kurzvideo Social Media (30–60s)"
-  },
-  {
-    id: 2,
-    title: "AI Automation Workspace – Kreativagentur",
-    category: "AI-System",
-    description: "Vollautomatisierter Workspace mit Notion, Python und API-Integrationen für eine 10-köpfige Kreativagentur.",
-    fullDescription: "Für eine wachsende Kreativagentur haben wir einen vollständig automatisierten Workspace implementiert. Das System umfasst ein zentrales Notion-Dashboard, Python-basierte Automatisierungen für wiederkehrende Aufgaben, und nahtlose API-Integrationen mit Tools wie Slack, Google Workspace und dem Projektmanagement-System der Agentur. Die Zeitersparnis beträgt geschätzt 15 Stunden pro Woche.",
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
-    tags: ["Automation", "AI", "Notion", "Python"],
-    relatedProduct: "Pro AI Workspace"
-  },
-  {
-    id: 3,
-    title: "Event Coverage – Firmen-Jubiläum",
-    category: "Video",
-    description: "Ganztägige Video-Dokumentation eines Firmenjubiläums mit Highlight-Video und 25 Social Clips.",
-    fullDescription: "Zum 25-jährigen Jubiläum eines Schweizer Familienunternehmens haben wir die gesamte Veranstaltung dokumentiert. Das Ergebnis: Ein emotionales 3-minütiges Highlight-Video sowie 25 kurze Social Media Clips für die interne und externe Kommunikation. Die Videos wurden sowohl für die Website als auch für LinkedIn und Instagram optimiert.",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
-    tags: ["Event", "Video Production", "Corporate"],
-    relatedProduct: "Event-Highlight-Video / Full Day Coverage"
-  }
-];
-
-const categories = ["Alle", "Video", "AI-System", "Tool", "Beratung"];
+import { useContent } from "@/contexts/ContentContext";
+import { X } from "lucide-react";
+import type { Project } from "@/data/initialData";
 
 interface ProjectDetailProps {
-  project: typeof projects[0];
+  project: Project;
   onClose: () => void;
 }
 
@@ -58,13 +24,15 @@ function ProjectDetail({ project, onClose }: ProjectDetailProps) {
           <X size={20} />
         </button>
         
-        <div className="aspect-video w-full overflow-hidden rounded-t-xl">
-          <img 
-            src={project.image} 
-            alt={project.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
+        {project.image && (
+          <div className="aspect-video w-full overflow-hidden rounded-t-xl">
+            <img 
+              src={project.image} 
+              alt={project.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         
         <div className="p-6 md:p-8">
           <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -101,12 +69,19 @@ function ProjectDetail({ project, onClose }: ProjectDetailProps) {
 }
 
 export default function Portfolio() {
+  const { projects } = useContent();
   const [selectedCategory, setSelectedCategory] = useState("Alle");
-  const [selectedProject, setSelectedProject] = useState<typeof projects[0] | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  // Only show published projects
+  const publishedProjects = projects.filter(p => p.status === 'published');
+
+  // Get unique categories from projects
+  const projectCategories = ["Alle", ...new Set(publishedProjects.map(p => p.category))];
 
   const filteredProjects = selectedCategory === "Alle"
-    ? projects
-    : projects.filter(p => p.category === selectedCategory);
+    ? publishedProjects
+    : publishedProjects.filter(p => p.category === selectedCategory);
 
   return (
     <Layout>
@@ -129,7 +104,7 @@ export default function Portfolio() {
       <section className="py-8 border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap gap-3">
-            {categories.map((category) => (
+            {projectCategories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
@@ -157,13 +132,15 @@ export default function Portfolio() {
                   className="group cursor-pointer overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-glow"
                   onClick={() => setSelectedProject(project)}
                 >
-                  <div className="aspect-video overflow-hidden">
-                    <img 
-                      src={project.image} 
-                      alt={project.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
+                  {project.image && (
+                    <div className="aspect-video overflow-hidden">
+                      <img 
+                        src={project.image} 
+                        alt={project.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  )}
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-3">
                       <Badge>{project.category}</Badge>
