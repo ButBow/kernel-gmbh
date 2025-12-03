@@ -445,8 +445,8 @@ const server = http.createServer(async (req, res) => {
   // Parse URL and remove query string
   let urlPath = req.url.split('?')[0];
   
-  // Security: Prevent directory traversal
-  urlPath = path.normalize(urlPath).replace(/^(\.\.[\/\\])+/, '');
+  // Security: Prevent directory traversal (but keep forward slashes for URL matching)
+  urlPath = urlPath.replace(/\.\./g, '').replace(/\/+/g, '/');
   
   // Handle API routes
   if (urlPath.startsWith('/api/')) {
