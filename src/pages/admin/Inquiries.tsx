@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -24,15 +23,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
-import { Inquiry, InquirySettings, INQUIRY_TYPES, BUDGET_RANGES } from '@/types/inquiry';
+import { Inquiry, INQUIRY_TYPES, BUDGET_RANGES } from '@/types/inquiry';
 import { exportInquiryToPDF, exportAllInquiriesToPDF } from '@/lib/pdfExport';
 import { 
   Mail, 
   Trash2, 
   CheckCircle, 
   Clock,
-  Settings,
-  Save,
   MessageSquare,
   Inbox,
   FileDown,
@@ -45,22 +42,15 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const STORAGE_KEY = 'cms_inquiries';
-const SETTINGS_KEY = 'cms_inquiry_settings';
 
 export default function AdminInquiries() {
   const { toast } = useToast();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [settings, setSettings] = useState<InquirySettings>({ forwardingEmail: '' });
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [tempEmail, setTempEmail] = useState('');
 
   useEffect(() => {
     const stored = getStorageItem<Inquiry[]>(STORAGE_KEY, []);
     setInquiries(stored);
-    const storedSettings = getStorageItem<InquirySettings>(SETTINGS_KEY, { forwardingEmail: '' });
-    setSettings(storedSettings);
-    setTempEmail(storedSettings.forwardingEmail);
   }, []);
 
   const saveInquiries = (updated: Inquiry[]) => {
@@ -99,19 +89,6 @@ export default function AdminInquiries() {
     toast({
       title: 'Anfrage gelöscht',
       description: 'Die Anfrage wurde entfernt.',
-    });
-  };
-
-  const saveSettings = () => {
-    const newSettings = { forwardingEmail: tempEmail };
-    setSettings(newSettings);
-    setStorageItem(SETTINGS_KEY, newSettings);
-    setShowSettings(false);
-    toast({
-      title: 'Einstellungen gespeichert',
-      description: tempEmail 
-        ? `E-Mails werden an ${tempEmail} weitergeleitet (wenn Backend aktiv).`
-        : 'E-Mail-Weiterleitung deaktiviert.',
     });
   };
 
@@ -166,25 +143,8 @@ export default function AdminInquiries() {
                 Alle als PDF
               </Button>
             )}
-            <Button variant="outline" onClick={() => setShowSettings(true)}>
-              <Settings className="h-4 w-4 mr-2" />
-              E-Mail Weiterleitung
-            </Button>
           </div>
         </div>
-
-        {/* Info Card */}
-        {settings.forwardingEmail && (
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-4 flex items-center gap-3">
-              <Mail className="h-5 w-5 text-primary" />
-              <p className="text-sm">
-                Neue Anfragen werden an <strong>{settings.forwardingEmail}</strong> weitergeleitet
-                <span className="text-muted-foreground"> (sobald Backend aktiviert ist)</span>
-              </p>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Inquiries List */}
         {inquiries.length === 0 ? (
@@ -379,40 +339,6 @@ export default function AdminInquiries() {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>E-Mail Weiterleitung</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Trage hier eine E-Mail-Adresse ein, an die neue Anfragen automatisch weitergeleitet werden sollen.
-              Diese Funktion wird aktiv, sobald ein Backend (Lovable Cloud) eingerichtet ist.
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="forwardingEmail">Weiterleitungs-E-Mail</Label>
-              <Input
-                id="forwardingEmail"
-                type="email"
-                value={tempEmail}
-                onChange={(e) => setTempEmail(e.target.value)}
-                placeholder="deine@email.de"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowSettings(false)}>
-                Abbrechen
-              </Button>
-              <Button onClick={saveSettings}>
-                <Save className="h-4 w-4 mr-2" />
-                Speichern
-              </Button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
     </AdminLayout>

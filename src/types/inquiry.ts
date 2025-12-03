@@ -13,9 +13,6 @@ export interface Inquiry {
   replied: boolean;
 }
 
-export interface InquirySettings {
-  forwardingEmail: string;
-}
 
 export const INQUIRY_TYPES = [
   { value: 'project', label: 'Projektanfrage' },
