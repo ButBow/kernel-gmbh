@@ -166,8 +166,8 @@ function sendJSON(res, statusCode, data, extraHeaders = {}) {
 }
 
 // Create Notion page
-async function createNotionPage(data, databaseId) {
-  const NOTION_API_TOKEN = process.env.NOTION_API_TOKEN;
+async function createNotionPage(data, databaseId, apiKey) {
+  const NOTION_API_TOKEN = apiKey || process.env.NOTION_API_TOKEN;
   
   if (!NOTION_API_TOKEN) {
     throw new Error('NOTION_API_TOKEN not configured');
@@ -253,11 +253,11 @@ async function createNotionPage(data, databaseId) {
 }
 
 // Test Notion connection
-async function testNotionConnection(databaseId) {
-  const NOTION_API_TOKEN = process.env.NOTION_API_TOKEN;
+async function testNotionConnection(databaseId, apiKey) {
+  const NOTION_API_TOKEN = apiKey || process.env.NOTION_API_TOKEN;
   
   if (!NOTION_API_TOKEN) {
-    return { success: false, error: 'NOTION_API_TOKEN nicht in .env konfiguriert' };
+    return { success: false, error: 'API Key nicht angegeben. Bitte trage den Notion API Key in den Einstellungen ein.' };
   }
   
   if (!databaseId) {
@@ -279,7 +279,7 @@ async function testNotionConnection(databaseId) {
         return { success: false, error: 'Datenbank nicht gefunden. Prüfe die Database ID und ob die Integration Zugriff hat.' };
       }
       if (response.status === 401) {
-        return { success: false, error: 'Authentifizierung fehlgeschlagen. Prüfe den API-Token in der .env Datei.' };
+        return { success: false, error: 'Authentifizierung fehlgeschlagen. Prüfe den API Key.' };
       }
       return { success: false, error: errorData.message || `API Fehler: ${response.status}` };
     }
@@ -339,16 +339,22 @@ async function handleAPI(req, res, urlPath) {
         return true;
       }
 
-      // Get database ID from body or env
+      // Get database ID and API key from body or env
       const databaseId = body.notionDatabaseId || process.env.NOTION_DATABASE_ID;
+      const apiKey = body.notionApiKey || process.env.NOTION_API_TOKEN;
       
       if (!databaseId) {
         sendJSON(res, 400, { error: 'Notion Database ID nicht konfiguriert.' });
         return true;
       }
+      
+      if (!apiKey) {
+        sendJSON(res, 400, { error: 'Notion API Key nicht konfiguriert.' });
+        return true;
+      }
 
       // Create Notion page
-      const result = await createNotionPage(body, databaseId);
+      const result = await createNotionPage(body, databaseId, apiKey);
       
       console.log(`[${new Date().toISOString()}] Contact inquiry created in Notion: ${body.email}`);
       
@@ -367,29 +373,18 @@ async function handleAPI(req, res, urlPath) {
     return true;
   }
 
-  // GET /api/notion/test - Test Notion connection
-  if (urlPath === '/api/notion/test' && req.method === 'GET') {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const databaseId = url.searchParams.get('databaseId') || process.env.NOTION_DATABASE_ID;
-    
-    const result = await testNotionConnection(databaseId);
-    sendJSON(res, result.success ? 200 : 400, result);
-    return true;
-  }
-
-  // GET /api/notion/status - Check if Notion is configured
-  if (urlPath === '/api/notion/status' && req.method === 'GET') {
-    const hasToken = !!process.env.NOTION_API_TOKEN;
-    const hasDatabaseId = !!process.env.NOTION_DATABASE_ID;
-    
-    sendJSON(res, 200, {
-      configured: hasToken,
-      hasToken,
-      hasDatabaseId,
-      message: hasToken 
-        ? 'Notion API Token ist konfiguriert.' 
-        : 'Notion API Token fehlt in .env Datei.'
-    });
+  // POST /api/notion/test - Test Notion connection
+  if (urlPath === '/api/notion/test' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const databaseId = body.databaseId || process.env.NOTION_DATABASE_ID;
+      const apiKey = body.apiKey || process.env.NOTION_API_TOKEN;
+      
+      const result = await testNotionConnection(databaseId, apiKey);
+      sendJSON(res, result.success ? 200 : 400, result);
+    } catch (error) {
+      sendJSON(res, 400, { success: false, error: error.message });
+    }
     return true;
   }
 

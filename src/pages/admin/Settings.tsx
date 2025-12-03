@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2 } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
@@ -36,6 +36,7 @@ export default function AdminSettings() {
     hasDatabaseId?: boolean;
   } | null>(null);
   const [notionTesting, setNotionTesting] = useState(false);
+  const [notionShowApiKey, setNotionShowApiKey] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -1006,7 +1007,6 @@ export default function AdminSettings() {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     Verbinde dein Kontaktformular mit Notion, um Anfragen automatisch in einer Datenbank zu speichern.
-                    Der API-Token muss in der <code className="bg-muted px-1 rounded">.env</code> Datei auf dem Server gespeichert werden.
                   </AlertDescription>
                 </Alert>
 
@@ -1021,6 +1021,34 @@ export default function AdminSettings() {
                     checked={form.notionEnabled || false}
                     onCheckedChange={(checked) => setForm({ ...form, notionEnabled: checked })}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Notion API Key</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type={form.notionApiKey && !notionShowApiKey ? 'password' : 'text'}
+                      value={form.notionApiKey || ''}
+                      onChange={(e) => setForm({ ...form, notionApiKey: e.target.value })}
+                      placeholder="secret_xxx..."
+                      disabled={!form.notionEnabled}
+                      className="font-mono"
+                    />
+                    {form.notionApiKey && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setNotionShowApiKey(!notionShowApiKey)}
+                        disabled={!form.notionEnabled}
+                      >
+                        {notionShowApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Den API Key findest du unter <a href="https://www.notion.so/my-integrations" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">notion.so/my-integrations</a> (beginnt mit secret_)
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -1039,12 +1067,19 @@ export default function AdminSettings() {
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
-                    disabled={!form.notionDatabaseId || notionTesting}
+                    disabled={!form.notionDatabaseId || !form.notionApiKey || notionTesting}
                     onClick={async () => {
                       setNotionTesting(true);
                       setNotionTestResult(null);
                       try {
-                        const response = await fetch(`/api/notion/test?databaseId=${form.notionDatabaseId}`);
+                        const response = await fetch('/api/notion/test', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            databaseId: form.notionDatabaseId,
+                            apiKey: form.notionApiKey
+                          })
+                        });
                         const result = await response.json();
                         setNotionTestResult(result);
                         if (result.success) {
@@ -1073,25 +1108,6 @@ export default function AdminSettings() {
                         Verbindung testen
                       </>
                     )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={async () => {
-                      try {
-                        const response = await fetch('/api/notion/status');
-                        const result = await response.json();
-                        setNotionTestResult(result);
-                        if (result.configured) {
-                          toast.success('API-Token ist konfiguriert');
-                        } else {
-                          toast.error('API-Token fehlt in .env');
-                        }
-                      } catch (error) {
-                        toast.error('Server nicht erreichbar');
-                      }
-                    }}
-                  >
-                    Status prüfen
                   </Button>
                 </div>
 
@@ -1132,11 +1148,6 @@ export default function AdminSettings() {
                             </div>
                           </div>
                         )}
-                        {notionTestResult.configured !== undefined && (
-                          <p className="text-sm text-muted-foreground">
-                            API-Token: {notionTestResult.hasToken ? '✅ Konfiguriert' : '❌ Fehlt in .env'}
-                          </p>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1146,12 +1157,11 @@ export default function AdminSettings() {
                   <h4 className="font-medium mb-2">Einrichtungs-Anleitung</h4>
                   <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
                     <li>Erstelle eine Integration unter <a href="https://www.notion.so/my-integrations" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">notion.so/my-integrations</a></li>
-                    <li>Kopiere den "Internal Integration Token" (beginnt mit <code className="bg-muted px-1 rounded">secret_</code>)</li>
-                    <li>Erstelle eine <code className="bg-muted px-1 rounded">.env</code> Datei im Projekt-Root mit: <code className="bg-muted px-1 rounded">NOTION_API_TOKEN=secret_xxx</code></li>
+                    <li>Kopiere den "Internal Integration Token" (beginnt mit <code className="bg-muted px-1 rounded">secret_</code>) und trage ihn oben ein</li>
                     <li>Erstelle eine Notion-Datenbank mit den Properties: Name, E-Mail, Status, Eingegangen</li>
                     <li>Teile die Datenbank mit deiner Integration</li>
-                    <li>Kopiere die Database ID aus der URL und trage sie hier ein</li>
-                    <li>Starte den Server neu: <code className="bg-muted px-1 rounded">node server.js</code></li>
+                    <li>Kopiere die Database ID aus der URL und trage sie oben ein</li>
+                    <li>Klicke auf "Speichern" und teste die Verbindung</li>
                   </ol>
                   <p className="text-xs text-muted-foreground mt-4">
                     Ausführliche Anleitung: Siehe <code className="bg-muted px-1 rounded">HOSTING.md</code> Abschnitt 9

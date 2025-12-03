@@ -117,6 +117,7 @@ export interface SiteSettings {
   // Notion Integration
   notionEnabled?: boolean;
   notionDatabaseId?: string;
+  notionApiKey?: string;
 }
 
 export const initialCategories: Category[] = [
