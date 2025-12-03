@@ -56,16 +56,18 @@ export default function AdminSettings() {
   return (
     <AdminLayout title="Einstellungen">
       <Tabs defaultValue="home">
-        <TabsList className="mb-6">
-          <TabsTrigger value="home">Startseite</TabsTrigger>
-          <TabsTrigger value="about">Über mich</TabsTrigger>
-          <TabsTrigger value="contact">Kontakt</TabsTrigger>
-          <TabsTrigger value="general">Allgemein</TabsTrigger>
-          <TabsTrigger value="legal">Rechtliches</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6">
+          <TabsList className="inline-flex w-max min-w-full sm:w-auto">
+            <TabsTrigger value="home" className="text-xs sm:text-sm">Startseite</TabsTrigger>
+            <TabsTrigger value="about" className="text-xs sm:text-sm">Über mich</TabsTrigger>
+            <TabsTrigger value="contact" className="text-xs sm:text-sm">Kontakt</TabsTrigger>
+            <TabsTrigger value="general" className="text-xs sm:text-sm">Allgemein</TabsTrigger>
+            <TabsTrigger value="legal" className="text-xs sm:text-sm">Rechtliches</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="home">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="mobile-stack">
             {/* Form */}
             <div className="space-y-6">
               <Card>
@@ -166,7 +168,7 @@ export default function AdminSettings() {
         </TabsContent>
 
         <TabsContent value="about">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="mobile-stack">
             {/* Form */}
             <div className="space-y-6">
               <Card>
@@ -278,7 +280,7 @@ export default function AdminSettings() {
         </TabsContent>
 
         <TabsContent value="contact">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="mobile-stack">
             <Card>
               <CardHeader>
                 <CardTitle>Kontaktinformationen</CardTitle>

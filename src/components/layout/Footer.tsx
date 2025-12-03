@@ -7,14 +7,14 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border bg-card">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="container mx-auto px-4 py-8 sm:py-12">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
           {/* Brand */}
-          <div className="md:col-span-1">
-            <Link to="/" className="font-display text-xl font-bold text-gradient">
+          <div className="col-span-2 sm:col-span-2 md:col-span-1">
+            <Link to="/" className="font-display text-lg sm:text-xl font-bold text-gradient">
               {settings.companyName}
             </Link>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
               KI, Automatisierung & Content-Produktion für Unternehmen, Creators und Einzelunternehmer.
             </p>
           </div>

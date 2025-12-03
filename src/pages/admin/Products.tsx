@@ -161,13 +161,15 @@ export default function AdminProducts() {
   return (
     <AdminLayout title="Produkte & Services">
       <Tabs defaultValue="products">
-        <TabsList className="mb-6">
-          <TabsTrigger value="products">Produkte ({products.length})</TabsTrigger>
-          <TabsTrigger value="categories">Kategorien ({categories.length})</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6">
+          <TabsList className="inline-flex w-max min-w-full sm:w-auto">
+            <TabsTrigger value="products" className="text-xs sm:text-sm">Produkte ({products.length})</TabsTrigger>
+            <TabsTrigger value="categories" className="text-xs sm:text-sm">Kategorien ({categories.length})</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="products">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <p className="text-muted-foreground">
               Verwalten Sie Ihre Produkte und Services
             </p>

@@ -85,4 +85,41 @@
   .shadow-card {
     box-shadow: 0 4px 24px hsl(222 47% 2% / 0.5);
   }
+
+  /* Mobile-optimized scrollable tabs */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Touch-friendly tap targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+@layer components {
+  /* Mobile menu animation */
+  .animate-slide-down {
+    animation: slideDown 0.2s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Mobile-first card stack */
+  .mobile-stack {
+    @apply flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-6;
+  }
 }
