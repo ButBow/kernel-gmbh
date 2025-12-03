@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ImageUpload } from '@/components/admin/ImageUpload';
+import { LivePreview } from '@/components/admin/LivePreview';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, ChevronRight } from 'lucide-react';
 import type { Category, Product, Showcase } from '@/data/initialData';
 
 export default function AdminProducts() {
@@ -25,15 +27,13 @@ export default function AdminProducts() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
 
-  // Category Form
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     description: '',
     icon: 'Package'
   });
 
-  // Product Form
-  const [productForm, setProductForm] = useState<Omit<Product, 'id'>>({
+  const [productForm, setProductForm] = useState<Omit<Product, 'id'> & { image?: string }>({
     categoryId: '',
     name: '',
     type: 'Service',
@@ -42,7 +42,8 @@ export default function AdminProducts() {
     priceText: '',
     showcases: [],
     targetAudience: [],
-    status: 'draft'
+    status: 'draft',
+    image: ''
   });
 
   const [showcaseForm, setShowcaseForm] = useState<Showcase>({
@@ -68,14 +69,14 @@ export default function AdminProducts() {
       priceText: '',
       showcases: [],
       targetAudience: [],
-      status: 'draft'
+      status: 'draft',
+      image: ''
     });
     setEditingProduct(null);
   };
 
   const handleSaveCategory = () => {
     if (!categoryForm.name) return;
-
     if (editingCategory) {
       updateCategory(editingCategory.id, categoryForm);
     } else {
@@ -97,7 +98,6 @@ export default function AdminProducts() {
 
   const handleSaveProduct = () => {
     if (!productForm.name || !productForm.categoryId) return;
-
     if (editingProduct) {
       updateProduct(editingProduct.id, productForm);
     } else {
@@ -118,7 +118,8 @@ export default function AdminProducts() {
       priceText: product.priceText,
       showcases: [...product.showcases],
       targetAudience: [...product.targetAudience],
-      status: product.status
+      status: product.status,
+      image: (product as Product & { image?: string }).image || ''
     });
     setProductDialogOpen(true);
   };
@@ -180,172 +181,214 @@ export default function AdminProducts() {
                   Neues Produkt
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingProduct ? 'Produkt bearbeiten' : 'Neues Produkt erstellen'}
                   </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Kategorie</label>
-                      <Select
-                        value={productForm.categoryId}
-                        onValueChange={(value) => setProductForm({ ...productForm, categoryId: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Kategorie wählen" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                  {/* Form */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Kategorie</label>
+                        <Select
+                          value={productForm.categoryId}
+                          onValueChange={(value) => setProductForm({ ...productForm, categoryId: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Kategorie wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Typ</label>
+                        <Select
+                          value={productForm.type}
+                          onValueChange={(value) => setProductForm({ ...productForm, type: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['Service', 'Paket', 'Beratung', 'Retainer', 'Tool', 'Workshop'].map((type) => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+
                     <div>
-                      <label className="text-sm font-medium">Typ</label>
+                      <label className="text-sm font-medium">Name</label>
+                      <Input
+                        value={productForm.name}
+                        onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                        placeholder="Produktname"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Kurzbeschreibung</label>
+                      <Input
+                        value={productForm.shortDescription}
+                        onChange={(e) => setProductForm({ ...productForm, shortDescription: e.target.value })}
+                        placeholder="Kurze Beschreibung für Übersichten"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Ausführliche Beschreibung</label>
+                      <Textarea
+                        value={productForm.description}
+                        onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                        placeholder="Detaillierte Produktbeschreibung"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Preis</label>
+                      <Input
+                        value={productForm.priceText}
+                        onChange={(e) => setProductForm({ ...productForm, priceText: e.target.value })}
+                        placeholder="z.B. CHF 120–350 oder ab CHF 500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Zielgruppe</label>
+                      <div className="flex gap-2 mb-2">
+                        <Input
+                          value={audienceInput}
+                          onChange={(e) => setAudienceInput(e.target.value)}
+                          placeholder="z.B. KMU"
+                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addAudience())}
+                        />
+                        <Button type="button" variant="outline" onClick={addAudience}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {productForm.targetAudience.map((audience, i) => (
+                          <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeAudience(i)}>
+                            {audience} ×
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Pakete / Showcases</label>
+                      <div className="space-y-2 mb-2">
+                        {productForm.showcases.map((showcase, i) => (
+                          <div key={i} className="flex items-center gap-2 p-2 bg-secondary rounded-lg">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{showcase.title}</p>
+                              <p className="text-xs text-muted-foreground">{showcase.description}</p>
+                              <p className="text-xs text-primary">{showcase.price}</p>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => removeShowcase(i)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-3 border border-dashed rounded-lg space-y-2">
+                        <Input
+                          value={showcaseForm.title}
+                          onChange={(e) => setShowcaseForm({ ...showcaseForm, title: e.target.value })}
+                          placeholder="Paket-Titel (z.B. Basic)"
+                        />
+                        <Input
+                          value={showcaseForm.description}
+                          onChange={(e) => setShowcaseForm({ ...showcaseForm, description: e.target.value })}
+                          placeholder="Beschreibung"
+                        />
+                        <div className="flex gap-2">
+                          <Input
+                            value={showcaseForm.price}
+                            onChange={(e) => setShowcaseForm({ ...showcaseForm, price: e.target.value })}
+                            placeholder="Preis"
+                          />
+                          <Button type="button" variant="outline" onClick={addShowcase}>
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Status</label>
                       <Select
-                        value={productForm.type}
-                        onValueChange={(value) => setProductForm({ ...productForm, type: value })}
+                        value={productForm.status}
+                        onValueChange={(value: 'draft' | 'published') => setProductForm({ ...productForm, status: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {['Service', 'Paket', 'Beratung', 'Retainer', 'Tool', 'Workshop'].map((type) => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                          ))}
+                          <SelectItem value="draft">Entwurf</SelectItem>
+                          <SelectItem value="published">Veröffentlicht</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium">Name</label>
-                    <Input
-                      value={productForm.name}
-                      onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                      placeholder="Produktname"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Kurzbeschreibung</label>
-                    <Input
-                      value={productForm.shortDescription}
-                      onChange={(e) => setProductForm({ ...productForm, shortDescription: e.target.value })}
-                      placeholder="Kurze Beschreibung für Übersichten"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Ausführliche Beschreibung</label>
-                    <Textarea
-                      value={productForm.description}
-                      onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                      placeholder="Detaillierte Produktbeschreibung"
-                      rows={4}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Preis</label>
-                    <Input
-                      value={productForm.priceText}
-                      onChange={(e) => setProductForm({ ...productForm, priceText: e.target.value })}
-                      placeholder="z.B. CHF 120–350 oder ab CHF 500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Zielgruppe</label>
-                    <div className="flex gap-2 mb-2">
-                      <Input
-                        value={audienceInput}
-                        onChange={(e) => setAudienceInput(e.target.value)}
-                        placeholder="z.B. KMU"
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addAudience())}
-                      />
-                      <Button type="button" variant="outline" onClick={addAudience}>
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {productForm.targetAudience.map((audience, i) => (
-                        <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeAudience(i)}>
-                          {audience} ×
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Pakete / Showcases</label>
-                    <div className="space-y-2 mb-2">
-                      {productForm.showcases.map((showcase, i) => (
-                        <div key={i} className="flex items-center gap-2 p-2 bg-secondary rounded-lg">
-                          <div className="flex-1">
-                            <p className="font-medium">{showcase.title}</p>
-                            <p className="text-sm text-muted-foreground">{showcase.description}</p>
-                            <p className="text-sm text-primary">{showcase.price}</p>
-                          </div>
-                          <Button variant="ghost" size="icon" onClick={() => removeShowcase(i)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                  {/* Preview */}
+                  <LivePreview title="Produkt-Vorschau">
+                    <div className="p-4 bg-slate-950">
+                      <div className="rounded-lg border border-slate-800 p-4">
+                        <div className="flex gap-2 mb-2">
+                          <span className="px-2 py-0.5 bg-slate-800 rounded text-xs text-slate-300">
+                            {productForm.type || 'Typ'}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                    <div className="p-3 border border-dashed rounded-lg space-y-2">
-                      <Input
-                        value={showcaseForm.title}
-                        onChange={(e) => setShowcaseForm({ ...showcaseForm, title: e.target.value })}
-                        placeholder="Paket-Titel (z.B. Basic)"
-                      />
-                      <Input
-                        value={showcaseForm.description}
-                        onChange={(e) => setShowcaseForm({ ...showcaseForm, description: e.target.value })}
-                        placeholder="Beschreibung"
-                      />
-                      <div className="flex gap-2">
-                        <Input
-                          value={showcaseForm.price}
-                          onChange={(e) => setShowcaseForm({ ...showcaseForm, price: e.target.value })}
-                          placeholder="Preis (z.B. CHF 120–180)"
-                        />
-                        <Button type="button" variant="outline" onClick={addShowcase}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Hinzufügen
-                        </Button>
+                        <h3 className="font-semibold text-white mb-2">
+                          {productForm.name || 'Produktname'}
+                        </h3>
+                        <p className="text-xs text-slate-400 mb-3">
+                          {productForm.shortDescription || 'Kurzbeschreibung...'}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-amber-400 font-semibold text-sm">
+                            {productForm.priceText || 'Preis'}
+                          </span>
+                          <ChevronRight className="h-4 w-4 text-slate-500" />
+                        </div>
                       </div>
+                      
+                      {productForm.showcases.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-xs text-slate-500">Pakete:</p>
+                          {productForm.showcases.map((s, i) => (
+                            <div key={i} className="p-2 bg-slate-900 rounded text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-white">{s.title}</span>
+                                <span className="text-amber-400">{s.price}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  </LivePreview>
+                </div>
 
-                  <div>
-                    <label className="text-sm font-medium">Status</label>
-                    <Select
-                      value={productForm.status}
-                      onValueChange={(value: 'draft' | 'published') => setProductForm({ ...productForm, status: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Entwurf</SelectItem>
-                        <SelectItem value="published">Veröffentlicht</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={() => setProductDialogOpen(false)}>
-                      Abbrechen
-                    </Button>
-                    <Button onClick={handleSaveProduct}>
-                      {editingProduct ? 'Speichern' : 'Erstellen'}
-                    </Button>
-                  </div>
+                <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
+                  <Button variant="outline" onClick={() => setProductDialogOpen(false)}>
+                    Abbrechen
+                  </Button>
+                  <Button onClick={handleSaveProduct}>
+                    {editingProduct ? 'Speichern' : 'Erstellen'}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -379,11 +422,7 @@ export default function AdminProducts() {
                             <p className="text-sm text-muted-foreground">{product.priceText}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditProduct(product)}
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => handleEditProduct(product)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
@@ -492,11 +531,7 @@ export default function AdminProducts() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditCategory(category)}
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => handleEditCategory(category)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
