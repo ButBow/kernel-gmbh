@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown, Star } from 'lucide-react';
 import { ImportExport } from '@/components/admin/ImportExport';
 import type { Category, Product, Showcase } from '@/data/initialData';
 
@@ -44,7 +44,8 @@ export default function AdminProducts() {
     showcases: [],
     targetAudience: [],
     status: 'draft',
-    image: ''
+    image: '',
+    featured: false
   });
 
   const [showcaseForm, setShowcaseForm] = useState<Showcase>({
@@ -71,7 +72,8 @@ export default function AdminProducts() {
       showcases: [],
       targetAudience: [],
       status: 'draft',
-      image: ''
+      image: '',
+      featured: false
     });
     setEditingProduct(null);
   };
@@ -120,7 +122,8 @@ export default function AdminProducts() {
       showcases: [...product.showcases],
       targetAudience: [...product.targetAudience],
       status: product.status,
-      image: (product as Product & { image?: string }).image || ''
+      image: (product as Product & { image?: string }).image || '',
+      featured: product.featured || false
     });
     setProductDialogOpen(true);
   };
@@ -347,6 +350,22 @@ export default function AdminProducts() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                      <input
+                        type="checkbox"
+                        id="featured"
+                        checked={productForm.featured || false}
+                        onChange={(e) => setProductForm({ ...productForm, featured: e.target.checked })}
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <label htmlFor="featured" className="text-sm font-medium cursor-pointer">
+                        Als "Beliebt" markieren
+                        <span className="block text-xs text-muted-foreground font-normal">
+                          Wird auf der Startseite und oben bei Leistungen angezeigt
+                        </span>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Preview */}
@@ -420,6 +439,9 @@ export default function AdminProducts() {
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
+                              {product.featured && (
+                                <Star className="h-4 w-4 text-primary fill-primary" />
+                              )}
                               <span className="font-medium">{product.name}</span>
                               <Badge variant={product.status === 'published' ? 'default' : 'outline'}>
                                 {product.status === 'published' ? 'Live' : 'Entwurf'}

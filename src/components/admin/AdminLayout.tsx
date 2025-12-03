@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  MessageSquare
+  MessageSquare,
+  BarChart3
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/admin/products', icon: Package, label: 'Produkte & Services' },
   { href: '/admin/portfolio', icon: FolderKanban, label: 'Portfolio' },
   { href: '/admin/blog', icon: FileText, label: 'Blog' },
+  { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/admin/settings', icon: Settings, label: 'Einstellungen' },
 ];
 
