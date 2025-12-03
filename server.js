@@ -318,9 +318,13 @@ async function testNotionConnection(databaseId, apiKey) {
 // Handle API requests
 async function handleAPI(req, res, urlPath) {
   const ip = getClientIP(req);
+  const timestamp = new Date().toISOString();
+  
+  console.log(`[${timestamp}] 🔌 API Request: ${req.method} ${urlPath}`);
   
   // CORS preflight
   if (req.method === 'OPTIONS') {
+    console.log(`[${timestamp}] ✅ CORS preflight handled`);
     res.writeHead(204, CORS_HEADERS);
     res.end();
     return true;
@@ -328,6 +332,7 @@ async function handleAPI(req, res, urlPath) {
 
   // POST /api/contact - Create contact inquiry in Notion
   if (urlPath === '/api/contact' && req.method === 'POST') {
+    console.log(`[${timestamp}] 📧 Processing contact form...`);
     // Rate limiting
     if (!checkRateLimit(ip)) {
       sendJSON(res, 429, { error: 'Zu viele Anfragen. Bitte warten Sie eine Minute.' });
@@ -360,7 +365,7 @@ async function handleAPI(req, res, urlPath) {
       // Create Notion page
       const result = await createNotionPage(body, databaseId, apiKey);
       
-      console.log(`[${new Date().toISOString()}] Contact inquiry created in Notion: ${body.email}`);
+      console.log(`[${timestamp}] ✅ Contact inquiry created in Notion: ${body.email}`);
       
       sendJSON(res, 200, { 
         success: true, 
@@ -368,7 +373,7 @@ async function handleAPI(req, res, urlPath) {
         notionPageId: result.id
       });
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Contact API error:`, error.message);
+      console.error(`[${timestamp}] ❌ Contact API error:`, error.message);
       sendJSON(res, 500, { 
         error: 'Fehler beim Senden an Notion.', 
         details: error.message 
@@ -377,27 +382,59 @@ async function handleAPI(req, res, urlPath) {
     return true;
   }
 
-  // POST /api/notion/test - Test Notion connection
-  if (urlPath === '/api/notion/test' && req.method === 'POST') {
+  // GET/POST /api/notion/test - Test Notion connection
+  if (urlPath === '/api/notion/test' && (req.method === 'POST' || req.method === 'GET')) {
+    console.log(`[${timestamp}] 🧪 Testing Notion connection...`);
     try {
-      const body = await parseBody(req);
-      const databaseId = body.databaseId || process.env.NOTION_DATABASE_ID;
-      const apiKey = body.apiKey || process.env.NOTION_API_TOKEN;
+      let databaseId, apiKey;
+      
+      if (req.method === 'POST') {
+        const body = await parseBody(req);
+        databaseId = body.databaseId || process.env.NOTION_DATABASE_ID;
+        apiKey = body.apiKey || process.env.NOTION_API_TOKEN;
+      } else {
+        // GET request - use env variables
+        databaseId = process.env.NOTION_DATABASE_ID;
+        apiKey = process.env.NOTION_API_TOKEN;
+      }
       
       const result = await testNotionConnection(databaseId, apiKey);
+      console.log(`[${timestamp}] ${result.success ? '✅' : '❌'} Notion test result:`, result.success ? 'Success' : result.error);
       sendJSON(res, result.success ? 200 : 400, result);
     } catch (error) {
+      console.error(`[${timestamp}] ❌ Notion test error:`, error.message);
       sendJSON(res, 400, { success: false, error: error.message });
     }
     return true;
   }
 
+  // GET /api/notion/status - Check Notion config status
+  if (urlPath === '/api/notion/status' && req.method === 'GET') {
+    console.log(`[${timestamp}] 📊 Checking Notion status...`);
+    const hasToken = !!process.env.NOTION_API_TOKEN;
+    const hasDatabaseId = !!process.env.NOTION_DATABASE_ID;
+    sendJSON(res, 200, {
+      configured: hasToken && hasDatabaseId,
+      hasToken,
+      hasDatabaseId
+    });
+    return true;
+  }
+
+  console.log(`[${timestamp}] ⚠️ Unknown API endpoint: ${urlPath}`);
   return false; // Not an API request
 }
 
 const server = http.createServer(async (req, res) => {
+  const timestamp = new Date().toISOString();
+  const clientIP = getClientIP(req);
+  
+  // Log every incoming request
+  console.log(`[${timestamp}] ${req.method} ${req.url} - IP: ${clientIP}`);
+  
   // Only allow GET, HEAD, POST, OPTIONS methods
   if (!['GET', 'HEAD', 'POST', 'OPTIONS'].includes(req.method)) {
+    console.log(`[${timestamp}] ❌ Method not allowed: ${req.method}`);
     res.writeHead(405, { 'Content-Type': 'text/plain' });
     res.end('Method Not Allowed');
     return;
