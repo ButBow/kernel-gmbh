@@ -1,6 +1,7 @@
 /**
  * Simple production server for kernel.gmbh
  * Serves static files from the dist/ directory
+ * Includes API endpoints for Notion integration
  * 
  * Usage: node server.js
  * Or with custom port: PORT=8080 node server.js
@@ -10,8 +11,28 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// Load environment variables from .env file
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const [key, ...valueParts] = trimmed.split('=');
+      if (key && valueParts.length > 0) {
+        process.env[key.trim()] = valueParts.join('=').trim();
+      }
+    }
+  });
+}
+
 const PORT = process.env.PORT || 3000;
 const DIST_DIR = path.join(__dirname, 'dist');
+
+// Rate limiting storage
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX = 5; // max 5 requests per minute
 
 // MIME types for static files
 const MIME_TYPES = {
@@ -51,6 +72,13 @@ const SECURITY_HEADERS = {
   ].join('; '),
 };
 
+// CORS headers for API
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 // Cache durations (in seconds)
 const CACHE_DURATIONS = {
   '.html': 0, // No cache for HTML (SPA routing)
@@ -67,9 +95,310 @@ const CACHE_DURATIONS = {
   '.woff2': 31536000,
 };
 
-const server = http.createServer((req, res) => {
-  // Only allow GET and HEAD methods
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
+// Rate limiting check
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW;
+  
+  // Clean old entries
+  if (rateLimitStore.has(ip)) {
+    const requests = rateLimitStore.get(ip).filter(time => time > windowStart);
+    rateLimitStore.set(ip, requests);
+  }
+  
+  const requests = rateLimitStore.get(ip) || [];
+  if (requests.length >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  
+  requests.push(now);
+  rateLimitStore.set(ip, requests);
+  return true;
+}
+
+// Get client IP
+function getClientIP(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+         req.connection?.remoteAddress || 
+         '127.0.0.1';
+}
+
+// Sanitize text input
+function sanitizeText(text) {
+  if (!text) return '';
+  return text
+    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+=/gi, '')
+    .trim();
+}
+
+// Parse JSON body
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+      // Limit body size to 1MB
+      if (body.length > 1024 * 1024) {
+        reject(new Error('Body too large'));
+      }
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        reject(new Error('Invalid JSON'));
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+// Send JSON response
+function sendJSON(res, statusCode, data, extraHeaders = {}) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json; charset=utf-8',
+    ...CORS_HEADERS,
+    ...extraHeaders,
+  });
+  res.end(JSON.stringify(data));
+}
+
+// Create Notion page
+async function createNotionPage(data, databaseId) {
+  const NOTION_API_TOKEN = process.env.NOTION_API_TOKEN;
+  
+  if (!NOTION_API_TOKEN) {
+    throw new Error('NOTION_API_TOKEN not configured');
+  }
+  
+  if (!databaseId) {
+    throw new Error('Notion Database ID not configured');
+  }
+
+  const properties = {
+    'Name': {
+      title: [{ text: { content: sanitizeText(data.name) || 'Unbekannt' } }]
+    },
+    'E-Mail': {
+      email: data.email || null
+    },
+    'Status': {
+      select: { name: 'Neu' }
+    },
+    'Eingegangen': {
+      date: { start: new Date().toISOString() }
+    }
+  };
+
+  // Optional fields
+  if (data.phone) {
+    properties['Telefon'] = { phone_number: sanitizeText(data.phone) };
+  }
+  if (data.company) {
+    properties['Firma'] = { rich_text: [{ text: { content: sanitizeText(data.company) } }] };
+  }
+  if (data.inquiryType) {
+    properties['Anfrageart'] = { select: { name: sanitizeText(data.inquiryType) } };
+  }
+  if (data.budget) {
+    properties['Budget'] = { select: { name: sanitizeText(data.budget) } };
+  }
+  if (data.subject) {
+    properties['Betreff'] = { rich_text: [{ text: { content: sanitizeText(data.subject) } }] };
+  }
+  if (data.hasAttachments) {
+    properties['Hat Anhänge'] = { checkbox: true };
+  }
+
+  // Message goes into page content, not properties (to allow longer text)
+  const children = [];
+  if (data.message) {
+    // Split message into chunks of 2000 chars (Notion limit)
+    const message = sanitizeText(data.message);
+    const chunks = message.match(/.{1,2000}/gs) || [];
+    chunks.forEach(chunk => {
+      children.push({
+        object: 'block',
+        type: 'paragraph',
+        paragraph: {
+          rich_text: [{ text: { content: chunk } }]
+        }
+      });
+    });
+  }
+
+  const response = await fetch('https://api.notion.com/v1/pages', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${NOTION_API_TOKEN}`,
+      'Content-Type': 'application/json',
+      'Notion-Version': '2022-06-28'
+    },
+    body: JSON.stringify({
+      parent: { database_id: databaseId },
+      properties,
+      children
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('Notion API Error:', errorData);
+    throw new Error(errorData.message || `Notion API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// Test Notion connection
+async function testNotionConnection(databaseId) {
+  const NOTION_API_TOKEN = process.env.NOTION_API_TOKEN;
+  
+  if (!NOTION_API_TOKEN) {
+    return { success: false, error: 'NOTION_API_TOKEN nicht in .env konfiguriert' };
+  }
+  
+  if (!databaseId) {
+    return { success: false, error: 'Database ID nicht angegeben' };
+  }
+
+  try {
+    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${NOTION_API_TOKEN}`,
+        'Notion-Version': '2022-06-28'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      if (response.status === 404) {
+        return { success: false, error: 'Datenbank nicht gefunden. Prüfe die Database ID und ob die Integration Zugriff hat.' };
+      }
+      if (response.status === 401) {
+        return { success: false, error: 'Authentifizierung fehlgeschlagen. Prüfe den API-Token in der .env Datei.' };
+      }
+      return { success: false, error: errorData.message || `API Fehler: ${response.status}` };
+    }
+
+    const dbData = await response.json();
+    
+    // Check for required properties
+    const requiredProps = ['Name', 'E-Mail', 'Status', 'Eingegangen'];
+    const existingProps = Object.keys(dbData.properties || {});
+    const missingProps = requiredProps.filter(p => !existingProps.includes(p));
+    
+    if (missingProps.length > 0) {
+      return { 
+        success: true, 
+        warning: `Fehlende Properties: ${missingProps.join(', ')}. Diese werden ggf. automatisch erstellt.`,
+        databaseTitle: dbData.title?.[0]?.plain_text || 'Unbenannt',
+        properties: existingProps
+      };
+    }
+
+    return { 
+      success: true, 
+      databaseTitle: dbData.title?.[0]?.plain_text || 'Unbenannt',
+      properties: existingProps
+    };
+  } catch (error) {
+    console.error('Notion connection test error:', error);
+    return { success: false, error: error.message || 'Verbindungsfehler' };
+  }
+}
+
+// Handle API requests
+async function handleAPI(req, res, urlPath) {
+  const ip = getClientIP(req);
+  
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, CORS_HEADERS);
+    res.end();
+    return true;
+  }
+
+  // POST /api/contact - Create contact inquiry in Notion
+  if (urlPath === '/api/contact' && req.method === 'POST') {
+    // Rate limiting
+    if (!checkRateLimit(ip)) {
+      sendJSON(res, 429, { error: 'Zu viele Anfragen. Bitte warten Sie eine Minute.' });
+      return true;
+    }
+
+    try {
+      const body = await parseBody(req);
+      
+      // Validate required fields
+      if (!body.name || !body.email || !body.message) {
+        sendJSON(res, 400, { error: 'Name, E-Mail und Nachricht sind erforderlich.' });
+        return true;
+      }
+
+      // Get database ID from body or env
+      const databaseId = body.notionDatabaseId || process.env.NOTION_DATABASE_ID;
+      
+      if (!databaseId) {
+        sendJSON(res, 400, { error: 'Notion Database ID nicht konfiguriert.' });
+        return true;
+      }
+
+      // Create Notion page
+      const result = await createNotionPage(body, databaseId);
+      
+      console.log(`[${new Date().toISOString()}] Contact inquiry created in Notion: ${body.email}`);
+      
+      sendJSON(res, 200, { 
+        success: true, 
+        message: 'Anfrage erfolgreich an Notion gesendet.',
+        notionPageId: result.id
+      });
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}] Contact API error:`, error.message);
+      sendJSON(res, 500, { 
+        error: 'Fehler beim Senden an Notion.', 
+        details: error.message 
+      });
+    }
+    return true;
+  }
+
+  // GET /api/notion/test - Test Notion connection
+  if (urlPath === '/api/notion/test' && req.method === 'GET') {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const databaseId = url.searchParams.get('databaseId') || process.env.NOTION_DATABASE_ID;
+    
+    const result = await testNotionConnection(databaseId);
+    sendJSON(res, result.success ? 200 : 400, result);
+    return true;
+  }
+
+  // GET /api/notion/status - Check if Notion is configured
+  if (urlPath === '/api/notion/status' && req.method === 'GET') {
+    const hasToken = !!process.env.NOTION_API_TOKEN;
+    const hasDatabaseId = !!process.env.NOTION_DATABASE_ID;
+    
+    sendJSON(res, 200, {
+      configured: hasToken,
+      hasToken,
+      hasDatabaseId,
+      message: hasToken 
+        ? 'Notion API Token ist konfiguriert.' 
+        : 'Notion API Token fehlt in .env Datei.'
+    });
+    return true;
+  }
+
+  return false; // Not an API request
+}
+
+const server = http.createServer(async (req, res) => {
+  // Only allow GET, HEAD, POST, OPTIONS methods
+  if (!['GET', 'HEAD', 'POST', 'OPTIONS'].includes(req.method)) {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
     res.end('Method Not Allowed');
     return;
@@ -80,6 +409,23 @@ const server = http.createServer((req, res) => {
   
   // Security: Prevent directory traversal
   urlPath = path.normalize(urlPath).replace(/^(\.\.[\/\\])+/, '');
+  
+  // Handle API routes
+  if (urlPath.startsWith('/api/')) {
+    const handled = await handleAPI(req, res, urlPath);
+    if (handled) return;
+    
+    // Unknown API endpoint
+    sendJSON(res, 404, { error: 'API endpoint not found' });
+    return;
+  }
+
+  // Static file serving (only GET/HEAD)
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.writeHead(405, { 'Content-Type': 'text/plain' });
+    res.end('Method Not Allowed');
+    return;
+  }
   
   // Determine file path
   let filePath = path.join(DIST_DIR, urlPath);
@@ -137,6 +483,13 @@ server.listen(PORT, '127.0.0.1', () => {
 ║  Status:  Running                                       ║
 ║  URL:     http://127.0.0.1:${PORT.toString().padEnd(28)}║
 ║  Mode:    Production                                    ║
+╠════════════════════════════════════════════════════════╣
+║  API Endpoints:                                         ║
+║  POST /api/contact     - Contact form to Notion         ║
+║  GET  /api/notion/test - Test Notion connection         ║
+║  GET  /api/notion/status - Check Notion config          ║
+╠════════════════════════════════════════════════════════╣
+║  Notion: ${process.env.NOTION_API_TOKEN ? 'Configured ✓' : 'Not configured (add .env)'}                        ║
 ╠════════════════════════════════════════════════════════╣
 ║  Press Ctrl+C to stop                                   ║
 ╚════════════════════════════════════════════════════════╝

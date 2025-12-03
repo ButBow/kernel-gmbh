@@ -114,6 +114,9 @@ export interface SiteSettings {
   footerText: string;
   impressumText: string;
   datenschutzText: string;
+  // Notion Integration
+  notionEnabled?: boolean;
+  notionDatabaseId?: string;
 }
 
 export const initialCategories: Category[] = [
