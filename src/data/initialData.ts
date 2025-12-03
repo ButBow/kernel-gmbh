@@ -25,6 +25,7 @@ export interface Product {
   showcases: Showcase[];
   targetAudience: string[];
   status: 'draft' | 'published';
+  featured?: boolean;
 }
 
 export interface Project {
