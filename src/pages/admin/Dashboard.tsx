@@ -2,10 +2,14 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useContent } from '@/contexts/ContentContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Package, FolderKanban, FileText, Settings, ArrowRight } from 'lucide-react';
+import { Package, FolderKanban, FileText, Settings, ArrowRight, MessageSquare, Bell } from 'lucide-react';
+import { getStorageItem } from '@/lib/storage';
+import { Inquiry } from '@/types/inquiry';
 
 export default function AdminDashboard() {
   const { categories, products, projects, posts } = useContent();
+  const inquiries = getStorageItem<Inquiry[]>('cms_inquiries', []);
+  const unreadCount = inquiries.filter(i => !i.read).length;
 
   const stats = [
     {
@@ -43,6 +47,28 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout title="Dashboard">
+      {/* Unread Inquiries Alert */}
+      {unreadCount > 0 && (
+        <Link to="/admin/inquiries">
+          <Card className="mb-6 border-primary/50 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Bell className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold">
+                  {unreadCount} neue {unreadCount === 1 ? 'Anfrage' : 'Anfragen'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Klicken um zu den Anfragen zu gelangen
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <Card key={stat.title}>
@@ -97,6 +123,21 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-muted-foreground" />
                 <span>Neuen Beitrag schreiben</span>
+              </div>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              to="/admin/inquiries"
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                <span>Anfragen ansehen</span>
+                {unreadCount > 0 && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
               </div>
               <ArrowRight className="h-4 w-4" />
             </Link>
