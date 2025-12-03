@@ -67,6 +67,9 @@ export interface SiteSettings {
   socialInstagram?: string;
   socialLinkedin?: string;
   socialTwitter?: string;
+  socialYoutube?: string;
+  socialTiktok?: string;
+  socialFacebook?: string;
   footerText: string;
   impressumText: string;
   datenschutzText: string;
@@ -327,6 +330,9 @@ export const initialSettings: SiteSettings = {
   socialInstagram: "",
   socialLinkedin: "",
   socialTwitter: "",
+  socialYoutube: "",
+  socialTiktok: "",
+  socialFacebook: "",
   footerText: "© 2024 Mein Firmenname. Alle Rechte vorbehalten.",
   impressumText: "Angaben gemäss Schweizer Recht...",
   datenschutzText: "Datenschutzerklärung gemäss DSG..."

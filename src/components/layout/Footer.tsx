@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Linkedin, Twitter, Youtube, Facebook } from "lucide-react";
 import { useContent } from "@/contexts/ContentContext";
 
 export function Footer() {
@@ -91,10 +91,10 @@ export function Footer() {
             </ul>
 
             {/* Social Media */}
-            {(settings.socialInstagram || settings.socialLinkedin || settings.socialTwitter) && (
+            {(settings.socialInstagram || settings.socialLinkedin || settings.socialTwitter || settings.socialYoutube || settings.socialTiktok || settings.socialFacebook) && (
               <div className="mt-6">
                 <h4 className="font-display font-semibold text-foreground mb-3">Social Media</h4>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   {settings.socialInstagram && (
                     <a
                       href={settings.socialInstagram}
@@ -123,6 +123,39 @@ export function Footer() {
                       className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
                     >
                       <Twitter size={18} />
+                    </a>
+                  )}
+                  {settings.socialYoutube && (
+                    <a
+                      href={settings.socialYoutube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      <Youtube size={18} />
+                    </a>
+                  )}
+                  {settings.socialTiktok && (
+                    <a
+                      href={settings.socialTiktok}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                      title="TikTok"
+                    >
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-[18px] w-[18px]">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                      </svg>
+                    </a>
+                  )}
+                  {settings.socialFacebook && (
+                    <a
+                      href={settings.socialFacebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      <Facebook size={18} />
                     </a>
                   )}
                 </div>
