@@ -1010,6 +1010,18 @@ export default function AdminSettings() {
                   </AlertDescription>
                 </Alert>
 
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Server URL (für Self-Hosting)</label>
+                  <Input
+                    value={form.apiBaseUrl || ''}
+                    onChange={(e) => setForm({ ...form, apiBaseUrl: e.target.value })}
+                    placeholder="https://kernel_website.floriskern.ch"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Gib deine Domain ein (z.B. https://kernel_website.floriskern.ch), wenn du die Website selbst hostest. Leer lassen für lokale Entwicklung.
+                  </p>
+                </div>
+
                 <div className="flex items-center justify-between p-4 border border-border rounded-lg">
                   <div className="space-y-1">
                     <p className="font-medium">Notion aktivieren</p>
@@ -1072,7 +1084,8 @@ export default function AdminSettings() {
                       setNotionTesting(true);
                       setNotionTestResult(null);
                       try {
-                        const response = await fetch('/api/notion/test', {
+                        const baseUrl = form.apiBaseUrl?.replace(/\/$/, '') || '';
+                        const response = await fetch(`${baseUrl}/api/notion/test`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
