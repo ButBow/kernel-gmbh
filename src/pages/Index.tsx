@@ -92,6 +92,17 @@ export default function Index() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {serviceCategories.map((category, index) => {
               const IconComponent = iconMap[category.icon] || Code;
+              // Find minimum price from products in this category
+              const categoryProducts = products.filter(p => p.categoryId === category.id && p.status === 'published');
+              const prices = categoryProducts
+                .map(p => {
+                  // Extract number from priceText (e.g., "Ab 500 €" -> 500)
+                  const match = p.priceText.match(/[\d.,]+/);
+                  return match ? parseFloat(match[0].replace('.', '').replace(',', '.')) : null;
+                })
+                .filter((price): price is number => price !== null && price > 0);
+              const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+              
               return (
                 <Link key={category.id} to="/leistungen">
                   <Card 
@@ -105,9 +116,14 @@ export default function Index() {
                       <h3 className="font-display font-semibold text-lg mb-2">
                         {category.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground mb-3">
                         {category.description}
                       </p>
+                      {minPrice && minPrice !== Infinity && (
+                        <p className="text-sm font-medium text-primary">
+                          Ab {minPrice.toLocaleString('de-DE')} €
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 </Link>
