@@ -113,8 +113,8 @@ export default function AdminBlog() {
 
   return (
     <AdminLayout title="Blog">
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-muted-foreground">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <p className="text-muted-foreground text-sm sm:text-base">
           Verwalten Sie Ihre Blog-Beiträge
         </p>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -122,19 +122,19 @@ export default function AdminBlog() {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Neuer Beitrag
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingPost ? 'Beitrag bearbeiten' : 'Neuen Beitrag erstellen'}
               </DialogTitle>
             </DialogHeader>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+            <div className="mobile-stack mt-4">
               {/* Form */}
               <div className="space-y-4">
                 <div>
@@ -156,7 +156,7 @@ export default function AdminBlog() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Slug (URL)</label>
                     <Input
