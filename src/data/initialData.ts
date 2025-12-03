@@ -68,6 +68,15 @@ export interface StatItem {
   label: string;
 }
 
+export interface Testimonial {
+  name: string;
+  position: string;
+  company: string;
+  image: string;
+  quote: string;
+  rating?: number;
+}
+
 export interface SiteSettings {
   companyName: string;
   ownerName: string;
@@ -82,6 +91,7 @@ export interface SiteSettings {
   milestones: Milestone[];
   coreValues: CoreValue[];
   stats: StatItem[];
+  testimonials: Testimonial[];
   skills: string[];
   contactEmail: string;
   contactPhone: string;
@@ -363,6 +373,32 @@ export const initialSettings: SiteSettings = {
     { value: "30+", label: "Zufriedene Kunden" },
     { value: "3+", label: "Jahre Erfahrung" },
     { value: "100%", label: "Leidenschaft" }
+  ],
+  testimonials: [
+    {
+      name: "Sarah Weber",
+      position: "Marketing Leiterin",
+      company: "TechCorp AG",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
+      quote: "Die Zusammenarbeit war hervorragend. Das Projekt wurde schnell und professionell umgesetzt. Die Qualität hat unsere Erwartungen übertroffen.",
+      rating: 5
+    },
+    {
+      name: "Michael Schneider",
+      position: "CEO",
+      company: "StartupHub",
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
+      quote: "Endlich jemand, der Technologie und Kreativität perfekt verbindet. Die Automatisierungen haben uns enorm viel Zeit gespart.",
+      rating: 5
+    },
+    {
+      name: "Anna Müller",
+      position: "Content Creator",
+      company: "Digital Dreams",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+      quote: "Die Video-Produktion war top! Schnelle Umsetzung, kreative Ideen und ein super Endresultat. Absolut empfehlenswert!",
+      rating: 5
+    }
   ],
   skills: ["Video & Content Production", "AI & Automation", "Programmierung", "IT-Support & Beratung", "Projekt-Management"],
   contactEmail: "kontakt@meinefirma.ch",
