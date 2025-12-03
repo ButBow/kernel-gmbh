@@ -5,6 +5,8 @@
  * 
  * Usage: node server.js
  * Or with custom port: PORT=8080 node server.js
+ * 
+ * Last updated: 2025-12-03 23:45
  */
 
 import http from 'http';
