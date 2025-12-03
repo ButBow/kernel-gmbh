@@ -1,6 +1,9 @@
 import { Layout } from "@/components/layout/Layout";
+import { useContent } from "@/contexts/ContentContext";
 
 export default function Impressum() {
+  const { settings } = useContent();
+
   return (
     <Layout>
       <section className="py-16 md:py-24">
@@ -17,36 +20,23 @@ export default function Impressum() {
                 Kontaktadresse
               </h3>
               <p className="text-muted-foreground mb-4">
-                Mein Firmenname<br />
-                Max Mustermann<br />
-                Musterstrasse 123<br />
-                8000 Zürich<br />
-                Schweiz
+                {settings.companyName}<br />
+                {settings.contactLocation}
               </p>
 
               <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
                 Kontakt
               </h3>
               <p className="text-muted-foreground mb-4">
-                E-Mail: info@beispiel.ch<br />
-                Telefon: +41 79 123 45 67
+                E-Mail: {settings.contactEmail}<br />
+                Telefon: {settings.contactPhone}
               </p>
 
-              <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
-                Vertretungsberechtigte Person
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Max Mustermann, Inhaber
-              </p>
-
-              <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
-                Handelsregister-Eintrag
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Eingetragener Firmenname: Mein Firmenname<br />
-                Handelsregister: [Handelsregister-Nummer]<br />
-                UID: CHE-XXX.XXX.XXX
-              </p>
+              {settings.impressumText && (
+                <div className="mt-8 whitespace-pre-line text-muted-foreground">
+                  {settings.impressumText}
+                </div>
+              )}
 
               <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
                 Haftungsausschluss
@@ -67,7 +57,7 @@ export default function Impressum() {
               </h3>
               <p className="text-muted-foreground mb-4">
                 Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos oder anderen 
-                Dateien auf der Website gehören ausschliesslich Mein Firmenname oder den speziell 
+                Dateien auf der Website gehören ausschliesslich {settings.companyName} oder den speziell 
                 genannten Rechtsinhabern. Für die Reproduktion jeglicher Elemente ist die 
                 schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen.
               </p>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useContent } from "@/contexts/ContentContext";
 import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
 import { z } from "zod";
 
@@ -18,6 +19,7 @@ const contactSchema = z.object({
 
 export default function Kontakt() {
   const { toast } = useToast();
+  const { settings } = useContent();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -32,7 +34,6 @@ export default function Kontakt() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user types
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
     }
@@ -41,14 +42,12 @@ export default function Kontakt() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Honeypot check
     if (formData.honeypot) {
       return;
     }
 
     setErrors({});
 
-    // Validate
     const result = contactSchema.safeParse(formData);
     if (!result.success) {
       const newErrors: Record<string, string> = {};
@@ -63,7 +62,7 @@ export default function Kontakt() {
 
     setIsSubmitting(true);
 
-    // Simulate form submission (in production, this would send to an API)
+    // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     setIsSubmitting(false);
@@ -133,10 +132,10 @@ export default function Kontakt() {
                   <div>
                     <p className="font-medium mb-1">E-Mail</p>
                     <a 
-                      href="mailto:info@beispiel.ch" 
+                      href={`mailto:${settings.contactEmail}`} 
                       className="text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      info@beispiel.ch
+                      {settings.contactEmail}
                     </a>
                   </div>
                 </div>
@@ -148,10 +147,10 @@ export default function Kontakt() {
                   <div>
                     <p className="font-medium mb-1">Telefon</p>
                     <a 
-                      href="tel:+41791234567" 
+                      href={`tel:${settings.contactPhone.replace(/\s/g, '')}`} 
                       className="text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      +41 79 123 45 67
+                      {settings.contactPhone}
                     </a>
                   </div>
                 </div>
@@ -162,7 +161,7 @@ export default function Kontakt() {
                   </div>
                   <div>
                     <p className="font-medium mb-1">Standort</p>
-                    <p className="text-muted-foreground">Schweiz</p>
+                    <p className="text-muted-foreground">{settings.contactLocation}</p>
                   </div>
                 </div>
               </div>
@@ -185,7 +184,6 @@ export default function Kontakt() {
                   <h2 className="font-display text-xl font-bold mb-6">Nachricht senden</h2>
                   
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Honeypot field - hidden from users */}
                     <input
                       type="text"
                       name="honeypot"

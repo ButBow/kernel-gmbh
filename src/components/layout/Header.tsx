@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useContent } from "@/contexts/ContentContext";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -16,6 +17,7 @@ const navItems = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { settings } = useContent();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
@@ -24,7 +26,7 @@ export function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <span className="font-display text-xl font-bold text-gradient">
-              Mein Firmenname
+              {settings.companyName}
             </span>
           </Link>
 
@@ -49,7 +51,7 @@ export function Header() {
           {/* CTA Button */}
           <div className="hidden md:block">
             <Button asChild>
-              <Link to="/kontakt">Projekt anfragen</Link>
+              <Link to="/kontakt">{settings.heroCta}</Link>
             </Button>
           </div>
 
@@ -85,7 +87,7 @@ export function Header() {
               <div className="pt-2 px-4">
                 <Button asChild className="w-full">
                   <Link to="/kontakt" onClick={() => setMobileMenuOpen(false)}>
-                    Projekt anfragen
+                    {settings.heroCta}
                   </Link>
                 </Button>
               </div>
