@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Linkedin, Twitter } from "lucide-react";
 import { useContent } from "@/contexts/ContentContext";
 
 export function Footer() {
@@ -89,6 +89,45 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
+
+            {/* Social Media */}
+            {(settings.socialInstagram || settings.socialLinkedin || settings.socialTwitter) && (
+              <div className="mt-6">
+                <h4 className="font-display font-semibold text-foreground mb-3">Social Media</h4>
+                <div className="flex gap-3">
+                  {settings.socialInstagram && (
+                    <a
+                      href={settings.socialInstagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      <Instagram size={18} />
+                    </a>
+                  )}
+                  {settings.socialLinkedin && (
+                    <a
+                      href={settings.socialLinkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      <Linkedin size={18} />
+                    </a>
+                  )}
+                  {settings.socialTwitter && (
+                    <a
+                      href={settings.socialTwitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      <Twitter size={18} />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
