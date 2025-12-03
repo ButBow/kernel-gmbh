@@ -57,10 +57,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        magenta: "hsl(var(--gradient-magenta))",
+        blue: "hsl(var(--gradient-blue))",
+        purple: "hsl(var(--gradient-purple))",
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
-        display: ["Space Grotesk", "sans-serif"],
+        display: ["Outfit", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
