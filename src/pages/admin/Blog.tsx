@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ImageUpload } from '@/components/admin/ImageUpload';
+import { LivePreview } from '@/components/admin/LivePreview';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Calendar } from 'lucide-react';
+import { Plus, Pencil, Trash2, Calendar, ArrowRight } from 'lucide-react';
 import type { Post } from '@/data/initialData';
 
 function formatDate(dateString: string) {
@@ -71,10 +73,8 @@ export default function AdminBlog() {
 
   const handleSave = () => {
     if (!form.title) return;
-
     const slug = form.slug || generateSlug(form.title);
     const postData = { ...form, slug };
-
     if (editingPost) {
       updatePost(editingPost.id, postData);
     } else {
@@ -127,122 +127,160 @@ export default function AdminBlog() {
               Neuer Beitrag
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingPost ? 'Beitrag bearbeiten' : 'Neuen Beitrag erstellen'}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <label className="text-sm font-medium">Titel</label>
-                <Input
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="Beitragstitel"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+              {/* Form */}
+              <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Slug (URL)</label>
-                  <Input
-                    value={form.slug}
-                    onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                    placeholder={form.title ? generateSlug(form.title) : 'auto-generiert'}
+                  <label className="text-sm font-medium">Titelbild</label>
+                  <ImageUpload
+                    value={form.image}
+                    onChange={(value) => setForm({ ...form, image: value })}
+                    aspectRatio="video"
+                    placeholder="Titelbild hochladen"
                   />
                 </div>
+
                 <div>
-                  <label className="text-sm font-medium">Datum</label>
+                  <label className="text-sm font-medium">Titel</label>
                   <Input
-                    type="date"
-                    value={form.date}
-                    onChange={(e) => setForm({ ...form, date: e.target.value })}
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="Beitragstitel"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="text-sm font-medium">Teaser / Auszug</label>
-                <Textarea
-                  value={form.excerpt}
-                  onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
-                  placeholder="Kurzer Teaser für die Übersicht"
-                  rows={2}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Inhalt (Markdown)</label>
-                <Textarea
-                  value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  placeholder="# Überschrift&#10;&#10;Ihr Beitragsinhalt..."
-                  rows={12}
-                  className="font-mono text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Bild-URL</label>
-                <Input
-                  value={form.image}
-                  onChange={(e) => setForm({ ...form, image: e.target.value })}
-                  placeholder="https://..."
-                />
-                {form.image && (
-                  <div className="mt-2 rounded-lg overflow-hidden">
-                    <img src={form.image} alt="Preview" className="w-full h-40 object-cover" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Slug (URL)</label>
+                    <Input
+                      value={form.slug}
+                      onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                      placeholder={form.title ? generateSlug(form.title) : 'auto-generiert'}
+                    />
                   </div>
-                )}
-              </div>
+                  <div>
+                    <label className="text-sm font-medium">Datum</label>
+                    <Input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <label className="text-sm font-medium">Tags</label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    placeholder="Tag hinzufügen"
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                <div>
+                  <label className="text-sm font-medium">Teaser / Auszug</label>
+                  <Textarea
+                    value={form.excerpt}
+                    onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                    placeholder="Kurzer Teaser für die Übersicht"
+                    rows={2}
                   />
-                  <Button type="button" variant="outline" onClick={addTag}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {form.tags.map((tag, i) => (
-                    <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeTag(i)}>
-                      {tag} ×
-                    </Badge>
-                  ))}
+
+                <div>
+                  <label className="text-sm font-medium">Inhalt (Markdown)</label>
+                  <Textarea
+                    value={form.content}
+                    onChange={(e) => setForm({ ...form, content: e.target.value })}
+                    placeholder="# Überschrift&#10;&#10;Ihr Beitragsinhalt..."
+                    rows={10}
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Tags</label>
+                  <div className="flex gap-2 mb-2">
+                    <Input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      placeholder="Tag hinzufügen"
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    />
+                    <Button type="button" variant="outline" onClick={addTag}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {form.tags.map((tag, i) => (
+                      <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeTag(i)}>
+                        {tag} ×
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(value: 'draft' | 'published') => setForm({ ...form, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Entwurf</SelectItem>
+                      <SelectItem value="published">Veröffentlicht</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Status</label>
-                <Select
-                  value={form.status}
-                  onValueChange={(value: 'draft' | 'published') => setForm({ ...form, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Entwurf</SelectItem>
-                    <SelectItem value="published">Veröffentlicht</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Preview */}
+              <LivePreview title="Blog-Vorschau">
+                <div className="bg-slate-950">
+                  {form.image ? (
+                    <div className="aspect-video">
+                      <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="aspect-video bg-slate-800 flex items-center justify-center text-slate-600">
+                      Titelbild
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                      <Calendar className="h-3 w-3" />
+                      {form.date ? formatDate(form.date) : 'Datum'}
+                    </div>
+                    <h3 className="font-semibold text-white mb-2">
+                      {form.title || 'Beitragstitel'}
+                    </h3>
+                    <p className="text-xs text-slate-400 mb-3 line-clamp-2">
+                      {form.excerpt || 'Teaser...'}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {form.tags.map((tag, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-slate-800 rounded text-xs text-slate-400">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center text-amber-400 text-xs font-medium">
+                      Weiterlesen
+                      <ArrowRight className="ml-1 h-3 w-3" />
+                    </div>
+                  </div>
+                </div>
+              </LivePreview>
+            </div>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Abbrechen
-                </Button>
-                <Button onClick={handleSave}>
-                  {editingPost ? 'Speichern' : 'Erstellen'}
-                </Button>
-              </div>
+            <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleSave}>
+                {editingPost ? 'Speichern' : 'Erstellen'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -253,13 +291,17 @@ export default function AdminBlog() {
           <Card key={post.id}>
             <CardContent className="p-4">
               <div className="flex gap-4">
-                {post.image && (
+                {post.image ? (
                   <div className="w-40 h-24 rounded-lg overflow-hidden flex-shrink-0">
                     <img
                       src={post.image}
                       alt={post.title}
                       className="w-full h-full object-cover"
                     />
+                  </div>
+                ) : (
+                  <div className="w-40 h-24 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground text-xs flex-shrink-0">
+                    Kein Bild
                   </div>
                 )}
                 <div className="flex-1">
