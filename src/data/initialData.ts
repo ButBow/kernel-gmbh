@@ -77,6 +77,13 @@ export interface Testimonial {
   rating?: number;
 }
 
+export interface Partner {
+  name: string;
+  logo: string;
+  link?: string;
+  quote?: string;
+}
+
 export interface SiteSettings {
   companyName: string;
   ownerName: string;
@@ -92,6 +99,7 @@ export interface SiteSettings {
   coreValues: CoreValue[];
   stats: StatItem[];
   testimonials: Testimonial[];
+  partners: Partner[];
   skills: string[];
   contactEmail: string;
   contactPhone: string;
@@ -398,6 +406,32 @@ export const initialSettings: SiteSettings = {
       image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
       quote: "Die Video-Produktion war top! Schnelle Umsetzung, kreative Ideen und ein super Endresultat. Absolut empfehlenswert!",
       rating: 5
+    }
+  ],
+  partners: [
+    {
+      name: "TechCorp",
+      logo: "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=200&q=80",
+      link: "https://example.com",
+      quote: "Innovationspartner seit 2023"
+    },
+    {
+      name: "StartupHub",
+      logo: "https://images.unsplash.com/photo-1516876437184-593fda40c7ce?w=200&q=80",
+      link: "https://example.com",
+      quote: "Gemeinsam für digitale Lösungen"
+    },
+    {
+      name: "DigitalFirst",
+      logo: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=200&q=80",
+      link: "https://example.com",
+      quote: "Vertrauen durch Zusammenarbeit"
+    },
+    {
+      name: "CreativeStudio",
+      logo: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=200&q=80",
+      link: "https://example.com",
+      quote: "Kreativität ohne Grenzen"
     }
   ],
   skills: ["Video & Content Production", "AI & Automation", "Programmierung", "IT-Support & Beratung", "Projekt-Management"],

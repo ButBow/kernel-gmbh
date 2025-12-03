@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useContent } from "@/contexts/ContentContext";
+import { PartnersSection } from "@/components/PartnersSection";
 import { 
   Video, 
   Cpu, 
@@ -146,6 +147,9 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Partners Section */}
+      <PartnersSection />
 
       {/* CTA Section */}
       <section className="py-20 md:py-28">

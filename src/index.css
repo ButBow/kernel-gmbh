@@ -118,6 +118,24 @@
     }
   }
 
+  /* Infinite scroll animation for partners */
+  .animate-scroll {
+    animation: scroll 30s linear infinite;
+  }
+
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-scroll:hover {
+    animation-play-state: paused;
+  }
+
   /* Mobile-first card stack */
   .mobile-stack {
     @apply flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-6;
