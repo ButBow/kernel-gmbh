@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
+import { ThemeManager } from '@/components/admin/ThemeManager';
 import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SiteSettings } from '@/data/initialData';
@@ -61,6 +62,7 @@ export default function AdminSettings() {
             <TabsTrigger value="home" className="text-xs sm:text-sm">Startseite</TabsTrigger>
             <TabsTrigger value="about" className="text-xs sm:text-sm">Über mich</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs sm:text-sm">Kontakt</TabsTrigger>
+            <TabsTrigger value="theme" className="text-xs sm:text-sm">Design</TabsTrigger>
             <TabsTrigger value="general" className="text-xs sm:text-sm">Allgemein</TabsTrigger>
             <TabsTrigger value="legal" className="text-xs sm:text-sm">Rechtliches</TabsTrigger>
           </TabsList>
@@ -541,6 +543,10 @@ export default function AdminSettings() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="theme">
+          <ThemeManager />
         </TabsContent>
       </Tabs>
 
