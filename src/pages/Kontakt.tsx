@@ -26,6 +26,7 @@ import {
   formatFileSize,
   getFileTypeLabel 
 } from "@/lib/attachmentUtils";
+import { sanitizeText, INPUT_LIMITS } from "@/lib/security";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name muss mindestens 2 Zeichen haben").max(100, "Name darf maximal 100 Zeichen haben"),
@@ -151,16 +152,17 @@ export default function Kontakt() {
 
     setIsSubmitting(true);
 
+    // Sanitize all text inputs before storing to prevent XSS
     const newInquiry: Inquiry = {
       id: crypto.randomUUID(),
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone || undefined,
-      company: formData.company || undefined,
+      name: sanitizeText(formData.name.slice(0, INPUT_LIMITS.name)),
+      email: formData.email.toLowerCase().trim().slice(0, INPUT_LIMITS.email),
+      phone: formData.phone ? sanitizeText(formData.phone.slice(0, INPUT_LIMITS.phone)) : undefined,
+      company: formData.company ? sanitizeText(formData.company.slice(0, INPUT_LIMITS.shortText)) : undefined,
       inquiryType: formData.inquiryType || undefined,
       budget: formData.budget || undefined,
-      subject: formData.subject,
-      message: formData.message,
+      subject: formData.subject ? sanitizeText(formData.subject.slice(0, INPUT_LIMITS.shortText)) : undefined,
+      message: sanitizeText(formData.message.slice(0, INPUT_LIMITS.longText)),
       attachments: attachments.length > 0 ? attachments : undefined,
       createdAt: new Date().toISOString(),
       read: false,
