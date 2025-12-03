@@ -7,14 +7,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, Target, Heart, Rocket, Award } from 'lucide-react';
 import { toast } from 'sonner';
-import type { SiteSettings } from '@/data/initialData';
+import type { SiteSettings, Milestone, CoreValue, StatItem } from '@/data/initialData';
 
 const benefitIcons = [Zap, Lightbulb, Shield, CheckCircle];
+const valueIconOptions = ['Star', 'Lightbulb', 'Eye', 'Zap', 'Target', 'Heart', 'Shield', 'Rocket', 'Award'];
 
 export default function AdminSettings() {
   const { settings, updateSettings } = useContent();
@@ -170,14 +172,14 @@ export default function AdminSettings() {
         </TabsContent>
 
         <TabsContent value="about">
-          <div className="mobile-stack">
-            {/* Form */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Persönliche Daten</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+          <div className="space-y-6">
+            {/* Persönliche Daten */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Persönliche Daten</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Dein Name</label>
                     <Input
@@ -185,99 +187,285 @@ export default function AdminSettings() {
                       onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
                       placeholder="Max Mustermann"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Dein persönlicher Name (nicht der Firmenname)
-                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Profilbild</label>
-                    <ImageUpload
-                      value={form.aboutImage}
-                      onChange={(value) => setForm({ ...form, aboutImage: value })}
-                      aspectRatio="square"
-                      placeholder="Profilbild hochladen"
+                    <label className="text-sm font-medium">Tagline / Motto</label>
+                    <Input
+                      value={form.aboutTagline || ''}
+                      onChange={(e) => setForm({ ...form, aboutTagline: e.target.value })}
+                      placeholder="Technologie trifft Kreativität"
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Profilbild</label>
+                  <ImageUpload
+                    value={form.aboutImage}
+                    onChange={(value) => setForm({ ...form, aboutImage: value })}
+                    aspectRatio="square"
+                    placeholder="Profilbild hochladen"
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Über mich Text</CardTitle>
-                </CardHeader>
-                <CardContent>
+            {/* Über mich Text & Mission */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Über mich & Mission</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Über mich Text</label>
                   <Textarea
                     value={form.aboutText}
                     onChange={(e) => setForm({ ...form, aboutText: e.target.value })}
-                    placeholder="Beschreibung..."
-                    rows={8}
+                    placeholder="Beschreibe dich und deine Arbeit..."
+                    rows={4}
                   />
-                </CardContent>
-              </Card>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Mission Statement</label>
+                  <Textarea
+                    value={form.aboutMission || ''}
+                    onChange={(e) => setForm({ ...form, aboutMission: e.target.value })}
+                    placeholder="Deine Mission als Zitat..."
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Wird als Zitat dargestellt</p>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Skills / Kompetenzen</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-2">
+            {/* Statistiken */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Statistiken
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm({
+                      ...form,
+                      stats: [...(form.stats || []), { value: '', label: '' }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Hinzufügen
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {(form.stats || []).map((stat, i) => (
+                  <div key={i} className="flex gap-2 items-center">
                     <Input
-                      value={skillInput}
-                      onChange={(e) => setSkillInput(e.target.value)}
-                      placeholder="Skill hinzufügen"
-                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                      value={stat.value}
+                      onChange={(e) => {
+                        const newStats = [...(form.stats || [])];
+                        newStats[i] = { ...newStats[i], value: e.target.value };
+                        setForm({ ...form, stats: newStats });
+                      }}
+                      placeholder="50+"
+                      className="w-24"
                     />
-                    <Button type="button" variant="outline" onClick={addSkill}>
-                      <Plus className="h-4 w-4" />
+                    <Input
+                      value={stat.label}
+                      onChange={(e) => {
+                        const newStats = [...(form.stats || [])];
+                        newStats[i] = { ...newStats[i], label: e.target.value };
+                        setForm({ ...form, stats: newStats });
+                      }}
+                      placeholder="Projekte"
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const newStats = (form.stats || []).filter((_, idx) => idx !== i);
+                        setForm({ ...form, stats: newStats });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {form.skills.map((skill, i) => (
-                      <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeSkill(i)}>
-                        {skill} ×
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Live Preview */}
-            <LivePreview title="Über mich Vorschau">
-              <div className="p-6 bg-slate-950">
-                <div className="flex gap-4">
-                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-800 flex-shrink-0">
-                    {form.aboutImage ? (
-                      <img src={form.aboutImage} alt="Profil" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-600">
-                        Bild
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-white mb-1">{form.ownerName || 'Dein Name'}</h3>
-                    <p className="text-xs text-amber-500 mb-2">Gründer von {form.companyName}</p>
-                    <p className="text-xs text-slate-400 line-clamp-3">
-                      {form.aboutText || 'Über mich Text...'}
-                    </p>
-                  </div>
-                </div>
-                
-                {form.skills.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-800">
-                    <p className="text-xs text-slate-500 mb-2">Skills</p>
-                    <div className="flex flex-wrap gap-1">
-                      {form.skills.map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-slate-800 rounded text-xs text-slate-300">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                ))}
+                {(!form.stats || form.stats.length === 0) && (
+                  <p className="text-sm text-muted-foreground">Keine Statistiken. Füge welche hinzu!</p>
                 )}
-              </div>
-            </LivePreview>
+              </CardContent>
+            </Card>
+
+            {/* Werte */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Werte
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm({
+                      ...form,
+                      coreValues: [...(form.coreValues || []), { title: '', description: '', icon: 'Star' }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Hinzufügen
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(form.coreValues || []).map((value, i) => (
+                  <div key={i} className="p-3 border border-border rounded-lg space-y-3">
+                    <div className="flex gap-2">
+                      <Select
+                        value={value.icon}
+                        onValueChange={(v) => {
+                          const newValues = [...(form.coreValues || [])];
+                          newValues[i] = { ...newValues[i], icon: v };
+                          setForm({ ...form, coreValues: newValues });
+                        }}
+                      >
+                        <SelectTrigger className="w-28">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {valueIconOptions.map((icon) => (
+                            <SelectItem key={icon} value={icon}>{icon}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={value.title}
+                        onChange={(e) => {
+                          const newValues = [...(form.coreValues || [])];
+                          newValues[i] = { ...newValues[i], title: e.target.value };
+                          setForm({ ...form, coreValues: newValues });
+                        }}
+                        placeholder="Wert-Titel"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newValues = (form.coreValues || []).filter((_, idx) => idx !== i);
+                          setForm({ ...form, coreValues: newValues });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={value.description}
+                      onChange={(e) => {
+                        const newValues = [...(form.coreValues || [])];
+                        newValues[i] = { ...newValues[i], description: e.target.value };
+                        setForm({ ...form, coreValues: newValues });
+                      }}
+                      placeholder="Beschreibung des Werts"
+                    />
+                  </div>
+                ))}
+                {(!form.coreValues || form.coreValues.length === 0) && (
+                  <p className="text-sm text-muted-foreground">Keine Werte. Füge welche hinzu!</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Milestones / Werdegang */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Werdegang / Meilensteine
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm({
+                      ...form,
+                      milestones: [...(form.milestones || []), { year: '', title: '', description: '' }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Hinzufügen
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(form.milestones || []).map((milestone, i) => (
+                  <div key={i} className="p-3 border border-border rounded-lg space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        value={milestone.year}
+                        onChange={(e) => {
+                          const newMilestones = [...(form.milestones || [])];
+                          newMilestones[i] = { ...newMilestones[i], year: e.target.value };
+                          setForm({ ...form, milestones: newMilestones });
+                        }}
+                        placeholder="2024"
+                        className="w-24"
+                      />
+                      <Input
+                        value={milestone.title}
+                        onChange={(e) => {
+                          const newMilestones = [...(form.milestones || [])];
+                          newMilestones[i] = { ...newMilestones[i], title: e.target.value };
+                          setForm({ ...form, milestones: newMilestones });
+                        }}
+                        placeholder="Titel"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newMilestones = (form.milestones || []).filter((_, idx) => idx !== i);
+                          setForm({ ...form, milestones: newMilestones });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={milestone.description}
+                      onChange={(e) => {
+                        const newMilestones = [...(form.milestones || [])];
+                        newMilestones[i] = { ...newMilestones[i], description: e.target.value };
+                        setForm({ ...form, milestones: newMilestones });
+                      }}
+                      placeholder="Beschreibung"
+                    />
+                  </div>
+                ))}
+                {(!form.milestones || form.milestones.length === 0) && (
+                  <p className="text-sm text-muted-foreground">Keine Meilensteine. Füge welche hinzu!</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Skills */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Skills / Kompetenzen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                    placeholder="Skill hinzufügen"
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                  />
+                  <Button type="button" variant="outline" onClick={addSkill}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {form.skills.map((skill, i) => (
+                    <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeSkill(i)}>
+                      {skill} ×
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 

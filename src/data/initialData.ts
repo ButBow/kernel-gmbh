@@ -51,6 +51,23 @@ export interface Post {
   status: 'draft' | 'published';
 }
 
+export interface Milestone {
+  year: string;
+  title: string;
+  description: string;
+}
+
+export interface CoreValue {
+  title: string;
+  description: string;
+  icon: string;
+}
+
+export interface StatItem {
+  value: string;
+  label: string;
+}
+
 export interface SiteSettings {
   companyName: string;
   ownerName: string;
@@ -60,6 +77,11 @@ export interface SiteSettings {
   whyWorkWithMe: string[];
   aboutText: string;
   aboutImage: string;
+  aboutTagline: string;
+  aboutMission: string;
+  milestones: Milestone[];
+  coreValues: CoreValue[];
+  stats: StatItem[];
   skills: string[];
   contactEmail: string;
   contactPhone: string;
@@ -323,6 +345,25 @@ export const initialSettings: SiteSettings = {
   ],
   aboutText: "Als Einzelunternehmer verbinde ich technisches Know-how mit kreativem Denken. Meine Mission: Komplexe Prozesse vereinfachen und beeindruckende Ergebnisse liefern – ob durch automatisierte Workflows, professionellen Video-Content oder massgeschneiderte Tools.",
   aboutImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+  aboutTagline: "Technologie trifft Kreativität",
+  aboutMission: "Meine Mission ist es, Unternehmen und Creators dabei zu helfen, das volle Potenzial moderner Technologien auszuschöpfen – ohne die Komplexität. Ich glaube daran, dass gute Lösungen einfach sein sollten.",
+  milestones: [
+    { year: "2024", title: "Gründung", description: "Start als Einzelunternehmer mit Fokus auf AI & Automation" },
+    { year: "2023", title: "Erste Projekte", description: "Erfolgreiche Video- und Automatisierungsprojekte für KMU" },
+    { year: "2022", title: "Spezialisierung", description: "Vertiefung in KI-Technologien und Workflow-Automation" }
+  ],
+  coreValues: [
+    { title: "Qualität", description: "Jedes Projekt verdient höchste Sorgfalt und Präzision", icon: "Star" },
+    { title: "Innovation", description: "Immer auf der Suche nach besseren Lösungen", icon: "Lightbulb" },
+    { title: "Transparenz", description: "Offene Kommunikation und faire Preise", icon: "Eye" },
+    { title: "Effizienz", description: "Zeit ist wertvoll – für mich und meine Kunden", icon: "Zap" }
+  ],
+  stats: [
+    { value: "50+", label: "Projekte" },
+    { value: "30+", label: "Zufriedene Kunden" },
+    { value: "3+", label: "Jahre Erfahrung" },
+    { value: "100%", label: "Leidenschaft" }
+  ],
   skills: ["Video & Content Production", "AI & Automation", "Programmierung", "IT-Support & Beratung", "Projekt-Management"],
   contactEmail: "kontakt@meinefirma.ch",
   contactPhone: "+41 79 123 45 67",
