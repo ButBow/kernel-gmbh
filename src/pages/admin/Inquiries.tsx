@@ -1,0 +1,320 @@
+import { useState, useEffect } from 'react';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { getStorageItem, setStorageItem } from '@/lib/storage';
+import { Inquiry, InquirySettings } from '@/types/inquiry';
+import { 
+  Mail, 
+  Eye, 
+  Trash2, 
+  CheckCircle, 
+  Clock,
+  Settings,
+  Save,
+  MessageSquare,
+  Inbox
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+
+const STORAGE_KEY = 'cms_inquiries';
+const SETTINGS_KEY = 'cms_inquiry_settings';
+
+export default function AdminInquiries() {
+  const { toast } = useToast();
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [settings, setSettings] = useState<InquirySettings>({ forwardingEmail: '' });
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [tempEmail, setTempEmail] = useState('');
+
+  useEffect(() => {
+    const stored = getStorageItem<Inquiry[]>(STORAGE_KEY, []);
+    setInquiries(stored);
+    const storedSettings = getStorageItem<InquirySettings>(SETTINGS_KEY, { forwardingEmail: '' });
+    setSettings(storedSettings);
+    setTempEmail(storedSettings.forwardingEmail);
+  }, []);
+
+  const saveInquiries = (updated: Inquiry[]) => {
+    setInquiries(updated);
+    setStorageItem(STORAGE_KEY, updated);
+  };
+
+  const markAsRead = (id: string) => {
+    const updated = inquiries.map(i => 
+      i.id === id ? { ...i, read: true } : i
+    );
+    saveInquiries(updated);
+    if (selectedInquiry?.id === id) {
+      setSelectedInquiry({ ...selectedInquiry, read: true });
+    }
+  };
+
+  const toggleReplied = (id: string) => {
+    const updated = inquiries.map(i => 
+      i.id === id ? { ...i, replied: !i.replied } : i
+    );
+    saveInquiries(updated);
+    toast({
+      title: 'Status aktualisiert',
+      description: 'Anfrage wurde als beantwortet markiert.',
+    });
+  };
+
+  const deleteInquiry = (id: string) => {
+    const updated = inquiries.filter(i => i.id !== id);
+    saveInquiries(updated);
+    setSelectedInquiry(null);
+    toast({
+      title: 'Anfrage gelöscht',
+      description: 'Die Anfrage wurde entfernt.',
+    });
+  };
+
+  const saveSettings = () => {
+    const newSettings = { forwardingEmail: tempEmail };
+    setSettings(newSettings);
+    setStorageItem(SETTINGS_KEY, newSettings);
+    setShowSettings(false);
+    toast({
+      title: 'Einstellungen gespeichert',
+      description: tempEmail 
+        ? `E-Mails werden an ${tempEmail} weitergeleitet (wenn Backend aktiv).`
+        : 'E-Mail-Weiterleitung deaktiviert.',
+    });
+  };
+
+  const openInquiry = (inquiry: Inquiry) => {
+    setSelectedInquiry(inquiry);
+    if (!inquiry.read) {
+      markAsRead(inquiry.id);
+    }
+  };
+
+  const unreadCount = inquiries.filter(i => !i.read).length;
+
+  return (
+    <AdminLayout title="Anfragen">
+      <div className="space-y-6">
+        {/* Header Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Badge variant={unreadCount > 0 ? "default" : "secondary"}>
+              {unreadCount} ungelesen
+            </Badge>
+            <Badge variant="outline">{inquiries.length} gesamt</Badge>
+          </div>
+          <Button variant="outline" onClick={() => setShowSettings(true)}>
+            <Settings className="h-4 w-4 mr-2" />
+            E-Mail Weiterleitung
+          </Button>
+        </div>
+
+        {/* Info Card */}
+        {settings.forwardingEmail && (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Mail className="h-5 w-5 text-primary" />
+              <p className="text-sm">
+                Neue Anfragen werden an <strong>{settings.forwardingEmail}</strong> weitergeleitet
+                <span className="text-muted-foreground"> (sobald Backend aktiviert ist)</span>
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Inquiries List */}
+        {inquiries.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Inbox className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="font-semibold mb-2">Keine Anfragen</h3>
+              <p className="text-muted-foreground text-sm">
+                Sobald jemand das Kontaktformular ausfüllt, erscheinen die Anfragen hier.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {inquiries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((inquiry) => (
+              <Card 
+                key={inquiry.id}
+                className={`cursor-pointer transition-colors hover:bg-secondary/50 ${!inquiry.read ? 'border-primary/50 bg-primary/5' : ''}`}
+                onClick={() => openInquiry(inquiry)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {!inquiry.read && (
+                          <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                        )}
+                        <span className="font-medium truncate">{inquiry.name}</span>
+                        {inquiry.replied && (
+                          <Badge variant="outline" className="text-xs">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Beantwortet
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{inquiry.email}</p>
+                      <p className="text-sm mt-1 truncate">
+                        {inquiry.subject || inquiry.message.substring(0, 60)}...
+                      </p>
+                    </div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-1 flex-shrink-0">
+                      <Clock className="h-3 w-3" />
+                      {format(new Date(inquiry.createdAt), 'dd.MM.yy HH:mm', { locale: de })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Inquiry Detail Dialog */}
+      <Dialog open={!!selectedInquiry} onOpenChange={() => setSelectedInquiry(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Anfrage Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedInquiry && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="text-muted-foreground">Name</Label>
+                  <p className="font-medium">{selectedInquiry.name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">E-Mail</Label>
+                  <a 
+                    href={`mailto:${selectedInquiry.email}`}
+                    className="font-medium text-primary hover:underline block"
+                  >
+                    {selectedInquiry.email}
+                  </a>
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-muted-foreground">Betreff</Label>
+                  <p className="font-medium">{selectedInquiry.subject || '(kein Betreff)'}</p>
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-muted-foreground">Datum</Label>
+                  <p>{format(new Date(selectedInquiry.createdAt), 'dd. MMMM yyyy, HH:mm', { locale: de })} Uhr</p>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-muted-foreground">Nachricht</Label>
+                <div className="mt-2 p-4 bg-secondary rounded-lg whitespace-pre-wrap text-sm">
+                  {selectedInquiry.message}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = `mailto:${selectedInquiry.email}?subject=Re: ${selectedInquiry.subject || 'Ihre Anfrage'}`}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Antworten
+                </Button>
+                <Button
+                  variant={selectedInquiry.replied ? "secondary" : "default"}
+                  onClick={() => toggleReplied(selectedInquiry.id)}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  {selectedInquiry.replied ? 'Als offen markieren' : 'Als beantwortet markieren'}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Löschen
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Anfrage löschen?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Diese Aktion kann nicht rückgängig gemacht werden.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => deleteInquiry(selectedInquiry.id)}>
+                        Löschen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>E-Mail Weiterleitung</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Trage hier eine E-Mail-Adresse ein, an die neue Anfragen automatisch weitergeleitet werden sollen.
+              Diese Funktion wird aktiv, sobald ein Backend (Lovable Cloud) eingerichtet ist.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="forwardingEmail">Weiterleitungs-E-Mail</Label>
+              <Input
+                id="forwardingEmail"
+                type="email"
+                value={tempEmail}
+                onChange={(e) => setTempEmail(e.target.value)}
+                placeholder="deine@email.de"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowSettings(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={saveSettings}>
+                <Save className="h-4 w-4 mr-2" />
+                Speichern
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </AdminLayout>
+  );
+}

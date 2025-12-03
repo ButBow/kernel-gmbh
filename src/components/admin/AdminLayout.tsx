@@ -11,7 +11,8 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronLeft
+  ChevronLeft,
+  MessageSquare
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,6 +23,7 @@ interface AdminLayoutProps {
 
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin/inquiries', icon: MessageSquare, label: 'Anfragen' },
   { href: '/admin/products', icon: Package, label: 'Produkte & Services' },
   { href: '/admin/portfolio', icon: FolderKanban, label: 'Portfolio' },
   { href: '/admin/blog', icon: FileText, label: 'Blog' },
