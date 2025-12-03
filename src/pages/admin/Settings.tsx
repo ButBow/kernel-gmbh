@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SiteSettings } from '@/data/initialData';
 
@@ -347,6 +347,39 @@ export default function AdminSettings() {
                     placeholder="https://twitter.com/username"
                   />
                 </div>
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Youtube className="h-4 w-4" /> YouTube
+                  </label>
+                  <Input
+                    value={form.socialYoutube || ''}
+                    onChange={(e) => setForm({ ...form, socialYoutube: e.target.value })}
+                    placeholder="https://youtube.com/@channel"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                    </svg>
+                    TikTok
+                  </label>
+                  <Input
+                    value={form.socialTiktok || ''}
+                    onChange={(e) => setForm({ ...form, socialTiktok: e.target.value })}
+                    placeholder="https://tiktok.com/@username"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Facebook className="h-4 w-4" /> Facebook
+                  </label>
+                  <Input
+                    value={form.socialFacebook || ''}
+                    onChange={(e) => setForm({ ...form, socialFacebook: e.target.value })}
+                    placeholder="https://facebook.com/pagename"
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Leer lassen, wenn du den Link nicht anzeigen möchtest.
                 </p>
@@ -382,10 +415,10 @@ export default function AdminSettings() {
                     <p className="text-sm text-white">{form.contactLocation || 'Standort'}</p>
                   </div>
                 </div>
-                {(form.socialInstagram || form.socialLinkedin || form.socialTwitter) && (
+                {(form.socialInstagram || form.socialLinkedin || form.socialTwitter || form.socialYoutube || form.socialTiktok || form.socialFacebook) && (
                   <div className="mt-4 pt-4 border-t border-slate-800">
                     <p className="text-xs text-slate-500 mb-2">Social Media</p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {form.socialInstagram && (
                         <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
                           <Instagram className="h-4 w-4 text-amber-500" />
@@ -399,6 +432,23 @@ export default function AdminSettings() {
                       {form.socialTwitter && (
                         <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
                           <Twitter className="h-4 w-4 text-amber-500" />
+                        </div>
+                      )}
+                      {form.socialYoutube && (
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                          <Youtube className="h-4 w-4 text-amber-500" />
+                        </div>
+                      )}
+                      {form.socialTiktok && (
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-amber-500">
+                            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                          </svg>
+                        </div>
+                      )}
+                      {form.socialFacebook && (
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                          <Facebook className="h-4 w-4 text-amber-500" />
                         </div>
                       )}
                     </div>
