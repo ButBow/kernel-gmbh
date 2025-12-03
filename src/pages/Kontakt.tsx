@@ -174,7 +174,7 @@ export default function Kontakt() {
     setStorageItem('cms_inquiries', [...existingInquiries, newInquiry]);
 
     // Try to send to Notion if enabled
-    if (settings.notionEnabled && settings.notionDatabaseId) {
+    if (settings.notionEnabled && settings.notionDatabaseId && settings.notionApiKey) {
       try {
         const response = await fetch('/api/contact', {
           method: 'POST',
@@ -192,6 +192,7 @@ export default function Kontakt() {
             message: newInquiry.message,
             hasAttachments: attachments.length > 0,
             notionDatabaseId: settings.notionDatabaseId,
+            notionApiKey: settings.notionApiKey,
           }),
         });
 
