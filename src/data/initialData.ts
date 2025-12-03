@@ -118,6 +118,8 @@ export interface SiteSettings {
   notionEnabled?: boolean;
   notionDatabaseId?: string;
   notionApiKey?: string;
+  // Server/API configuration for self-hosting
+  apiBaseUrl?: string;
 }
 
 export const initialCategories: Category[] = [
@@ -451,5 +453,6 @@ export const initialSettings: SiteSettings = {
   socialFacebook: "",
   footerText: "© 2024 Mein Firmenname. Alle Rechte vorbehalten.",
   impressumText: "Angaben gemäss Schweizer Recht...",
-  datenschutzText: "Datenschutzerklärung gemäss DSG..."
+  datenschutzText: "Datenschutzerklärung gemäss DSG...",
+  apiBaseUrl: ""
 };

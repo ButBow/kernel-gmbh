@@ -176,7 +176,8 @@ export default function Kontakt() {
     // Try to send to Notion if enabled
     if (settings.notionEnabled && settings.notionDatabaseId && settings.notionApiKey) {
       try {
-        const response = await fetch('/api/contact', {
+        const baseUrl = settings.apiBaseUrl?.replace(/\/$/, '') || '';
+        const response = await fetch(`${baseUrl}/api/contact`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
