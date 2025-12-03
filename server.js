@@ -171,6 +171,194 @@ function sendJSON(res, statusCode, data, extraHeaders = {}) {
   res.end(JSON.stringify(data));
 }
 
+/**
+ * ============================================================================
+ * AI NOTES: NOTION PROPERTY SCHEMA DEFINITION
+ * ============================================================================
+ * 
+ * This object defines ALL properties that the contact form can send to Notion.
+ * When adding new form fields:
+ * 1. Add the property definition here with its Notion type
+ * 2. Add the field mapping in createNotionPage() function
+ * 3. The ensureNotionProperties() function will auto-create missing properties
+ * 
+ * Supported Notion property types:
+ * - title: Main title field (only one per database)
+ * - email: Email addresses
+ * - phone_number: Phone numbers
+ * - rich_text: Plain text fields
+ * - select: Dropdown with predefined options
+ * - date: Date/datetime fields
+ * - checkbox: Boolean true/false
+ * - number: Numeric values
+ * - url: URLs/links
+ * 
+ * To add a new contact form field:
+ * 1. Add entry here: 'FieldName': { type: 'notion_type', options: [...] }
+ * 2. In createNotionPage(), add: if (data.fieldName) { properties['FieldName'] = {...} }
+ * ============================================================================
+ */
+const REQUIRED_NOTION_PROPERTIES = {
+  // Required fields (always sent)
+  'Name': { type: 'title' },
+  'E-Mail': { type: 'email' },
+  'Status': { 
+    type: 'select', 
+    options: ['Neu', 'In Bearbeitung', 'Erledigt', 'Archiviert'] 
+  },
+  'Eingegangen': { type: 'date' },
+  
+  // Optional fields (sent when provided by user)
+  'Telefon': { type: 'phone_number' },
+  'Firma': { type: 'rich_text' },
+  'Anfrageart': { 
+    type: 'select', 
+    options: ['Allgemeine Anfrage', 'Projektanfrage', 'Zusammenarbeit', 'Support', 'Sonstiges'] 
+  },
+  'Budget': { 
+    type: 'select', 
+    options: ['Unter CHF 500', 'CHF 500-1000', 'CHF 1000-3000', 'CHF 3000-5000', 'Über CHF 5000', 'Auf Anfrage'] 
+  },
+  'Betreff': { type: 'rich_text' },
+  'Hat Anhänge': { type: 'checkbox' }
+};
+
+/**
+ * ============================================================================
+ * AI NOTES: AUTO-CREATE MISSING NOTION PROPERTIES
+ * ============================================================================
+ * 
+ * This function automatically creates missing database properties in Notion.
+ * It's called during connection test and before creating contact entries.
+ * 
+ * How it works:
+ * 1. Fetches current database schema from Notion API
+ * 2. Compares with REQUIRED_NOTION_PROPERTIES definition
+ * 3. Creates any missing properties using PATCH /databases/{id}
+ * 
+ * Benefits:
+ * - Users don't need to manually create properties in Notion
+ * - New form fields are automatically supported
+ * - Consistent property types across all installations
+ * 
+ * Note: Notion API doesn't allow modifying existing properties, only adding new ones.
+ * If a property exists with wrong type, user must fix it manually in Notion.
+ * ============================================================================
+ */
+async function ensureNotionProperties(databaseId, apiKey) {
+  const NOTION_API_TOKEN = apiKey || process.env.NOTION_API_TOKEN;
+  
+  if (!NOTION_API_TOKEN || !databaseId) {
+    return { success: false, error: 'Missing credentials' };
+  }
+
+  try {
+    // Get current database schema
+    const getResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${NOTION_API_TOKEN}`,
+        'Notion-Version': '2022-06-28'
+      }
+    });
+
+    if (!getResponse.ok) {
+      return { success: false, error: 'Could not fetch database schema' };
+    }
+
+    const dbData = await getResponse.json();
+    const existingProps = Object.keys(dbData.properties || {});
+    
+    // Find missing properties
+    const missingProps = Object.keys(REQUIRED_NOTION_PROPERTIES).filter(
+      prop => !existingProps.includes(prop)
+    );
+
+    if (missingProps.length === 0) {
+      console.log(`[${new Date().toISOString()}] ✅ All Notion properties exist`);
+      return { success: true, created: [], existing: existingProps };
+    }
+
+    console.log(`[${new Date().toISOString()}] 🔧 Creating missing Notion properties: ${missingProps.join(', ')}`);
+
+    // Build properties object for PATCH request
+    const propertiesToCreate = {};
+    for (const propName of missingProps) {
+      const propDef = REQUIRED_NOTION_PROPERTIES[propName];
+      
+      switch (propDef.type) {
+        case 'title':
+          // Title property already exists by default, skip
+          continue;
+        case 'email':
+          propertiesToCreate[propName] = { email: {} };
+          break;
+        case 'phone_number':
+          propertiesToCreate[propName] = { phone_number: {} };
+          break;
+        case 'rich_text':
+          propertiesToCreate[propName] = { rich_text: {} };
+          break;
+        case 'select':
+          propertiesToCreate[propName] = { 
+            select: { 
+              options: (propDef.options || []).map(name => ({ name, color: 'default' }))
+            } 
+          };
+          break;
+        case 'date':
+          propertiesToCreate[propName] = { date: {} };
+          break;
+        case 'checkbox':
+          propertiesToCreate[propName] = { checkbox: {} };
+          break;
+        case 'number':
+          propertiesToCreate[propName] = { number: {} };
+          break;
+        case 'url':
+          propertiesToCreate[propName] = { url: {} };
+          break;
+        default:
+          propertiesToCreate[propName] = { rich_text: {} };
+      }
+    }
+
+    // Update database with new properties
+    if (Object.keys(propertiesToCreate).length > 0) {
+      const patchResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${NOTION_API_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28'
+        },
+        body: JSON.stringify({ properties: propertiesToCreate })
+      });
+
+      if (!patchResponse.ok) {
+        const errorData = await patchResponse.json().catch(() => ({}));
+        console.error(`[${new Date().toISOString()}] ❌ Failed to create properties:`, errorData);
+        return { 
+          success: false, 
+          error: errorData.message || 'Failed to create properties',
+          missingProps 
+        };
+      }
+
+      console.log(`[${new Date().toISOString()}] ✅ Created Notion properties: ${Object.keys(propertiesToCreate).join(', ')}`);
+    }
+
+    return { 
+      success: true, 
+      created: Object.keys(propertiesToCreate),
+      existing: existingProps
+    };
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] ❌ Error ensuring properties:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
 // Create Notion page
 async function createNotionPage(data, databaseId, apiKey) {
   const NOTION_API_TOKEN = apiKey || process.env.NOTION_API_TOKEN;
@@ -182,6 +370,9 @@ async function createNotionPage(data, databaseId, apiKey) {
   if (!databaseId) {
     throw new Error('Notion Database ID not configured');
   }
+
+  // Ensure all required properties exist before creating the page
+  await ensureNotionProperties(databaseId, apiKey);
 
   const properties = {
     'Name': {
@@ -259,7 +450,7 @@ async function createNotionPage(data, databaseId, apiKey) {
 }
 
 // Test Notion connection
-async function testNotionConnection(databaseId, apiKey) {
+async function testNotionConnection(databaseId, apiKey, autoCreate = true) {
   const NOTION_API_TOKEN = apiKey || process.env.NOTION_API_TOKEN;
   
   if (!NOTION_API_TOKEN) {
@@ -291,19 +482,34 @@ async function testNotionConnection(databaseId, apiKey) {
     }
 
     const dbData = await response.json();
-    
-    // Check for required properties
-    const requiredProps = ['Name', 'E-Mail', 'Status', 'Eingegangen'];
     const existingProps = Object.keys(dbData.properties || {});
-    const missingProps = requiredProps.filter(p => !existingProps.includes(p));
     
-    if (missingProps.length > 0) {
-      return { 
-        success: true, 
-        warning: `Fehlende Properties: ${missingProps.join(', ')}. Diese werden ggf. automatisch erstellt.`,
-        databaseTitle: dbData.title?.[0]?.plain_text || 'Unbenannt',
-        properties: existingProps
-      };
+    // Check for required properties from REQUIRED_NOTION_PROPERTIES
+    const allRequiredProps = Object.keys(REQUIRED_NOTION_PROPERTIES);
+    const missingProps = allRequiredProps.filter(p => !existingProps.includes(p));
+    
+    // Auto-create missing properties if enabled
+    if (missingProps.length > 0 && autoCreate) {
+      console.log(`[${new Date().toISOString()}] 🔧 Auto-creating missing Notion properties...`);
+      const ensureResult = await ensureNotionProperties(databaseId, apiKey);
+      
+      if (ensureResult.success && ensureResult.created?.length > 0) {
+        return { 
+          success: true, 
+          message: `Properties automatisch erstellt: ${ensureResult.created.join(', ')}`,
+          databaseTitle: dbData.title?.[0]?.plain_text || 'Unbenannt',
+          properties: [...existingProps, ...ensureResult.created],
+          created: ensureResult.created
+        };
+      } else if (!ensureResult.success) {
+        return { 
+          success: true, 
+          warning: `Verbindung OK, aber Properties konnten nicht erstellt werden: ${ensureResult.error}`,
+          databaseTitle: dbData.title?.[0]?.plain_text || 'Unbenannt',
+          properties: existingProps,
+          missingProps
+        };
+      }
     }
 
     return { 
