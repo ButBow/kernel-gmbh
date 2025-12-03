@@ -169,10 +169,39 @@ export default function Kontakt() {
       replied: false,
     };
 
+    // Save locally first
     const existingInquiries = getStorageItem<Inquiry[]>('cms_inquiries', []);
     setStorageItem('cms_inquiries', [...existingInquiries, newInquiry]);
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Try to send to Notion if enabled
+    if (settings.notionEnabled && settings.notionDatabaseId) {
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newInquiry.name,
+            email: newInquiry.email,
+            phone: newInquiry.phone,
+            company: newInquiry.company,
+            inquiryType: formData.inquiryType ? 
+              INQUIRY_TYPES.find(t => t.value === formData.inquiryType)?.label || formData.inquiryType : undefined,
+            budget: formData.budget ?
+              BUDGET_RANGES.find(b => b.value === formData.budget)?.label || formData.budget : undefined,
+            subject: newInquiry.subject,
+            message: newInquiry.message,
+            hasAttachments: attachments.length > 0,
+            notionDatabaseId: settings.notionDatabaseId,
+          }),
+        });
+
+        if (!response.ok) {
+          console.warn('Notion sync failed, but local save succeeded');
+        }
+      } catch (error) {
+        console.warn('Notion API not reachable, but local save succeeded:', error);
+      }
+    }
 
     setIsSubmitting(false);
     setIsSuccess(true);

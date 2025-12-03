@@ -11,7 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, Target, Heart, Rocket, Award, User, Handshake, ExternalLink } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner } from '@/data/initialData';
 
@@ -23,6 +25,17 @@ export default function AdminSettings() {
   const [form, setForm] = useState<SiteSettings>(settings);
   const [whyInput, setWhyInput] = useState('');
   const [skillInput, setSkillInput] = useState('');
+  const [notionTestResult, setNotionTestResult] = useState<{
+    success?: boolean;
+    error?: string;
+    warning?: string;
+    databaseTitle?: string;
+    properties?: string[];
+    configured?: boolean;
+    hasToken?: boolean;
+    hasDatabaseId?: boolean;
+  } | null>(null);
+  const [notionTesting, setNotionTesting] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -65,6 +78,7 @@ export default function AdminSettings() {
             <TabsTrigger value="partners" className="text-xs sm:text-sm">Partner</TabsTrigger>
             <TabsTrigger value="about" className="text-xs sm:text-sm">Über mich</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs sm:text-sm">Kontakt</TabsTrigger>
+            <TabsTrigger value="integrations" className="text-xs sm:text-sm">Integrationen</TabsTrigger>
             <TabsTrigger value="theme" className="text-xs sm:text-sm">Design</TabsTrigger>
             <TabsTrigger value="general" className="text-xs sm:text-sm">Allgemein</TabsTrigger>
             <TabsTrigger value="legal" className="text-xs sm:text-sm">Rechtliches</TabsTrigger>
@@ -973,6 +987,176 @@ export default function AdminSettings() {
                   placeholder="Zusätzliche Angaben für den Datenschutz..."
                   rows={8}
                 />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Notion Integration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Verbinde dein Kontaktformular mit Notion, um Anfragen automatisch in einer Datenbank zu speichern.
+                    Der API-Token muss in der <code className="bg-muted px-1 rounded">.env</code> Datei auf dem Server gespeichert werden.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+                  <div className="space-y-1">
+                    <p className="font-medium">Notion aktivieren</p>
+                    <p className="text-sm text-muted-foreground">
+                      Kontaktanfragen werden an Notion gesendet
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.notionEnabled || false}
+                    onCheckedChange={(checked) => setForm({ ...form, notionEnabled: checked })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Notion Database ID</label>
+                  <Input
+                    value={form.notionDatabaseId || ''}
+                    onChange={(e) => setForm({ ...form, notionDatabaseId: e.target.value })}
+                    placeholder="abc123def456..."
+                    disabled={!form.notionEnabled}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Die ID findest du in der URL deiner Notion-Datenbank zwischen dem letzten "/" und dem "?"
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    disabled={!form.notionDatabaseId || notionTesting}
+                    onClick={async () => {
+                      setNotionTesting(true);
+                      setNotionTestResult(null);
+                      try {
+                        const response = await fetch(`/api/notion/test?databaseId=${form.notionDatabaseId}`);
+                        const result = await response.json();
+                        setNotionTestResult(result);
+                        if (result.success) {
+                          toast.success('Notion-Verbindung erfolgreich!');
+                        } else {
+                          toast.error(result.error || 'Verbindung fehlgeschlagen');
+                        }
+                      } catch (error) {
+                        setNotionTestResult({ 
+                          success: false, 
+                          error: 'Server nicht erreichbar. Läuft der Server mit node server.js?' 
+                        });
+                        toast.error('Server nicht erreichbar');
+                      }
+                      setNotionTesting(false);
+                    }}
+                  >
+                    {notionTesting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Teste...
+                      </>
+                    ) : (
+                      <>
+                        <Link2 className="h-4 w-4 mr-2" />
+                        Verbindung testen
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/notion/status');
+                        const result = await response.json();
+                        setNotionTestResult(result);
+                        if (result.configured) {
+                          toast.success('API-Token ist konfiguriert');
+                        } else {
+                          toast.error('API-Token fehlt in .env');
+                        }
+                      } catch (error) {
+                        toast.error('Server nicht erreichbar');
+                      }
+                    }}
+                  >
+                    Status prüfen
+                  </Button>
+                </div>
+
+                {notionTestResult && (
+                  <div className={`p-4 rounded-lg border ${
+                    notionTestResult.success 
+                      ? 'bg-green-500/10 border-green-500/30' 
+                      : 'bg-destructive/10 border-destructive/30'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      {notionTestResult.success ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                      )}
+                      <div className="space-y-1 flex-1">
+                        <p className={`font-medium ${notionTestResult.success ? 'text-green-500' : 'text-destructive'}`}>
+                          {notionTestResult.success ? 'Verbindung erfolgreich' : 'Verbindung fehlgeschlagen'}
+                        </p>
+                        {notionTestResult.error && (
+                          <p className="text-sm text-muted-foreground">{notionTestResult.error}</p>
+                        )}
+                        {notionTestResult.warning && (
+                          <p className="text-sm text-yellow-500">{notionTestResult.warning}</p>
+                        )}
+                        {notionTestResult.databaseTitle && (
+                          <p className="text-sm text-muted-foreground">
+                            Datenbank: <strong>{notionTestResult.databaseTitle}</strong>
+                          </p>
+                        )}
+                        {notionTestResult.properties && notionTestResult.properties.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs text-muted-foreground mb-1">Gefundene Properties:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {notionTestResult.properties.map((prop, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">{prop}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {notionTestResult.configured !== undefined && (
+                          <p className="text-sm text-muted-foreground">
+                            API-Token: {notionTestResult.hasToken ? '✅ Konfiguriert' : '❌ Fehlt in .env'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-border">
+                  <h4 className="font-medium mb-2">Einrichtungs-Anleitung</h4>
+                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>Erstelle eine Integration unter <a href="https://www.notion.so/my-integrations" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">notion.so/my-integrations</a></li>
+                    <li>Kopiere den "Internal Integration Token" (beginnt mit <code className="bg-muted px-1 rounded">secret_</code>)</li>
+                    <li>Erstelle eine <code className="bg-muted px-1 rounded">.env</code> Datei im Projekt-Root mit: <code className="bg-muted px-1 rounded">NOTION_API_TOKEN=secret_xxx</code></li>
+                    <li>Erstelle eine Notion-Datenbank mit den Properties: Name, E-Mail, Status, Eingegangen</li>
+                    <li>Teile die Datenbank mit deiner Integration</li>
+                    <li>Kopiere die Database ID aus der URL und trage sie hier ein</li>
+                    <li>Starte den Server neu: <code className="bg-muted px-1 rounded">node server.js</code></li>
+                  </ol>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Ausführliche Anleitung: Siehe <code className="bg-muted px-1 rounded">HOSTING.md</code> Abschnitt 9
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
