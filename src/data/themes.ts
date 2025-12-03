@@ -224,6 +224,33 @@ export const presetThemes: Theme[] = [
       ring: "0 0% 90%",
     },
   },
+  {
+    id: "magenta-blue",
+    name: "Magenta Blue",
+    description: "Vibrant Magenta mit Electric Blue Akzenten",
+    isPreset: true,
+    colors: {
+      background: "250 30% 6%",
+      foreground: "270 20% 98%",
+      card: "250 30% 9%",
+      cardForeground: "270 20% 98%",
+      popover: "250 30% 9%",
+      popoverForeground: "270 20% 98%",
+      primary: "300 100% 50%",
+      primaryForeground: "250 30% 6%",
+      secondary: "240 80% 25%",
+      secondaryForeground: "270 20% 98%",
+      muted: "250 25% 15%",
+      mutedForeground: "270 15% 65%",
+      accent: "270 60% 30%",
+      accentForeground: "270 20% 98%",
+      destructive: "0 84% 60%",
+      destructiveForeground: "270 20% 98%",
+      border: "250 25% 18%",
+      input: "250 25% 15%",
+      ring: "300 100% 50%",
+    },
+  },
 ];
 
 export interface ThemeConfig {
