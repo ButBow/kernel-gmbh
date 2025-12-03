@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,17 +24,22 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
-import { Inquiry, InquirySettings } from '@/types/inquiry';
+import { Inquiry, InquirySettings, INQUIRY_TYPES, BUDGET_RANGES } from '@/types/inquiry';
+import { exportInquiryToPDF, exportAllInquiriesToPDF } from '@/lib/pdfExport';
 import { 
   Mail, 
-  Eye, 
   Trash2, 
   CheckCircle, 
   Clock,
   Settings,
   Save,
   MessageSquare,
-  Inbox
+  Inbox,
+  FileDown,
+  Phone,
+  Building2,
+  Tag,
+  Wallet
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -78,9 +83,12 @@ export default function AdminInquiries() {
       i.id === id ? { ...i, replied: !i.replied } : i
     );
     saveInquiries(updated);
+    if (selectedInquiry?.id === id) {
+      setSelectedInquiry({ ...selectedInquiry, replied: !selectedInquiry.replied });
+    }
     toast({
       title: 'Status aktualisiert',
-      description: 'Anfrage wurde als beantwortet markiert.',
+      description: 'Anfrage-Status wurde geändert.',
     });
   };
 
@@ -114,6 +122,30 @@ export default function AdminInquiries() {
     }
   };
 
+  const handleExportSingle = (inquiry: Inquiry) => {
+    exportInquiryToPDF(inquiry);
+    toast({
+      title: 'PDF exportiert',
+      description: 'Die Anfrage wurde als PDF heruntergeladen.',
+    });
+  };
+
+  const handleExportAll = () => {
+    exportAllInquiriesToPDF(inquiries);
+    toast({
+      title: 'PDF exportiert',
+      description: 'Alle Anfragen wurden als PDF heruntergeladen.',
+    });
+  };
+
+  const getInquiryTypeLabel = (value?: string) => {
+    return INQUIRY_TYPES.find(t => t.value === value)?.label;
+  };
+
+  const getBudgetLabel = (value?: string) => {
+    return BUDGET_RANGES.find(b => b.value === value)?.label;
+  };
+
   const unreadCount = inquiries.filter(i => !i.read).length;
 
   return (
@@ -127,10 +159,18 @@ export default function AdminInquiries() {
             </Badge>
             <Badge variant="outline">{inquiries.length} gesamt</Badge>
           </div>
-          <Button variant="outline" onClick={() => setShowSettings(true)}>
-            <Settings className="h-4 w-4 mr-2" />
-            E-Mail Weiterleitung
-          </Button>
+          <div className="flex items-center gap-2">
+            {inquiries.length > 0 && (
+              <Button variant="outline" onClick={handleExportAll}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Alle als PDF
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setShowSettings(true)}>
+              <Settings className="h-4 w-4 mr-2" />
+              E-Mail Weiterleitung
+            </Button>
+          </div>
         </div>
 
         {/* Info Card */}
@@ -168,15 +208,23 @@ export default function AdminInquiries() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         {!inquiry.read && (
                           <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
                         )}
                         <span className="font-medium truncate">{inquiry.name}</span>
+                        {inquiry.company && (
+                          <span className="text-xs text-muted-foreground">({inquiry.company})</span>
+                        )}
                         {inquiry.replied && (
                           <Badge variant="outline" className="text-xs">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Beantwortet
+                          </Badge>
+                        )}
+                        {inquiry.inquiryType && (
+                          <Badge variant="secondary" className="text-xs">
+                            {getInquiryTypeLabel(inquiry.inquiryType)}
                           </Badge>
                         )}
                       </div>
@@ -199,7 +247,7 @@ export default function AdminInquiries() {
 
       {/* Inquiry Detail Dialog */}
       <Dialog open={!!selectedInquiry} onOpenChange={() => setSelectedInquiry(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
@@ -208,6 +256,7 @@ export default function AdminInquiries() {
           </DialogHeader>
           {selectedInquiry && (
             <div className="space-y-4">
+              {/* Contact Info Grid */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <Label className="text-muted-foreground">Name</Label>
@@ -222,6 +271,48 @@ export default function AdminInquiries() {
                     {selectedInquiry.email}
                   </a>
                 </div>
+                
+                {selectedInquiry.phone && (
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3" /> Telefon
+                    </Label>
+                    <a 
+                      href={`tel:${selectedInquiry.phone}`}
+                      className="font-medium text-primary hover:underline block"
+                    >
+                      {selectedInquiry.phone}
+                    </a>
+                  </div>
+                )}
+                
+                {selectedInquiry.company && (
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1">
+                      <Building2 className="h-3 w-3" /> Firma
+                    </Label>
+                    <p className="font-medium">{selectedInquiry.company}</p>
+                  </div>
+                )}
+
+                {selectedInquiry.inquiryType && (
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1">
+                      <Tag className="h-3 w-3" /> Anfrage-Art
+                    </Label>
+                    <p className="font-medium">{getInquiryTypeLabel(selectedInquiry.inquiryType)}</p>
+                  </div>
+                )}
+
+                {selectedInquiry.budget && (
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1">
+                      <Wallet className="h-3 w-3" /> Budget
+                    </Label>
+                    <p className="font-medium">{getBudgetLabel(selectedInquiry.budget)}</p>
+                  </div>
+                )}
+
                 <div className="col-span-2">
                   <Label className="text-muted-foreground">Betreff</Label>
                   <p className="font-medium">{selectedInquiry.subject || '(kein Betreff)'}</p>
@@ -232,6 +323,7 @@ export default function AdminInquiries() {
                 </div>
               </div>
               
+              {/* Message */}
               <div>
                 <Label className="text-muted-foreground">Nachricht</Label>
                 <div className="mt-2 p-4 bg-secondary rounded-lg whitespace-pre-wrap text-sm">
@@ -239,6 +331,7 @@ export default function AdminInquiries() {
                 </div>
               </div>
 
+              {/* Actions */}
               <div className="flex flex-wrap gap-2 pt-4 border-t">
                 <Button 
                   variant="outline"
@@ -246,6 +339,13 @@ export default function AdminInquiries() {
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Antworten
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleExportSingle(selectedInquiry)}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Als PDF
                 </Button>
                 <Button
                   variant={selectedInquiry.replied ? "secondary" : "default"}

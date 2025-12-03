@@ -5,16 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useContent } from "@/contexts/ContentContext";
 import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook } from "lucide-react";
 import { z } from "zod";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
-import { Inquiry } from "@/types/inquiry";
+import { Inquiry, INQUIRY_TYPES, BUDGET_RANGES } from "@/types/inquiry";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name muss mindestens 2 Zeichen haben").max(100, "Name darf maximal 100 Zeichen haben"),
   email: z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein"),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  inquiryType: z.string().optional(),
+  budget: z.string().optional(),
   subject: z.string().optional(),
   message: z.string().min(10, "Nachricht muss mindestens 10 Zeichen haben").max(2000, "Nachricht darf maximal 2000 Zeichen haben")
 });
@@ -28,9 +39,13 @@ export default function Kontakt() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
+    company: "",
+    inquiryType: "",
+    budget: "",
     subject: "",
     message: "",
-    honeypot: "" // Spam protection
+    honeypot: ""
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -39,6 +54,10 @@ export default function Kontakt() {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
     }
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,11 +83,14 @@ export default function Kontakt() {
 
     setIsSubmitting(true);
 
-    // Save inquiry to localStorage
     const newInquiry: Inquiry = {
       id: crypto.randomUUID(),
       name: formData.name,
       email: formData.email,
+      phone: formData.phone || undefined,
+      company: formData.company || undefined,
+      inquiryType: formData.inquiryType || undefined,
+      budget: formData.budget || undefined,
       subject: formData.subject,
       message: formData.message,
       createdAt: new Date().toISOString(),
@@ -79,7 +101,6 @@ export default function Kontakt() {
     const existingInquiries = getStorageItem<Inquiry[]>('cms_inquiries', []);
     setStorageItem('cms_inquiries', [...existingInquiries, newInquiry]);
 
-    // Simulate processing time
     await new Promise(resolve => setTimeout(resolve, 500));
 
     setIsSubmitting(false);
@@ -283,6 +304,7 @@ export default function Kontakt() {
                       autoComplete="off"
                     />
 
+                    {/* Name & Email */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="name">Name *</Label>
@@ -313,6 +335,73 @@ export default function Kontakt() {
                         {errors.email && (
                           <p className="text-sm text-destructive">{errors.email}</p>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Phone & Company */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Telefon (optional)</Label>
+                        <Input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          placeholder="+41 79 123 45 67"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="company">Firma (optional)</Label>
+                        <Input
+                          id="company"
+                          name="company"
+                          value={formData.company}
+                          onChange={handleChange}
+                          placeholder="Ihre Firma"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Inquiry Type & Budget */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Art der Anfrage (optional)</Label>
+                        <Select 
+                          value={formData.inquiryType} 
+                          onValueChange={(value) => handleSelectChange('inquiryType', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Bitte wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {INQUIRY_TYPES.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Budget (optional)</Label>
+                        <Select 
+                          value={formData.budget} 
+                          onValueChange={(value) => handleSelectChange('budget', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Bitte wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {BUDGET_RANGES.map((range) => (
+                              <SelectItem key={range.value} value={range.value}>
+                                {range.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
