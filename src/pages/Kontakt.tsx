@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,18 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useContent } from "@/contexts/ContentContext";
-import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
 import { z } from "zod";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
-import { Inquiry, INQUIRY_TYPES, BUDGET_RANGES } from "@/types/inquiry";
+import { Inquiry, InquiryAttachment, INQUIRY_TYPES, BUDGET_RANGES } from "@/types/inquiry";
+import { 
+  MAX_FILE_SIZE, 
+  MAX_FILES, 
+  ALLOWED_TYPES, 
+  fileToBase64, 
+  formatFileSize,
+  getFileTypeLabel 
+} from "@/lib/attachmentUtils";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name muss mindestens 2 Zeichen haben").max(100, "Name darf maximal 100 Zeichen haben"),
@@ -27,15 +35,17 @@ const contactSchema = z.object({
   inquiryType: z.string().optional(),
   budget: z.string().optional(),
   subject: z.string().optional(),
-  message: z.string().min(10, "Nachricht muss mindestens 10 Zeichen haben").max(2000, "Nachricht darf maximal 2000 Zeichen haben")
+  message: z.string().min(10, "Nachricht muss mindestens 10 Zeichen haben").max(5000, "Nachricht darf maximal 5000 Zeichen haben")
 });
 
 export default function Kontakt() {
   const { toast } = useToast();
   const { settings } = useContent();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [attachments, setAttachments] = useState<InquiryAttachment[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -58,6 +68,64 @@ export default function Kontakt() {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newAttachments: InquiryAttachment[] = [];
+    
+    for (const file of Array.from(files)) {
+      if (attachments.length + newAttachments.length >= MAX_FILES) {
+        toast({
+          title: "Maximum erreicht",
+          description: `Maximal ${MAX_FILES} Dateien erlaubt.`,
+          variant: "destructive",
+        });
+        break;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Datei zu groß",
+          description: `${file.name} ist größer als 10 MB.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast({
+          title: "Dateityp nicht erlaubt",
+          description: `${file.name} hat einen nicht unterstützten Dateityp.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      try {
+        const base64 = await fileToBase64(file);
+        newAttachments.push({
+          id: crypto.randomUUID(),
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: base64,
+        });
+      } catch (error) {
+        console.error("Error reading file:", error);
+      }
+    }
+
+    setAttachments(prev => [...prev, ...newAttachments]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,6 +161,7 @@ export default function Kontakt() {
       budget: formData.budget || undefined,
       subject: formData.subject,
       message: formData.message,
+      attachments: attachments.length > 0 ? attachments : undefined,
       createdAt: new Date().toISOString(),
       read: false,
       replied: false,
@@ -111,6 +180,11 @@ export default function Kontakt() {
     });
   };
 
+  const getAttachmentIcon = (type: string) => {
+    if (type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
+    return <FileText className="h-4 w-4" />;
+  };
+
   if (isSuccess) {
     return (
       <Layout>
@@ -127,7 +201,21 @@ export default function Kontakt() {
                 Ihre Nachricht wurde erfolgreich gesendet. Ich melde mich 
                 schnellstmöglich bei Ihnen – in der Regel innerhalb von 24 Stunden.
               </p>
-              <Button onClick={() => setIsSuccess(false)}>
+              <Button onClick={() => {
+                setIsSuccess(false);
+                setAttachments([]);
+                setFormData({
+                  name: "",
+                  email: "",
+                  phone: "",
+                  company: "",
+                  inquiryType: "",
+                  budget: "",
+                  subject: "",
+                  message: "",
+                  honeypot: ""
+                });
+              }}>
                 Weitere Nachricht senden
               </Button>
             </div>
@@ -432,13 +520,81 @@ export default function Kontakt() {
                       )}
                     </div>
 
-                    <Button type="submit" size="lg" disabled={isSubmitting}>
+                    {/* File Attachments */}
+                    <div className="space-y-3">
+                      <Label>Anhänge (optional)</Label>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={attachments.length >= MAX_FILES}
+                        >
+                          <Paperclip className="h-4 w-4 mr-2" />
+                          Dateien hinzufügen
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {attachments.length}/{MAX_FILES} Dateien (max. 10 MB pro Datei)
+                        </span>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept={ALLOWED_TYPES.join(',')}
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Erlaubte Formate: Bilder, PDF, Word, Excel, PowerPoint, Text
+                      </p>
+
+                      {/* Attachment List */}
+                      {attachments.length > 0 && (
+                        <div className="space-y-2 mt-3">
+                          {attachments.map((attachment) => (
+                            <div
+                              key={attachment.id}
+                              className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                {getAttachmentIcon(attachment.type)}
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate">{attachment.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {getFileTypeLabel(attachment.type)} • {formatFileSize(attachment.size)}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeAttachment(attachment.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      className="w-full md:w-auto"
+                      disabled={isSubmitting}
+                    >
                       {isSubmitting ? (
-                        "Wird gesendet..."
+                        <>
+                          <span className="animate-spin mr-2">⏳</span>
+                          Wird gesendet...
+                        </>
                       ) : (
                         <>
+                          <Send className="h-4 w-4 mr-2" />
                           Nachricht senden
-                          <Send className="ml-2 h-4 w-4" />
                         </>
                       )}
                     </Button>
