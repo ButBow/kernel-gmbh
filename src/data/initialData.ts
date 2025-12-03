@@ -64,6 +64,9 @@ export interface SiteSettings {
   contactEmail: string;
   contactPhone: string;
   contactLocation: string;
+  socialInstagram?: string;
+  socialLinkedin?: string;
+  socialTwitter?: string;
   footerText: string;
   impressumText: string;
   datenschutzText: string;
@@ -321,6 +324,9 @@ export const initialSettings: SiteSettings = {
   contactEmail: "kontakt@meinefirma.ch",
   contactPhone: "+41 79 123 45 67",
   contactLocation: "Zürich, Schweiz",
+  socialInstagram: "",
+  socialLinkedin: "",
+  socialTwitter: "",
   footerText: "© 2024 Mein Firmenname. Alle Rechte vorbehalten.",
   impressumText: "Angaben gemäss Schweizer Recht...",
   datenschutzText: "Datenschutzerklärung gemäss DSG..."

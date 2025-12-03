@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useContent } from "@/contexts/ContentContext";
-import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter } from "lucide-react";
 import { z } from "zod";
 
 const contactSchema = z.object({
@@ -165,6 +165,45 @@ export default function Kontakt() {
                   </div>
                 </div>
               </div>
+
+              {/* Social Media */}
+              {(settings.socialInstagram || settings.socialLinkedin || settings.socialTwitter) && (
+                <div className="mt-8">
+                  <h3 className="font-display text-lg font-semibold mb-4">Social Media</h3>
+                  <div className="flex gap-3">
+                    {settings.socialInstagram && (
+                      <a
+                        href={settings.socialInstagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <Instagram className="h-5 w-5" />
+                      </a>
+                    )}
+                    {settings.socialLinkedin && (
+                      <a
+                        href={settings.socialLinkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <Linkedin className="h-5 w-5" />
+                      </a>
+                    )}
+                    {settings.socialTwitter && (
+                      <a
+                        href={settings.socialTwitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <Twitter className="h-5 w-5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <Card className="mt-8">
                 <CardContent className="p-6">

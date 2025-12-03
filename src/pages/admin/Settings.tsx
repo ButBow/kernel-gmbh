@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SiteSettings } from '@/data/initialData';
 
@@ -312,6 +312,47 @@ export default function AdminSettings() {
               </CardContent>
             </Card>
 
+            <Card>
+              <CardHeader>
+                <CardTitle>Social Media (optional)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Instagram className="h-4 w-4" /> Instagram
+                  </label>
+                  <Input
+                    value={form.socialInstagram || ''}
+                    onChange={(e) => setForm({ ...form, socialInstagram: e.target.value })}
+                    placeholder="https://instagram.com/username"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Linkedin className="h-4 w-4" /> LinkedIn
+                  </label>
+                  <Input
+                    value={form.socialLinkedin || ''}
+                    onChange={(e) => setForm({ ...form, socialLinkedin: e.target.value })}
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Twitter className="h-4 w-4" /> Twitter / X
+                  </label>
+                  <Input
+                    value={form.socialTwitter || ''}
+                    onChange={(e) => setForm({ ...form, socialTwitter: e.target.value })}
+                    placeholder="https://twitter.com/username"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Leer lassen, wenn du den Link nicht anzeigen möchtest.
+                </p>
+              </CardContent>
+            </Card>
+
             <LivePreview title="Kontakt-Vorschau">
               <div className="p-6 bg-slate-950 space-y-3">
                 <div className="flex items-center gap-3">
@@ -341,6 +382,28 @@ export default function AdminSettings() {
                     <p className="text-sm text-white">{form.contactLocation || 'Standort'}</p>
                   </div>
                 </div>
+                {(form.socialInstagram || form.socialLinkedin || form.socialTwitter) && (
+                  <div className="mt-4 pt-4 border-t border-slate-800">
+                    <p className="text-xs text-slate-500 mb-2">Social Media</p>
+                    <div className="flex gap-2">
+                      {form.socialInstagram && (
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                          <Instagram className="h-4 w-4 text-amber-500" />
+                        </div>
+                      )}
+                      {form.socialLinkedin && (
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                          <Linkedin className="h-4 w-4 text-amber-500" />
+                        </div>
+                      )}
+                      {form.socialTwitter && (
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                          <Twitter className="h-4 w-4 text-amber-500" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </LivePreview>
           </div>
