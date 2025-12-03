@@ -13,8 +13,8 @@ export function CookieConsent() {
   if (consentGiven !== null) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom-4 duration-500">
-      <Card className="max-w-2xl mx-auto p-6 bg-card/95 backdrop-blur-md border-border shadow-2xl">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4 animate-in slide-in-from-bottom-4 duration-500">
+      <Card className="max-w-2xl mx-auto p-4 sm:p-6 mx-3 sm:mx-auto bg-background/40 backdrop-blur-xl border-border/50 shadow-2xl">
         <div className="flex items-start gap-4">
           <div className="p-3 rounded-full bg-primary/10 shrink-0">
             <Cookie className="h-6 w-6 text-primary" />
