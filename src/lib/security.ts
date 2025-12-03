@@ -98,9 +98,60 @@ export function containsScriptInjection(input: string): boolean {
     'onload=',
     'onclick=',
     'onmouseover=',
+    'onfocus=',
+    'onblur=',
+    'onchange=',
+    'onsubmit=',
     'eval(',
     'document.cookie',
     'document.write',
+    'document.domain',
+    'window.location',
+    'innerHTML',
+    'outerHTML',
+    'insertAdjacentHTML',
+    'expression(',
+    'vbscript:',
+    'data:text/html',
   ];
   return dangerousPatterns.some(pattern => lowerInput.includes(pattern));
+}
+
+// Secure data encryption for localStorage (basic obfuscation)
+// Note: This is NOT cryptographically secure - for true security, use a backend
+const STORAGE_KEY = 'k3rn3l_s4lt_2024';
+
+export function encodeData(data: string): string {
+  try {
+    const encoded = btoa(encodeURIComponent(data));
+    return encoded.split('').reverse().join('');
+  } catch {
+    return data;
+  }
+}
+
+export function decodeData(encoded: string): string {
+  try {
+    const reversed = encoded.split('').reverse().join('');
+    return decodeURIComponent(atob(reversed));
+  } catch {
+    return encoded;
+  }
+}
+
+// Rate limiter for form submissions
+const submissionTimestamps: number[] = [];
+const MAX_SUBMISSIONS_PER_HOUR = 10;
+
+export function canSubmitForm(): boolean {
+  const oneHourAgo = Date.now() - 60 * 60 * 1000;
+  // Remove old timestamps
+  while (submissionTimestamps.length > 0 && submissionTimestamps[0] < oneHourAgo) {
+    submissionTimestamps.shift();
+  }
+  return submissionTimestamps.length < MAX_SUBMISSIONS_PER_HOUR;
+}
+
+export function recordFormSubmission(): void {
+  submissionTimestamps.push(Date.now());
 }

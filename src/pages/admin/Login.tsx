@@ -1,25 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock } from 'lucide-react';
+import { Lock, AlertTriangle, Clock } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, loginAttempts, isLocked, lockoutEndTime } = useAuth();
   const navigate = useNavigate();
+  const [remainingTime, setRemainingTime] = useState<string>('');
+
+  // Update remaining lockout time
+  useEffect(() => {
+    if (!isLocked || !lockoutEndTime) {
+      setRemainingTime('');
+      return;
+    }
+
+    const updateTime = () => {
+      const remaining = lockoutEndTime - Date.now();
+      if (remaining <= 0) {
+        setRemainingTime('');
+        window.location.reload(); // Refresh to reset state
+        return;
+      }
+      const minutes = Math.floor(remaining / 60000);
+      const seconds = Math.floor((remaining % 60000) / 1000);
+      setRemainingTime(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, [isLocked, lockoutEndTime]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (isLocked) {
+      setError('Zu viele Fehlversuche. Bitte warten.');
+      return;
+    }
     
     if (login(password)) {
       navigate('/admin');
     } else {
-      setError('Falsches Passwort');
+      const attemptsLeft = 5 - (loginAttempts + 1);
+      if (attemptsLeft > 0) {
+        setError(`Falsches Passwort. Noch ${attemptsLeft} Versuche.`);
+      } else {
+        setError('Konto gesperrt. Bitte 15 Minuten warten.');
+      }
     }
   };
 
@@ -33,6 +69,24 @@ export default function AdminLogin() {
           <CardTitle className="font-display text-2xl">Admin Login</CardTitle>
         </CardHeader>
         <CardContent>
+          {isLocked && (
+            <Alert variant="destructive" className="mb-4">
+              <Clock className="h-4 w-4" />
+              <AlertDescription>
+                Konto gesperrt. Entsperrung in: {remainingTime}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {loginAttempts > 0 && loginAttempts < 5 && !isLocked && (
+            <Alert className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {5 - loginAttempts} Versuche verbleibend
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Input
@@ -41,12 +95,15 @@ export default function AdminLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="text-center"
+                disabled={isLocked}
+                maxLength={100}
+                autoComplete="current-password"
               />
               {error && (
                 <p className="text-sm text-destructive mt-2 text-center">{error}</p>
               )}
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLocked}>
               Anmelden
             </Button>
           </form>
