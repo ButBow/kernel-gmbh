@@ -11,9 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, Target, Heart, Rocket, Award, User } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, Target, Heart, Rocket, Award, User, Handshake, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
-import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial } from '@/data/initialData';
+import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner } from '@/data/initialData';
 
 const benefitIcons = [Zap, Lightbulb, Shield, CheckCircle];
 const valueIconOptions = ['Star', 'Lightbulb', 'Eye', 'Zap', 'Target', 'Heart', 'Shield', 'Rocket', 'Award'];
@@ -62,6 +62,7 @@ export default function AdminSettings() {
         <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6">
           <TabsList className="inline-flex w-max min-w-full sm:w-auto">
             <TabsTrigger value="home" className="text-xs sm:text-sm">Startseite</TabsTrigger>
+            <TabsTrigger value="partners" className="text-xs sm:text-sm">Partner</TabsTrigger>
             <TabsTrigger value="about" className="text-xs sm:text-sm">Über mich</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs sm:text-sm">Kontakt</TabsTrigger>
             <TabsTrigger value="theme" className="text-xs sm:text-sm">Design</TabsTrigger>
@@ -169,6 +170,122 @@ export default function AdminSettings() {
               </div>
             </LivePreview>
           </div>
+        </TabsContent>
+
+        <TabsContent value="partners">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Handshake className="h-5 w-5" />
+                  Partner & Kooperationen
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setForm({
+                    ...form,
+                    partners: [...(form.partners || []), {
+                      name: '',
+                      logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=200&q=80',
+                      link: '',
+                      quote: ''
+                    }]
+                  })}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Partner hinzufügen
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Partner-Logos werden auf der Startseite als scrollende Leiste angezeigt. Auch mit nur 1-2 Partnern funktioniert die Animation.
+              </p>
+              {(form.partners || []).map((partner, i) => (
+                <div key={i} className="p-4 border border-border rounded-lg space-y-3">
+                  <div className="flex gap-3 items-start">
+                    {/* Logo Preview */}
+                    <div className="w-16 h-16 rounded-lg bg-secondary flex-shrink-0 overflow-hidden">
+                      <img 
+                        src={partner.logo} 
+                        alt={partner.name || 'Partner'} 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <Input
+                          value={partner.name}
+                          onChange={(e) => {
+                            const newPartners = [...(form.partners || [])];
+                            newPartners[i] = { ...newPartners[i], name: e.target.value };
+                            setForm({ ...form, partners: newPartners });
+                          }}
+                          placeholder="Partner-Name"
+                        />
+                        <div className="flex gap-2">
+                          <Input
+                            value={partner.link || ''}
+                            onChange={(e) => {
+                              const newPartners = [...(form.partners || [])];
+                              newPartners[i] = { ...newPartners[i], link: e.target.value };
+                              setForm({ ...form, partners: newPartners });
+                            }}
+                            placeholder="Website-Link (optional)"
+                            className="flex-1"
+                          />
+                          {partner.link && (
+                            <a href={partner.link} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-secondary rounded-lg">
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <Input
+                        value={partner.logo}
+                        onChange={(e) => {
+                          const newPartners = [...(form.partners || [])];
+                          newPartners[i] = { ...newPartners[i], logo: e.target.value };
+                          setForm({ ...form, partners: newPartners });
+                        }}
+                        placeholder="Logo-URL (https://...)"
+                      />
+                      <Input
+                        value={partner.quote || ''}
+                        onChange={(e) => {
+                          const newPartners = [...(form.partners || [])];
+                          newPartners[i] = { ...newPartners[i], quote: e.target.value };
+                          setForm({ ...form, partners: newPartners });
+                        }}
+                        placeholder="Kurzes Zitat/Beschreibung (optional)"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const newPartners = (form.partners || []).filter((_, idx) => idx !== i);
+                        setForm({ ...form, partners: newPartners });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {(!form.partners || form.partners.length === 0) && (
+                <div className="text-center py-8 border border-dashed border-border rounded-lg">
+                  <Handshake className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Keine Partner vorhanden
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Füge Partner hinzu, um sie auf der Startseite anzuzeigen
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="about">
