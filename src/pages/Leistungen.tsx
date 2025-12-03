@@ -23,6 +23,51 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Video, Cpu, Wrench, Code, Image, FileText, Users, Package
 };
 
+const categoryColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
+  video: { 
+    bg: "bg-[hsl(var(--category-video)/.15)]", 
+    border: "border-[hsl(var(--category-video)/.5)]", 
+    text: "text-[hsl(var(--category-video))]",
+    glow: "hover:shadow-[0_0_30px_hsl(var(--category-video)/.3)]"
+  },
+  ai: { 
+    bg: "bg-[hsl(var(--category-ai)/.15)]", 
+    border: "border-[hsl(var(--category-ai)/.5)]", 
+    text: "text-[hsl(var(--category-ai))]",
+    glow: "hover:shadow-[0_0_30px_hsl(var(--category-ai)/.3)]"
+  },
+  support: { 
+    bg: "bg-[hsl(var(--category-support)/.15)]", 
+    border: "border-[hsl(var(--category-support)/.5)]", 
+    text: "text-[hsl(var(--category-support))]",
+    glow: "hover:shadow-[0_0_30px_hsl(var(--category-support)/.3)]"
+  },
+  tools: { 
+    bg: "bg-[hsl(var(--category-tools)/.15)]", 
+    border: "border-[hsl(var(--category-tools)/.5)]", 
+    text: "text-[hsl(var(--category-tools))]",
+    glow: "hover:shadow-[0_0_30px_hsl(var(--category-tools)/.3)]"
+  },
+  design: { 
+    bg: "bg-[hsl(var(--category-design)/.15)]", 
+    border: "border-[hsl(var(--category-design)/.5)]", 
+    text: "text-[hsl(var(--category-design))]",
+    glow: "hover:shadow-[0_0_30px_hsl(var(--category-design)/.3)]"
+  },
+  text: { 
+    bg: "bg-[hsl(var(--category-text)/.15)]", 
+    border: "border-[hsl(var(--category-text)/.5)]", 
+    text: "text-[hsl(var(--category-text))]",
+    glow: "hover:shadow-[0_0_30px_hsl(var(--category-text)/.3)]"
+  },
+  management: { 
+    bg: "bg-[hsl(var(--category-management)/.15)]", 
+    border: "border-[hsl(var(--category-management)/.5)]", 
+    text: "text-[hsl(var(--category-management))]",
+    glow: "hover:shadow-[0_0_30px_hsl(var(--category-management)/.3)]"
+  },
+};
+
 interface ProductDetailProps {
   product: Product;
   onClose: () => void;
@@ -183,22 +228,23 @@ export default function Leistungen() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProducts.map((product) => {
               const category = categories.find(c => c.id === product.categoryId);
+              const colors = categoryColors[product.categoryId] || categoryColors.video;
               return (
                 <Card 
                   key={product.id}
-                  className="group cursor-pointer hover:border-primary/50 transition-all duration-300 hover:shadow-glow"
+                  className={`group cursor-pointer transition-all duration-300 ${colors.border} ${colors.glow} border-2`}
                   onClick={() => setSelectedProduct(product)}
                 >
                   <CardHeader>
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="secondary">{product.type}</Badge>
+                      <Badge className={`${colors.bg} ${colors.text} border-0`}>{product.type}</Badge>
                       {category && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className={`text-xs ${colors.border} ${colors.text}`}>
                           {category.name}
                         </Badge>
                       )}
                     </div>
-                    <CardTitle className="font-display text-lg group-hover:text-primary transition-colors">
+                    <CardTitle className={`font-display text-lg group-hover:${colors.text} transition-colors`}>
                       {product.name}
                     </CardTitle>
                   </CardHeader>
@@ -207,8 +253,8 @@ export default function Leistungen() {
                       {product.shortDescription}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-primary">{product.priceText}</span>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className={`font-semibold ${colors.text}`}>{product.priceText}</span>
+                      <ChevronRight className={`h-5 w-5 text-muted-foreground group-hover:${colors.text} transition-colors`} />
                     </div>
                   </CardContent>
                 </Card>
