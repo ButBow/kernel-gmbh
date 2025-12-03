@@ -38,6 +38,15 @@
 
     --radius: 0.75rem;
 
+    /* Category colors */
+    --category-video: 270 70% 60%;
+    --category-ai: 210 80% 55%;
+    --category-support: 25 95% 55%;
+    --category-tools: 142 70% 45%;
+    --category-design: 330 80% 60%;
+    --category-text: 45 90% 50%;
+    --category-management: 180 70% 45%;
+
     --sidebar-background: 222 47% 6%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 38 92% 50%;
