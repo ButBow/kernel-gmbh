@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useContent } from "@/contexts/ContentContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { usePageTracking } from "@/hooks/usePageTracking";
 import { getCategoryColors } from "@/lib/categoryColors";
 import { 
   Video, 
@@ -116,7 +115,6 @@ export default function Leistungen() {
   const { categories, products } = useContent();
   const { trackEvent } = useAnalytics();
   const navigate = useNavigate();
-  usePageTracking();
   
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);

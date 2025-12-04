@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useContent } from "@/contexts/ContentContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { usePageTracking } from "@/hooks/usePageTracking";
 import { PartnersSection } from "@/components/PartnersSection";
 import { 
   Video, 
@@ -32,7 +31,6 @@ const benefitIcons = [Zap, Lightbulb, Shield, CheckCircle];
 export default function Index() {
   const { settings, categories, products } = useContent();
   const { trackEvent } = useAnalytics();
-  usePageTracking();
 
   // Get first 4 categories for service teasers
   const serviceCategories = categories.slice(0, 4);
