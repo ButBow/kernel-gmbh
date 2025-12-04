@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useContent } from "@/contexts/ContentContext";
+import { PackageSelector } from "@/components/PackageSelector";
 import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Paperclip, X, FileText, Image as ImageIcon, Package } from "lucide-react";
 import { z } from "zod";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
@@ -67,7 +68,7 @@ const contactSchema = z.object({
 
 export default function Kontakt() {
   const { toast } = useToast();
-  const { settings, products } = useContent();
+  const { settings, products, categories } = useContent();
   const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,32 +107,8 @@ export default function Kontakt() {
     honeypot: ""
   });
 
-  // Build package options from all published products
-  const packageOptions = products
-    .filter(p => p.status === 'published')
-    .flatMap(product => {
-      const options: { value: string; label: string; price: string }[] = [];
-      
-      // Add main product as option
-      options.push({
-        value: `${product.name} (${product.priceText})`,
-        label: product.name,
-        price: product.priceText
-      });
-      
-      // Add showcases/packages as options
-      if (product.showcases && product.showcases.length > 0) {
-        product.showcases.forEach(showcase => {
-          options.push({
-            value: `${product.name} - ${showcase.title} (${showcase.price})`,
-            label: `${product.name} - ${showcase.title}`,
-            price: showcase.price
-          });
-        });
-      }
-      
-      return options;
-    });
+  // Published products for PackageSelector
+  const publishedProducts = products.filter(p => p.status === 'published');
 
   // Auto-set budget based on selected package price
   useEffect(() => {
@@ -620,49 +597,35 @@ export default function Kontakt() {
                       </div>
                     </div>
 
-                    {/* Package Selection & Inquiry Type */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label>Produkt / Paket (optional)</Label>
-                        <Select 
-                          value={formData.selectedPackage} 
-                          onValueChange={(value) => handleSelectChange('selectedPackage', value === 'none' ? '' : value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Produkt auswählen" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[300px]">
-                            <SelectItem value="none">Kein Produkt ausgewählt</SelectItem>
-                            {packageOptions.map((option, index) => (
-                              <SelectItem key={`${option.value}-${index}`} value={option.value}>
-                                <div className="flex justify-between items-center gap-2">
-                                  <span>{option.label}</span>
-                                  <Badge variant="secondary" className="text-xs">{option.price}</Badge>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    {/* Package Selection */}
+                    <div className="space-y-2">
+                      <Label>Produkt / Paket (optional)</Label>
+                      <PackageSelector
+                        products={publishedProducts}
+                        categories={categories}
+                        value={formData.selectedPackage}
+                        onChange={(value) => handleSelectChange('selectedPackage', value)}
+                      />
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label>Art der Anfrage (optional)</Label>
-                        <Select 
-                          value={formData.inquiryType} 
-                          onValueChange={(value) => handleSelectChange('inquiryType', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Bitte wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {INQUIRY_TYPES.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    {/* Inquiry Type */}
+                    <div className="space-y-2">
+                      <Label>Art der Anfrage (optional)</Label>
+                      <Select 
+                        value={formData.inquiryType} 
+                        onValueChange={(value) => handleSelectChange('inquiryType', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Bitte wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {INQUIRY_TYPES.map((type) => (
+                            <SelectItem key={type.value} value={type.value}>
+                              {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Budget (shown if no package selected, or always visible) */}
