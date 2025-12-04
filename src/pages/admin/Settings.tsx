@@ -12,13 +12,14 @@ import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
 import { BackupRestore } from '@/components/admin/BackupRestore';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag, FileText } from 'lucide-react';
 import { PromotionManager } from '@/components/admin/PromotionManager';
 import { Promotion } from '@/types/promotion';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner } from '@/data/initialData';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 const benefitIcons = [Zap, Lightbulb, Shield, CheckCircle];
 const valueIconOptions = ['Star', 'Lightbulb', 'Eye', 'Zap', 'Target', 'Heart', 'Shield', 'Rocket', 'Award'];
@@ -969,43 +970,83 @@ export default function AdminSettings() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 Firmenname, E-Mail, Telefon und Standort werden automatisch aus den Kontaktdaten übernommen. 
-                Hier können Sie den vollständigen rechtlichen Text bearbeiten.
+                Sie können Markdown-Formatierung verwenden: **fett**, *kursiv*, ## Überschriften, - Listen
               </AlertDescription>
             </Alert>
 
             <Card>
               <CardHeader>
-                <CardTitle>Impressum - Vollständiger Text</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Impressum - Vollständiger Text
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Textarea
-                  value={form.impressumText}
-                  onChange={(e) => setForm({ ...form, impressumText: e.target.value })}
-                  placeholder="Vollständiger Impressum-Text..."
-                  rows={15}
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Tipp: Der Text wird nach den automatischen Kontaktdaten angezeigt. Verwenden Sie Absätze für bessere Lesbarkeit.
-                </p>
+                <Tabs defaultValue="edit" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="edit">Bearbeiten</TabsTrigger>
+                    <TabsTrigger value="preview">Vorschau</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="edit">
+                    <Textarea
+                      value={form.impressumText}
+                      onChange={(e) => setForm({ ...form, impressumText: e.target.value })}
+                      placeholder="## Firmenangaben&#10;&#10;**Inhaber:** Max Mustermann&#10;&#10;## Kontakt&#10;- E-Mail: info@example.ch&#10;- Telefon: +41 12 345 67 89"
+                      rows={15}
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Markdown-Syntax: ## Überschrift, **fett**, *kursiv*, - Aufzählung, [Link](url)
+                    </p>
+                  </TabsContent>
+                  <TabsContent value="preview">
+                    <div className="border border-border rounded-lg p-4 min-h-[300px] bg-background">
+                      {form.impressumText ? (
+                        <MarkdownRenderer content={form.impressumText} />
+                      ) : (
+                        <p className="text-muted-foreground italic">Noch kein Text vorhanden...</p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Datenschutzerklärung - Vollständiger Text</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Datenschutzerklärung - Vollständiger Text
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Textarea
-                  value={form.datenschutzText}
-                  onChange={(e) => setForm({ ...form, datenschutzText: e.target.value })}
-                  placeholder="Vollständige Datenschutzerklärung..."
-                  rows={20}
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Tipp: Fügen Sie hier Ihre vollständige Datenschutzerklärung ein. Der grundlegende Header wird automatisch generiert.
-                </p>
+                <Tabs defaultValue="edit" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="edit">Bearbeiten</TabsTrigger>
+                    <TabsTrigger value="preview">Vorschau</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="edit">
+                    <Textarea
+                      value={form.datenschutzText}
+                      onChange={(e) => setForm({ ...form, datenschutzText: e.target.value })}
+                      placeholder="## Datenerhebung&#10;&#10;Wir erheben folgende Daten:&#10;- Name&#10;- E-Mail-Adresse&#10;&#10;## Zweck der Verarbeitung&#10;&#10;**Wichtig:** Diese Daten werden..."
+                      rows={20}
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Markdown-Syntax: ## Überschrift, **fett**, *kursiv*, - Aufzählung, [Link](url)
+                    </p>
+                  </TabsContent>
+                  <TabsContent value="preview">
+                    <div className="border border-border rounded-lg p-4 min-h-[400px] bg-background">
+                      {form.datenschutzText ? (
+                        <MarkdownRenderer content={form.datenschutzText} />
+                      ) : (
+                        <p className="text-muted-foreground italic">Noch kein Text vorhanden...</p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
