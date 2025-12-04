@@ -29,11 +29,13 @@ interface ContentContextType {
   addProject: (project: Omit<Project, 'id'>) => void;
   updateProject: (id: number, project: Partial<Project>) => void;
   deleteProject: (id: number) => void;
+  importProjects: (projects: Project[], mode: 'add' | 'replace') => void;
   
   // Posts
   addPost: (post: Omit<Post, 'id'>) => void;
   updatePost: (id: number, post: Partial<Post>) => void;
   deletePost: (id: number) => void;
+  importPosts: (posts: Post[], mode: 'add' | 'replace') => void;
   
   // Settings
   updateSettings: (settings: Partial<SiteSettings>) => void;
@@ -181,6 +183,26 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     setStorageItem(STORAGE_KEYS.PROJECTS, updated);
   };
 
+  const importProjects = (newProjects: Project[], mode: 'add' | 'replace') => {
+    let updated: Project[];
+    if (mode === 'replace') {
+      updated = newProjects.map((p, i) => ({
+        ...p,
+        id: p.id || Date.now() + i
+      }));
+    } else {
+      updated = [
+        ...projects,
+        ...newProjects.map((p, i) => ({
+          ...p,
+          id: p.id || Date.now() + i
+        }))
+      ];
+    }
+    setProjects(updated);
+    setStorageItem(STORAGE_KEYS.PROJECTS, updated);
+  };
+
   // Posts
   const addPost = (post: Omit<Post, 'id'>) => {
     const newPost: Post = {
@@ -204,6 +226,26 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     setStorageItem(STORAGE_KEYS.POSTS, updated);
   };
 
+  const importPosts = (newPosts: Post[], mode: 'add' | 'replace') => {
+    let updated: Post[];
+    if (mode === 'replace') {
+      updated = newPosts.map((p, i) => ({
+        ...p,
+        id: p.id || Date.now() + i
+      }));
+    } else {
+      updated = [
+        ...posts,
+        ...newPosts.map((p, i) => ({
+          ...p,
+          id: p.id || Date.now() + i
+        }))
+      ];
+    }
+    setPosts(updated);
+    setStorageItem(STORAGE_KEYS.POSTS, updated);
+  };
+
   // Settings
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
     const updated = { ...settings, ...newSettings };
@@ -216,8 +258,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       categories, products, projects, posts, settings,
       addCategory, updateCategory, deleteCategory, reorderCategories, importCategories,
       addProduct, updateProduct, deleteProduct, importProducts,
-      addProject, updateProject, deleteProject,
-      addPost, updatePost, deletePost,
+      addProject, updateProject, deleteProject, importProjects,
+      addPost, updatePost, deletePost, importPosts,
       updateSettings
     }}>
       {children}

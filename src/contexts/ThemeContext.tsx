@@ -15,6 +15,7 @@ interface ThemeContextType {
   updateCustomTheme: (id: string, theme: Partial<Theme>) => void;
   deleteCustomTheme: (id: string) => void;
   duplicateTheme: (themeId: string) => void;
+  importThemes: (themes: { activeThemeId: string; customThemes: Theme[] }, mode: 'replace' | 'merge') => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -95,6 +96,39 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const importThemes = (themes: { activeThemeId: string; customThemes: Theme[] }, mode: 'replace' | 'merge') => {
+    let updated: ThemeConfig;
+    if (mode === 'replace') {
+      updated = {
+        activeThemeId: themes.activeThemeId,
+        customThemes: themes.customThemes.map((t, i) => ({
+          ...t,
+          id: t.id || `custom_${Date.now()}_${i}`,
+          isPreset: false,
+          createdAt: t.createdAt || Date.now(),
+        })),
+      };
+    } else {
+      // Merge: add new themes, keep existing
+      const existingIds = themeConfig.customThemes.map(t => t.id);
+      const newThemes = themes.customThemes.filter(t => !existingIds.includes(t.id));
+      updated = {
+        activeThemeId: themeConfig.activeThemeId,
+        customThemes: [
+          ...themeConfig.customThemes,
+          ...newThemes.map((t, i) => ({
+            ...t,
+            id: t.id || `custom_${Date.now()}_${i}`,
+            isPreset: false,
+            createdAt: t.createdAt || Date.now(),
+          })),
+        ],
+      };
+    }
+    setThemeConfig(updated);
+    setStorageItem(STORAGE_KEYS.THEME, updated);
+  };
+
   return (
     <ThemeContext.Provider value={{
       themeConfig,
@@ -105,6 +139,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       updateCustomTheme,
       deleteCustomTheme,
       duplicateTheme,
+      importThemes,
     }}>
       {children}
     </ThemeContext.Provider>
