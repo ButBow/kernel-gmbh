@@ -13,9 +13,14 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Tag
 };
 
+const BANNER_DISMISSED_KEY = 'promo_banner_dismissed';
+
 export function PromoBanner() {
   const { settings } = useContent();
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    // Check sessionStorage on initial render
+    return sessionStorage.getItem(BANNER_DISMISSED_KEY) === 'true';
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   
@@ -32,6 +37,11 @@ export function PromoBanner() {
     }, 5000);
     return () => clearInterval(interval);
   }, [promotions.length]);
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    sessionStorage.setItem(BANNER_DISMISSED_KEY, 'true');
+  };
 
   if (dismissed || promotions.length === 0) return null;
 
@@ -153,7 +163,7 @@ export function PromoBanner() {
 
         {/* Close button */}
         <button
-          onClick={() => setDismissed(true)}
+          onClick={handleDismiss}
           className="absolute right-4 p-1 rounded-full hover:bg-white/10 transition-colors"
           aria-label="Banner schließen"
         >
