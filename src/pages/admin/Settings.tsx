@@ -965,34 +965,47 @@ export default function AdminSettings() {
 
         <TabsContent value="legal">
           <div className="space-y-6">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Firmenname, E-Mail, Telefon und Standort werden automatisch aus den Kontaktdaten übernommen. 
+                Hier können Sie den vollständigen rechtlichen Text bearbeiten.
+              </AlertDescription>
+            </Alert>
+
             <Card>
               <CardHeader>
-                <CardTitle>Impressum (zusätzlicher Text)</CardTitle>
+                <CardTitle>Impressum - Vollständiger Text</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Textarea
                   value={form.impressumText}
                   onChange={(e) => setForm({ ...form, impressumText: e.target.value })}
-                  placeholder="Zusätzliche Angaben fürs Impressum..."
-                  rows={8}
+                  placeholder="Vollständiger Impressum-Text..."
+                  rows={15}
+                  className="font-mono text-sm"
                 />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Firmenname, E-Mail, Telefon und Standort werden automatisch aus den Kontaktdaten übernommen.
+                <p className="text-xs text-muted-foreground">
+                  Tipp: Der Text wird nach den automatischen Kontaktdaten angezeigt. Verwenden Sie Absätze für bessere Lesbarkeit.
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Datenschutzerklärung (zusätzlicher Text)</CardTitle>
+                <CardTitle>Datenschutzerklärung - Vollständiger Text</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Textarea
                   value={form.datenschutzText}
                   onChange={(e) => setForm({ ...form, datenschutzText: e.target.value })}
-                  placeholder="Zusätzliche Angaben für den Datenschutz..."
-                  rows={8}
+                  placeholder="Vollständige Datenschutzerklärung..."
+                  rows={20}
+                  className="font-mono text-sm"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Tipp: Fügen Sie hier Ihre vollständige Datenschutzerklärung ein. Der grundlegende Header wird automatisch generiert.
+                </p>
               </CardContent>
             </Card>
           </div>
