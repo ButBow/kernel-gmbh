@@ -4,15 +4,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useContent } from "@/contexts/ContentContext";
-import { X } from "lucide-react";
+import { X, Image as ImageIcon, Video, Play } from "lucide-react";
+import { ProjectGalleryModal } from "@/components/ProjectGalleryModal";
 import type { Project } from "@/data/initialData";
 
 interface ProjectDetailProps {
   project: Project;
   onClose: () => void;
+  onOpenGallery: () => void;
 }
 
-function ProjectDetail({ project, onClose }: ProjectDetailProps) {
+function ProjectDetail({ project, onClose, onOpenGallery }: ProjectDetailProps) {
+  const hasGallery = project.gallery && project.gallery.length > 0;
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
       <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-card rounded-xl border border-border shadow-card animate-scale-in">
@@ -56,8 +60,56 @@ function ProjectDetail({ project, onClose }: ProjectDetailProps) {
               <p className="font-semibold">{project.relatedProduct}</p>
             </div>
           )}
+
+          {/* Gallery Preview */}
+          {hasGallery && (
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground mb-3">
+                Galerie ({project.gallery!.length} {project.gallery!.length === 1 ? 'Element' : 'Elemente'})
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {project.gallery!.slice(0, 4).map((item, index) => (
+                  <button
+                    key={item.id}
+                    onClick={onOpenGallery}
+                    className="aspect-video rounded-lg overflow-hidden bg-muted relative group"
+                  >
+                    {item.type === 'image' ? (
+                      <img
+                        src={item.url}
+                        alt=""
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                        <Play className="h-6 w-6 text-white" />
+                      </div>
+                    )}
+                    {index === 3 && project.gallery!.length > 4 && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <span className="text-white font-semibold">+{project.gallery!.length - 4}</span>
+                      </div>
+                    )}
+                    <div className="absolute bottom-1 right-1">
+                      {item.type === 'video' ? (
+                        <Video className="h-3 w-3 text-white drop-shadow-md" />
+                      ) : (
+                        <ImageIcon className="h-3 w-3 text-white drop-shadow-md" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           
           <div className="flex gap-4">
+            {hasGallery && (
+              <Button onClick={onOpenGallery} className="flex-1">
+                <Play className="h-4 w-4 mr-2" />
+                Arbeit ansehen
+              </Button>
+            )}
             <Button variant="outline" onClick={onClose}>
               Schliessen
             </Button>
@@ -72,6 +124,7 @@ export default function Portfolio() {
   const { projects } = useContent();
   const [selectedCategory, setSelectedCategory] = useState("Alle");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [showGallery, setShowGallery] = useState(false);
 
   // Only show published projects
   const publishedProjects = projects.filter(p => p.status === 'published');
@@ -82,6 +135,14 @@ export default function Portfolio() {
   const filteredProjects = selectedCategory === "Alle"
     ? publishedProjects
     : publishedProjects.filter(p => p.category === selectedCategory);
+
+  const handleOpenGallery = () => {
+    setShowGallery(true);
+  };
+
+  const handleCloseGallery = () => {
+    setShowGallery(false);
+  };
 
   return (
     <Layout>
@@ -133,12 +194,23 @@ export default function Portfolio() {
                   onClick={() => setSelectedProject(project)}
                 >
                   {project.image && (
-                    <div className="aspect-video overflow-hidden">
+                    <div className="aspect-video overflow-hidden relative">
                       <img 
                         src={project.image} 
                         alt={project.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
+                      {project.gallery && project.gallery.length > 0 && (
+                        <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded-md flex items-center gap-1">
+                          {project.gallery.some(g => g.type === 'video') && (
+                            <Video className="h-3 w-3 text-white" />
+                          )}
+                          {project.gallery.some(g => g.type === 'image') && (
+                            <ImageIcon className="h-3 w-3 text-white" />
+                          )}
+                          <span className="text-xs text-white">{project.gallery.length}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                   <CardContent className="p-6">
@@ -166,10 +238,20 @@ export default function Portfolio() {
       </section>
 
       {/* Project Detail Modal */}
-      {selectedProject && (
+      {selectedProject && !showGallery && (
         <ProjectDetail 
           project={selectedProject} 
-          onClose={() => setSelectedProject(null)} 
+          onClose={() => setSelectedProject(null)}
+          onOpenGallery={handleOpenGallery}
+        />
+      )}
+
+      {/* Gallery Modal */}
+      {selectedProject && showGallery && selectedProject.gallery && selectedProject.gallery.length > 0 && (
+        <ProjectGalleryModal
+          items={selectedProject.gallery}
+          projectTitle={selectedProject.title}
+          onClose={handleCloseGallery}
         />
       )}
     </Layout>
