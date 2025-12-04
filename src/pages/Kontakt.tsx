@@ -626,13 +626,13 @@ export default function Kontakt() {
                         <Label>Produkt / Paket (optional)</Label>
                         <Select 
                           value={formData.selectedPackage} 
-                          onValueChange={(value) => handleSelectChange('selectedPackage', value)}
+                          onValueChange={(value) => handleSelectChange('selectedPackage', value === 'none' ? '' : value)}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Produkt auswählen" />
                           </SelectTrigger>
                           <SelectContent className="max-h-[300px]">
-                            <SelectItem value="">Kein Produkt ausgewählt</SelectItem>
+                            <SelectItem value="none">Kein Produkt ausgewählt</SelectItem>
                             {packageOptions.map((option, index) => (
                               <SelectItem key={`${option.value}-${index}`} value={option.value}>
                                 <div className="flex justify-between items-center gap-2">
