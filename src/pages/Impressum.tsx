@@ -29,7 +29,7 @@ export default function Impressum() {
               </h3>
               <p className="text-muted-foreground mb-4">
                 E-Mail: {settings.contactEmail}<br />
-                Telefon: {settings.contactPhone}
+                {settings.contactPhone && <>Telefon: {settings.contactPhone}</>}
               </p>
 
               {settings.impressumText && (
@@ -37,30 +37,6 @@ export default function Impressum() {
                   {settings.impressumText}
                 </div>
               )}
-
-              <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
-                Haftungsausschluss
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Der Autor übernimmt keinerlei Gewähr hinsichtlich der inhaltlichen Richtigkeit, 
-                Genauigkeit, Aktualität, Zuverlässigkeit und Vollständigkeit der Informationen.
-              </p>
-              <p className="text-muted-foreground mb-4">
-                Haftungsansprüche gegen den Autor wegen Schäden materieller oder immaterieller Art, 
-                welche aus dem Zugriff oder der Nutzung bzw. Nichtnutzung der veröffentlichten 
-                Informationen, durch Missbrauch der Verbindung oder durch technische Störungen 
-                entstanden sind, werden ausgeschlossen.
-              </p>
-
-              <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
-                Urheberrechte
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos oder anderen 
-                Dateien auf der Website gehören ausschliesslich {settings.companyName} oder den speziell 
-                genannten Rechtsinhabern. Für die Reproduktion jeglicher Elemente ist die 
-                schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen.
-              </p>
             </div>
           </div>
         </div>

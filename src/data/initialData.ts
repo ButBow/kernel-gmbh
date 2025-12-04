@@ -463,8 +463,46 @@ export const initialSettings: SiteSettings = {
   socialTiktok: "",
   socialFacebook: "",
   footerText: "© 2024 Mein Firmenname. Alle Rechte vorbehalten.",
-  impressumText: "Angaben gemäss Schweizer Recht...",
-  datenschutzText: "Datenschutzerklärung gemäss DSG...",
+  impressumText: `Haftungsausschluss
+
+Der Autor übernimmt keinerlei Gewähr hinsichtlich der inhaltlichen Richtigkeit, Genauigkeit, Aktualität, Zuverlässigkeit und Vollständigkeit der Informationen.
+
+Haftungsansprüche gegen den Autor wegen Schäden materieller oder immaterieller Art, welche aus dem Zugriff oder der Nutzung bzw. Nichtnutzung der veröffentlichten Informationen, durch Missbrauch der Verbindung oder durch technische Störungen entstanden sind, werden ausgeschlossen.
+
+Urheberrechte
+
+Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos oder anderen Dateien auf der Website gehören ausschliesslich dem Betreiber oder den speziell genannten Rechtsinhabern. Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen.`,
+  datenschutzText: `Allgemeine Hinweise
+
+Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.
+
+Datenerfassung auf dieser Website
+
+Kontaktformular
+Wenn Sie uns per Kontaktformular Anfragen zukommen lassen, werden Ihre Angaben aus dem Anfrageformular inklusive der von Ihnen dort angegebenen Kontaktdaten zwecks Bearbeitung der Anfrage und für den Fall von Anschlussfragen bei uns gespeichert. Diese Daten geben wir nicht ohne Ihre Einwilligung weiter.
+
+Server-Log-Dateien
+Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt. Dies sind:
+• Browsertyp und Browserversion
+• Verwendetes Betriebssystem
+• Referrer URL
+• Hostname des zugreifenden Rechners
+• Uhrzeit der Serveranfrage
+• IP-Adresse
+
+Eine Zusammenführung dieser Daten mit anderen Datenquellen wird nicht vorgenommen.
+
+Ihre Rechte
+
+Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben ausserdem ein Recht, die Berichtigung oder Löschung dieser Daten zu verlangen. Hierzu sowie zu weiteren Fragen zum Thema Datenschutz können Sie sich jederzeit an uns wenden.
+
+Cookies
+
+Diese Website verwendet keine Tracking-Cookies. Es werden lediglich technisch notwendige Cookies verwendet, die für den Betrieb der Website erforderlich sind.
+
+Änderungen
+
+Wir können diese Datenschutzerklärung jederzeit ohne Vorankündigung anpassen. Es gilt die jeweils aktuelle, auf unserer Website publizierte Fassung.`,
   apiBaseUrl: "",
   promotions: DEFAULT_PROMOTIONS
 };
