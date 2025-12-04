@@ -41,6 +41,7 @@
 import { Category, Product, Project, Post, SiteSettings, initialSettings } from '@/data/initialData';
 import { Theme, ThemeConfig, initialThemeConfig } from '@/data/themes';
 import { AnalyticsEvent } from '@/contexts/AnalyticsContext';
+import { Inquiry } from '@/types/inquiry';
 
 // Version constants
 export const BACKUP_VERSION = '1.0.0';
@@ -71,6 +72,7 @@ export interface BackupData {
     events: AnalyticsEvent[];
     includeAnalytics: boolean;
   };
+  inquiries?: Inquiry[];
 }
 
 // Options for creating backup
@@ -82,6 +84,7 @@ export interface BackupOptions {
   includeSettings?: boolean;
   includeThemes?: boolean;
   includeAnalytics?: boolean;
+  includeInquiries?: boolean;
 }
 
 // Validation result
@@ -95,6 +98,7 @@ export interface ValidationResult {
     products: number;
     projects: number;
     posts: number;
+    inquiries: number;
     hasSettings: boolean;
     hasThemes: boolean;
     hasAnalytics: boolean;
@@ -159,6 +163,7 @@ function createEmptyBackup(): BackupData {
       events: [],
       includeAnalytics: false,
     },
+    inquiries: [],
   };
 }
 
@@ -174,6 +179,7 @@ export function createFullBackup(
     settings: SiteSettings;
     themeConfig: ThemeConfig;
     analyticsEvents: AnalyticsEvent[];
+    inquiries: Inquiry[];
   },
   options: BackupOptions = {}
 ): BackupData {
@@ -185,6 +191,7 @@ export function createFullBackup(
     includeSettings = true,
     includeThemes = true,
     includeAnalytics = false,
+    includeInquiries = true,
   } = options;
 
   const backup: BackupData = {
@@ -214,6 +221,7 @@ export function createFullBackup(
       includeAnalytics: true,
     };
   }
+  if (includeInquiries) backup.inquiries = data.inquiries;
 
   return backup;
 }
@@ -258,12 +266,18 @@ export function validateBackup(data: unknown): ValidationResult {
     errors.push('Blog-Posts müssen ein Array sein');
   }
 
+  // Validate inquiries
+  if (backupData.inquiries && !Array.isArray(backupData.inquiries)) {
+    errors.push('Anfragen müssen ein Array sein');
+  }
+
   // Create summary
   const summary = {
     categories: Array.isArray(backupData.categories) ? backupData.categories.length : 0,
     products: Array.isArray(backupData.products) ? backupData.products.length : 0,
     projects: Array.isArray(backupData.projects) ? backupData.projects.length : 0,
     posts: Array.isArray(backupData.posts) ? backupData.posts.length : 0,
+    inquiries: Array.isArray(backupData.inquiries) ? backupData.inquiries.length : 0,
     hasSettings: !!backupData.settings,
     hasThemes: !!backupData.themes,
     hasAnalytics: !!backupData.analytics?.events?.length,
@@ -345,6 +359,7 @@ export function importBackup(rawData: unknown): ImportResult {
     settings: processedData.settings ? { ...defaults.settings, ...processedData.settings } : defaults.settings,
     themes: processedData.themes || defaults.themes,
     analytics: processedData.analytics || defaults.analytics,
+    inquiries: processedData.inquiries || defaults.inquiries,
   };
 
   return {

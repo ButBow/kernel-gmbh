@@ -12,7 +12,7 @@
  * ============================================================================
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,12 +23,14 @@ import {
   Download, Upload, AlertCircle, CheckCircle2, 
   FileJson, Database, Palette, BarChart3,
   FileText, FolderOpen, Package, ShoppingBag,
-  AlertTriangle, Info
+  AlertTriangle, Info, MessageSquare
 } from 'lucide-react';
 import { useContent } from '@/contexts/ContentContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { toast } from 'sonner';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
+import { Inquiry } from '@/types/inquiry';
 import {
   BackupOptions,
   ValidationResult,
@@ -56,6 +58,15 @@ export function BackupRestore() {
   const { themeConfig, importThemes } = useTheme();
   const { events: analyticsEvents, importAnalytics } = useAnalytics();
 
+  // Inquiries state
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+
+  // Load inquiries from storage
+  useEffect(() => {
+    const stored = getStorageItem<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []);
+    setInquiries(stored);
+  }, []);
+
   // Export options
   const [exportOptions, setExportOptions] = useState<BackupOptions>({
     includeCategories: true,
@@ -65,6 +76,7 @@ export function BackupRestore() {
     includeSettings: true,
     includeThemes: true,
     includeAnalytics: false,
+    includeInquiries: true,
   });
 
   // Import state
@@ -76,6 +88,9 @@ export function BackupRestore() {
 
   // Handle export
   const handleExport = () => {
+    // Reload inquiries fresh from storage for export
+    const currentInquiries = getStorageItem<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []);
+    
     const backup = createFullBackup(
       {
         categories,
@@ -85,6 +100,7 @@ export function BackupRestore() {
         settings,
         themeConfig,
         analyticsEvents,
+        inquiries: currentInquiries,
       },
       exportOptions
     );
@@ -149,6 +165,16 @@ export function BackupRestore() {
     if (data.analytics?.events?.length) {
       importAnalytics(data.analytics.events, importMode);
     }
+    if (data.inquiries?.length) {
+      if (importMode === 'replace') {
+        setStorageItem(STORAGE_KEYS.INQUIRIES, data.inquiries);
+      } else {
+        const existing = getStorageItem<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []);
+        const merged = [...existing, ...data.inquiries];
+        setStorageItem(STORAGE_KEYS.INQUIRIES, merged);
+      }
+      setInquiries(getStorageItem<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []));
+    }
 
     // Show success message
     const migrationNote = result.migrated 
@@ -163,6 +189,7 @@ export function BackupRestore() {
   };
 
   // Calculate counts
+  const currentInquiries = getStorageItem<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []);
   const counts = {
     categories: categories.length,
     products: products.length,
@@ -170,6 +197,7 @@ export function BackupRestore() {
     posts: posts.length,
     customThemes: themeConfig.customThemes.length,
     analyticsEvents: analyticsEvents.length,
+    inquiries: currentInquiries.length,
   };
 
   return (
@@ -242,13 +270,22 @@ export function BackupRestore() {
               <span className="text-sm">Themes ({counts.customThemes})</span>
             </label>
 
-            <label className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer col-span-2 md:col-span-1">
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
               <Checkbox
                 checked={exportOptions.includeAnalytics}
                 onCheckedChange={(checked) => setExportOptions({ ...exportOptions, includeAnalytics: !!checked })}
               />
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">Analytics ({counts.analyticsEvents})</span>
+            </label>
+
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
+              <Checkbox
+                checked={exportOptions.includeInquiries}
+                onCheckedChange={(checked) => setExportOptions({ ...exportOptions, includeInquiries: !!checked })}
+              />
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Anfragen ({counts.inquiries})</span>
             </label>
           </div>
 
@@ -370,6 +407,9 @@ export function BackupRestore() {
                     </Badge>
                     <Badge variant="secondary" className="justify-center">
                       {importValidation.summary.posts} Posts
+                    </Badge>
+                    <Badge variant="secondary" className="justify-center">
+                      {importValidation.summary.inquiries} Anfragen
                     </Badge>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
