@@ -18,7 +18,7 @@ import { Promotion } from '@/types/promotion';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner } from '@/data/initialData';
+import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner, Executive } from '@/data/initialData';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 const benefitIcons = [Zap, Lightbulb, Shield, CheckCircle];
@@ -974,11 +974,103 @@ export default function AdminSettings() {
               </AlertDescription>
             </Alert>
 
+            {/* Impressum Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Impressum-Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium">Firmensitz</label>
+                    <Input
+                      value={form.companyHeadquarters || ''}
+                      onChange={(e) => setForm({ ...form, companyHeadquarters: e.target.value })}
+                      placeholder="z.B. Les Acacias, Genf, Schweiz"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Handelsregister</label>
+                    <Input
+                      value={form.tradeRegistry || ''}
+                      onChange={(e) => setForm({ ...form, tradeRegistry: e.target.value })}
+                      placeholder="z.B. Handelsregister des Kantons Genf CH-660.0.059.996-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">UID- / MWSt-Nummer</label>
+                  <Input
+                    value={form.uidNumber || ''}
+                    onChange={(e) => setForm({ ...form, uidNumber: e.target.value })}
+                    placeholder="z.B. CHE-103.167.648"
+                  />
+                </div>
+
+                {/* Führungskräfte */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Führungskräfte</label>
+                  <div className="space-y-2">
+                    {(form.executives || []).map((exec, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          value={exec.name}
+                          onChange={(e) => {
+                            const newExecs = [...(form.executives || [])];
+                            newExecs[index] = { ...newExecs[index], name: e.target.value };
+                            setForm({ ...form, executives: newExecs });
+                          }}
+                          placeholder="Name"
+                          className="flex-1"
+                        />
+                        <Input
+                          value={exec.position}
+                          onChange={(e) => {
+                            const newExecs = [...(form.executives || [])];
+                            newExecs[index] = { ...newExecs[index], position: e.target.value };
+                            setForm({ ...form, executives: newExecs });
+                          }}
+                          placeholder="Position (z.B. CEO)"
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newExecs = (form.executives || []).filter((_, i) => i !== index);
+                            setForm({ ...form, executives: newExecs });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newExecs = [...(form.executives || []), { name: '', position: '' }];
+                      setForm({ ...form, executives: newExecs });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Führungskraft hinzufügen
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Impressum - Vollständiger Text
+                  Rechtliche Hinweise (Markdown)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -991,7 +1083,7 @@ export default function AdminSettings() {
                     <Textarea
                       value={form.impressumText}
                       onChange={(e) => setForm({ ...form, impressumText: e.target.value })}
-                      placeholder="## Firmenangaben&#10;&#10;**Inhaber:** Max Mustermann&#10;&#10;## Kontakt&#10;- E-Mail: info@example.ch&#10;- Telefon: +41 12 345 67 89"
+                      placeholder="## Haftungsausschluss&#10;&#10;Der Autor übernimmt keinerlei Gewähr...&#10;&#10;## Urheberrechte&#10;&#10;Die Urheber- und alle anderen Rechte..."
                       rows={15}
                       className="font-mono text-sm"
                     />
