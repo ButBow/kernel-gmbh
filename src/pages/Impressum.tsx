@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { useContent } from "@/contexts/ContentContext";
-
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 export default function Impressum() {
   const { settings } = useContent();
 
@@ -33,8 +33,8 @@ export default function Impressum() {
               </p>
 
               {settings.impressumText && (
-                <div className="mt-8 whitespace-pre-line text-muted-foreground">
-                  {settings.impressumText}
+                <div className="mt-8">
+                  <MarkdownRenderer content={settings.impressumText} />
                 </div>
               )}
             </div>

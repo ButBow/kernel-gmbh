@@ -1,5 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { useContent } from "@/contexts/ContentContext";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 export default function Datenschutz() {
   const { settings } = useContent();
@@ -25,8 +26,8 @@ export default function Datenschutz() {
               </p>
 
               {settings.datenschutzText && (
-                <div className="mt-8 whitespace-pre-line text-muted-foreground">
-                  {settings.datenschutzText}
+                <div className="mt-8">
+                  <MarkdownRenderer content={settings.datenschutzText} />
                 </div>
               )}
 
