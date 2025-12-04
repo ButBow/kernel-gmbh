@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   POSTS: 'cms_posts',
   SETTINGS: 'cms_settings',
   THEME: 'cms_theme',
+  INQUIRIES: 'cms_inquiries',
 } as const;
 
 // Generic storage functions
