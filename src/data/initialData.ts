@@ -85,6 +85,11 @@ export interface Partner {
   quote?: string;
 }
 
+export interface Executive {
+  name: string;
+  position: string;
+}
+
 import { Promotion, DEFAULT_PROMOTIONS } from '@/types/promotion';
 
 export interface SiteSettings {
@@ -116,6 +121,11 @@ export interface SiteSettings {
   footerText: string;
   impressumText: string;
   datenschutzText: string;
+  // Impressum details
+  companyHeadquarters?: string;
+  tradeRegistry?: string;
+  uidNumber?: string;
+  executives?: Executive[];
   // Notion Integration
   notionEnabled?: boolean;
   notionDatabaseId?: string;
@@ -463,13 +473,17 @@ export const initialSettings: SiteSettings = {
   socialTiktok: "",
   socialFacebook: "",
   footerText: "© 2024 Mein Firmenname. Alle Rechte vorbehalten.",
-  impressumText: `Haftungsausschluss
+  companyHeadquarters: "",
+  tradeRegistry: "",
+  uidNumber: "",
+  executives: [],
+  impressumText: `## Haftungsausschluss
 
 Der Autor übernimmt keinerlei Gewähr hinsichtlich der inhaltlichen Richtigkeit, Genauigkeit, Aktualität, Zuverlässigkeit und Vollständigkeit der Informationen.
 
 Haftungsansprüche gegen den Autor wegen Schäden materieller oder immaterieller Art, welche aus dem Zugriff oder der Nutzung bzw. Nichtnutzung der veröffentlichten Informationen, durch Missbrauch der Verbindung oder durch technische Störungen entstanden sind, werden ausgeschlossen.
 
-Urheberrechte
+## Urheberrechte
 
 Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos oder anderen Dateien auf der Website gehören ausschliesslich dem Betreiber oder den speziell genannten Rechtsinhabern. Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen.`,
   datenschutzText: `Allgemeine Hinweise
