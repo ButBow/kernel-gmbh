@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,10 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const { login, loginAttempts, isLocked, lockoutEndTime } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the intended destination from state (set by ProtectedRoute)
+  const from = (location.state as { from?: string })?.from || '/admin';
   const [remainingTime, setRemainingTime] = useState<string>('');
 
   // Update remaining lockout time
@@ -48,7 +52,8 @@ export default function AdminLogin() {
     }
     
     if (login(password)) {
-      navigate('/admin');
+      // Redirect to the originally requested page
+      navigate(from, { replace: true });
     } else {
       const attemptsLeft = 5 - (loginAttempts + 1);
       if (attemptsLeft > 0) {
