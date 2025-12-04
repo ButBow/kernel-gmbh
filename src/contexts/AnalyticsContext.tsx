@@ -30,6 +30,7 @@ interface AnalyticsContextType {
   setConsent: (consent: boolean) => void;
   trackEvent: (type: AnalyticsEvent['type'], page: string, data?: Record<string, string | number>) => void;
   clearAnalytics: () => void;
+  importAnalytics: (newEvents: AnalyticsEvent[], mode: 'replace' | 'merge') => void;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType | null>(null);
@@ -144,6 +145,21 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     setSummary(calculateSummary([]));
   }, []);
 
+  const importAnalytics = useCallback((newEvents: AnalyticsEvent[], mode: 'replace' | 'merge') => {
+    let updated: AnalyticsEvent[];
+    if (mode === 'replace') {
+      updated = newEvents;
+    } else {
+      // Merge: add new events, avoid duplicates by id
+      const existingIds = new Set(events.map(e => e.id));
+      const uniqueNew = newEvents.filter(e => !existingIds.has(e.id));
+      updated = [...events, ...uniqueNew].slice(-1000);
+    }
+    setEvents(updated);
+    setStorageItem(ANALYTICS_KEY, updated);
+    setSummary(calculateSummary(updated));
+  }, [events]);
+
   return (
     <AnalyticsContext.Provider value={{
       events,
@@ -151,7 +167,8 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       consentGiven,
       setConsent,
       trackEvent,
-      clearAnalytics
+      clearAnalytics,
+      importAnalytics
     }}>
       {children}
     </AnalyticsContext.Provider>

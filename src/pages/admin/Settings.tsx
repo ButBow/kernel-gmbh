@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2 } from 'lucide-react';
+import { BackupRestore } from '@/components/admin/BackupRestore';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
@@ -81,6 +82,7 @@ export default function AdminSettings() {
             <TabsTrigger value="contact" className="text-xs sm:text-sm">Kontakt</TabsTrigger>
             <TabsTrigger value="integrations" className="text-xs sm:text-sm">Integrationen</TabsTrigger>
             <TabsTrigger value="theme" className="text-xs sm:text-sm">Design</TabsTrigger>
+            <TabsTrigger value="backup" className="text-xs sm:text-sm">Backup</TabsTrigger>
             <TabsTrigger value="general" className="text-xs sm:text-sm">Allgemein</TabsTrigger>
             <TabsTrigger value="legal" className="text-xs sm:text-sm">Rechtliches</TabsTrigger>
           </TabsList>
@@ -1187,6 +1189,10 @@ export default function AdminSettings() {
 
         <TabsContent value="theme">
           <ThemeManager />
+        </TabsContent>
+
+        <TabsContent value="backup">
+          <BackupRestore />
         </TabsContent>
       </Tabs>
 
