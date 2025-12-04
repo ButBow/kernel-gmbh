@@ -6,7 +6,7 @@ const CONSENT_KEY = 'cookie_consent';
 
 export interface AnalyticsEvent {
   id: string;
-  type: 'page_view' | 'product_click' | 'category_click' | 'contact_click' | 'scroll_depth' | 'time_on_page';
+  type: 'page_view' | 'product_click' | 'category_click' | 'contact_click' | 'scroll_depth' | 'time_on_page' | 'product_inquiry';
   page: string;
   data?: Record<string, string | number>;
   timestamp: string;

@@ -38,14 +38,33 @@
 
     --radius: 0.75rem;
 
-    /* Category colors */
-    --category-video: 270 70% 60%;
-    --category-ai: 210 80% 55%;
-    --category-support: 25 95% 55%;
-    --category-tools: 142 70% 45%;
-    --category-design: 330 80% 60%;
-    --category-text: 45 90% 50%;
-    --category-management: 180 70% 45%;
+    /* Category colors - Auto-assigned to categories by index */
+    /* 12+ distinct colors for automatic category assignment */
+    --category-0: 270 70% 60%;    /* Purple - Video */
+    --category-1: 210 80% 55%;    /* Blue - AI */
+    --category-2: 25 95% 55%;     /* Orange - Support */
+    --category-3: 142 70% 45%;    /* Green - Tools */
+    --category-4: 330 80% 60%;    /* Pink - Design */
+    --category-5: 45 90% 50%;     /* Yellow - Text */
+    --category-6: 180 70% 45%;    /* Cyan - Management */
+    --category-7: 0 80% 60%;      /* Red */
+    --category-8: 280 60% 50%;    /* Violet */
+    --category-9: 160 70% 40%;    /* Teal */
+    --category-10: 30 90% 55%;    /* Amber */
+    --category-11: 200 80% 50%;   /* Sky Blue */
+    --category-12: 350 75% 55%;   /* Rose */
+    --category-13: 120 60% 45%;   /* Emerald */
+    --category-14: 260 70% 55%;   /* Indigo */
+    --category-15: 15 85% 50%;    /* Coral */
+    
+    /* Legacy aliases for backwards compatibility */
+    --category-video: var(--category-0);
+    --category-ai: var(--category-1);
+    --category-support: var(--category-2);
+    --category-tools: var(--category-3);
+    --category-design: var(--category-4);
+    --category-text: var(--category-5);
+    --category-management: var(--category-6);
 
     --sidebar-background: 222 47% 6%;
     --sidebar-foreground: 210 40% 98%;

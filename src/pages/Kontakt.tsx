@@ -1,10 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -14,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useContent } from "@/contexts/ContentContext";
-import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Paperclip, X, FileText, Image as ImageIcon, Package } from "lucide-react";
 import { z } from "zod";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
 import { Inquiry, InquiryAttachment, INQUIRY_TYPES, BUDGET_RANGES } from "@/types/inquiry";
@@ -35,29 +37,127 @@ const contactSchema = z.object({
   company: z.string().optional(),
   inquiryType: z.string().optional(),
   budget: z.string().optional(),
+  selectedPackage: z.string().optional(),
   subject: z.string().optional(),
   message: z.string().min(10, "Nachricht muss mindestens 10 Zeichen haben").max(5000, "Nachricht darf maximal 5000 Zeichen haben")
 });
 
+/**
+ * ============================================================================
+ * AI NOTES: PACKAGE SELECTION IN CONTACT FORM
+ * ============================================================================
+ * 
+ * This form supports pre-filling from URL parameters when coming from Leistungen:
+ * - ?product=ProductName - Pre-selects the product
+ * - ?productPrice=CHF 120-350 - Product price range
+ * - ?package=Basic - Pre-selects specific package/tier
+ * - ?packagePrice=CHF 120-180 - Package price
+ * - ?packageDescription=Description - Package description
+ * 
+ * The selectedPackage is sent to Notion as a multi-select field.
+ * Format: "ProductName - PackageName (Price)"
+ * 
+ * To add new form fields:
+ * 1. Add field to formData state
+ * 2. Add to contactSchema validation
+ * 3. Add UI element in form
+ * 4. Update handleSubmit to include in Notion payload
+ * ============================================================================
+ */
+
 export default function Kontakt() {
   const { toast } = useToast();
-  const { settings } = useContent();
+  const { settings, products } = useContent();
+  const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [attachments, setAttachments] = useState<InquiryAttachment[]>([]);
+  
+  // Pre-filled product/package from URL params
+  const prefilledProduct = searchParams.get('product');
+  const prefilledProductPrice = searchParams.get('productPrice');
+  const prefilledPackage = searchParams.get('package');
+  const prefilledPackagePrice = searchParams.get('packagePrice');
+  const prefilledPackageDescription = searchParams.get('packageDescription');
+  
+  // Build package selection string if pre-filled
+  const getPrefilledPackageString = () => {
+    if (prefilledProduct && prefilledPackage && prefilledPackagePrice) {
+      return `${prefilledProduct} - ${prefilledPackage} (${prefilledPackagePrice})`;
+    }
+    if (prefilledProduct && prefilledProductPrice) {
+      return `${prefilledProduct} (${prefilledProductPrice})`;
+    }
+    return "";
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     company: "",
-    inquiryType: "",
+    inquiryType: prefilledProduct ? "project" : "",
     budget: "",
-    subject: "",
+    selectedPackage: getPrefilledPackageString(),
+    subject: prefilledProduct ? `Anfrage: ${prefilledProduct}${prefilledPackage ? ` - ${prefilledPackage}` : ''}` : "",
     message: "",
     honeypot: ""
   });
+
+  // Build package options from all published products
+  const packageOptions = products
+    .filter(p => p.status === 'published')
+    .flatMap(product => {
+      const options: { value: string; label: string; price: string }[] = [];
+      
+      // Add main product as option
+      options.push({
+        value: `${product.name} (${product.priceText})`,
+        label: product.name,
+        price: product.priceText
+      });
+      
+      // Add showcases/packages as options
+      if (product.showcases && product.showcases.length > 0) {
+        product.showcases.forEach(showcase => {
+          options.push({
+            value: `${product.name} - ${showcase.title} (${showcase.price})`,
+            label: `${product.name} - ${showcase.title}`,
+            price: showcase.price
+          });
+        });
+      }
+      
+      return options;
+    });
+
+  // Auto-set budget based on selected package price
+  useEffect(() => {
+    if (formData.selectedPackage) {
+      // Extract price from package string, e.g. "Product - Package (CHF 120-180)"
+      const priceMatch = formData.selectedPackage.match(/\(([^)]+)\)$/);
+      if (priceMatch) {
+        const priceStr = priceMatch[1];
+        // Try to determine budget range from price
+        const numMatch = priceStr.match(/(\d+)/);
+        if (numMatch) {
+          const price = parseInt(numMatch[1]);
+          let budgetValue = "";
+          if (price < 1000) budgetValue = "under-1k";
+          else if (price < 5000) budgetValue = "1k-5k";
+          else if (price < 10000) budgetValue = "5k-10k";
+          else budgetValue = "10k-plus";
+          
+          // Only auto-set if budget is not manually selected
+          if (!formData.budget || formData.budget === "") {
+            setFormData(prev => ({ ...prev, budget: budgetValue }));
+          }
+        }
+      }
+    }
+  }, [formData.selectedPackage]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,6 +169,12 @@ export default function Kontakt() {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const clearPackageSelection = () => {
+    setFormData(prev => ({ ...prev, selectedPackage: "", subject: "" }));
+    // Clear URL params
+    setSearchParams({});
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,6 +295,7 @@ export default function Kontakt() {
               INQUIRY_TYPES.find(t => t.value === formData.inquiryType)?.label || formData.inquiryType : undefined,
             budget: formData.budget ?
               BUDGET_RANGES.find(b => b.value === formData.budget)?.label || formData.budget : undefined,
+            selectedPackage: formData.selectedPackage || undefined,
             subject: newInquiry.subject,
             message: newInquiry.message,
             hasAttachments: attachments.length > 0,
@@ -237,6 +344,7 @@ export default function Kontakt() {
               <Button onClick={() => {
                 setIsSuccess(false);
                 setAttachments([]);
+                setSearchParams({});
                 setFormData({
                   name: "",
                   email: "",
@@ -244,6 +352,7 @@ export default function Kontakt() {
                   company: "",
                   inquiryType: "",
                   budget: "",
+                  selectedPackage: "",
                   subject: "",
                   message: "",
                   honeypot: ""
@@ -414,6 +523,32 @@ export default function Kontakt() {
                 <CardContent className="p-6 md:p-8">
                   <h2 className="font-display text-xl font-bold mb-6">Nachricht senden</h2>
                   
+                  {/* Pre-filled Package Banner */}
+                  {formData.selectedPackage && (
+                    <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/30">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <Package className="h-5 w-5 text-primary mt-0.5" />
+                          <div>
+                            <p className="font-medium text-sm">Ausgewähltes Paket</p>
+                            <p className="text-primary font-semibold">{formData.selectedPackage}</p>
+                            {prefilledPackageDescription && (
+                              <p className="text-sm text-muted-foreground mt-1">{prefilledPackageDescription}</p>
+                            )}
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={clearPackageSelection}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <input
                       type="text"
@@ -485,8 +620,31 @@ export default function Kontakt() {
                       </div>
                     </div>
 
-                    {/* Inquiry Type & Budget */}
+                    {/* Package Selection & Inquiry Type */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Produkt / Paket (optional)</Label>
+                        <Select 
+                          value={formData.selectedPackage} 
+                          onValueChange={(value) => handleSelectChange('selectedPackage', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Produkt auswählen" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[300px]">
+                            <SelectItem value="">Kein Produkt ausgewählt</SelectItem>
+                            {packageOptions.map((option, index) => (
+                              <SelectItem key={`${option.value}-${index}`} value={option.value}>
+                                <div className="flex justify-between items-center gap-2">
+                                  <span>{option.label}</span>
+                                  <Badge variant="secondary" className="text-xs">{option.price}</Badge>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div className="space-y-2">
                         <Label>Art der Anfrage (optional)</Label>
                         <Select 
@@ -505,25 +663,33 @@ export default function Kontakt() {
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label>Budget (optional)</Label>
-                        <Select 
-                          value={formData.budget} 
-                          onValueChange={(value) => handleSelectChange('budget', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Bitte wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {BUDGET_RANGES.map((range) => (
-                              <SelectItem key={range.value} value={range.value}>
-                                {range.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    {/* Budget (shown if no package selected, or always visible) */}
+                    <div className="space-y-2">
+                      <Label>
+                        Budget (optional)
+                        {formData.selectedPackage && (
+                          <span className="text-xs text-muted-foreground ml-2">
+                            (automatisch vom Paket übernommen)
+                          </span>
+                        )}
+                      </Label>
+                      <Select 
+                        value={formData.budget} 
+                        onValueChange={(value) => handleSelectChange('budget', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Bitte wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BUDGET_RANGES.map((range) => (
+                            <SelectItem key={range.value} value={range.value}>
+                              {range.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
