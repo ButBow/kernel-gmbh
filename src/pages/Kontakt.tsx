@@ -272,34 +272,44 @@ export default function Kontakt() {
     // Try to send to Notion if enabled
     if (settings.notionEnabled && settings.notionDatabaseId && settings.notionApiKey) {
       try {
-        // Generate the admin inquiry link
-        const inquiryLink = `${window.location.origin}/admin/inquiries/${newInquiry.id}`;
+        // Generate the admin inquiry link - use configured base URL or current origin
+        const siteBaseUrl = settings.apiBaseUrl?.replace(/\/$/, '') || window.location.origin;
+        const inquiryLink = `${siteBaseUrl}/admin/inquiries/${newInquiry.id}`;
         
-        const baseUrl = settings.apiBaseUrl?.replace(/\/$/, '') || '';
-        const response = await fetch(`${baseUrl}/api/contact`, {
+        console.log('📧 Sending to Notion with inquiry link:', inquiryLink);
+        
+        const apiBaseUrl = settings.apiBaseUrl?.replace(/\/$/, '') || '';
+        const notionPayload = {
+          name: newInquiry.name,
+          email: newInquiry.email,
+          phone: newInquiry.phone,
+          company: newInquiry.company,
+          inquiryType: formData.inquiryType ? 
+            INQUIRY_TYPES.find(t => t.value === formData.inquiryType)?.label || formData.inquiryType : undefined,
+          budget: formData.budget ?
+            BUDGET_RANGES.find(b => b.value === formData.budget)?.label || formData.budget : undefined,
+          selectedPackage: formData.selectedPackage || undefined,
+          subject: newInquiry.subject,
+          message: newInquiry.message,
+          hasAttachments: attachments.length > 0,
+          inquiryLink: inquiryLink,
+          notionDatabaseId: settings.notionDatabaseId,
+          notionApiKey: settings.notionApiKey,
+        };
+        
+        console.log('📤 Notion payload:', JSON.stringify(notionPayload, null, 2));
+        
+        const response = await fetch(`${apiBaseUrl}/api/contact`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: newInquiry.name,
-            email: newInquiry.email,
-            phone: newInquiry.phone,
-            company: newInquiry.company,
-            inquiryType: formData.inquiryType ? 
-              INQUIRY_TYPES.find(t => t.value === formData.inquiryType)?.label || formData.inquiryType : undefined,
-            budget: formData.budget ?
-              BUDGET_RANGES.find(b => b.value === formData.budget)?.label || formData.budget : undefined,
-            selectedPackage: formData.selectedPackage || undefined,
-            subject: newInquiry.subject,
-            message: newInquiry.message,
-            hasAttachments: attachments.length > 0,
-            inquiryLink: inquiryLink,
-            notionDatabaseId: settings.notionDatabaseId,
-            notionApiKey: settings.notionApiKey,
-          }),
+          body: JSON.stringify(notionPayload),
         });
 
         if (!response.ok) {
-          console.warn('Notion sync failed, but local save succeeded');
+          const errorText = await response.text();
+          console.warn('Notion sync failed:', errorText);
+        } else {
+          console.log('✅ Notion sync successful');
         }
       } catch (error) {
         console.warn('Notion API not reachable, but local save succeeded:', error);

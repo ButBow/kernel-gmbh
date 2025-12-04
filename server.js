@@ -6,7 +6,7 @@
  * Usage: node server.js
  * Or with custom port: PORT=8080 node server.js
  * 
- * Last updated: 2025-12-03 23:45
+ * Last updated: 2025-12-04 - Added Anfragen-Link property for Notion
  */
 
 import http from 'http';
@@ -457,10 +457,13 @@ async function createNotionPage(data, databaseId, apiKey) {
     properties['Hat Anhänge'] = { checkbox: true };
   }
   
-  // Add direct link to admin inquiry page
+  // Add direct link to admin inquiry page - ALWAYS add this property
   if (data.inquiryLink) {
     properties['Anfragen-Link'] = { url: data.inquiryLink };
     console.log(`[${new Date().toISOString()}] 🔗 Adding inquiry link to Notion: ${data.inquiryLink}`);
+  } else {
+    console.log(`[${new Date().toISOString()}] ⚠️ No inquiry link provided in data`);
+    console.log(`[${new Date().toISOString()}] 📋 Received data keys: ${Object.keys(data).join(', ')}`);
   }
   
   /**
