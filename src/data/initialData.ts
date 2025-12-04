@@ -28,6 +28,14 @@ export interface Product {
   featured?: boolean;
 }
 
+export interface GalleryItem {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  thumbnail?: string;
+  title?: string;
+}
+
 export interface Project {
   id: number;
   title: string;
@@ -38,6 +46,7 @@ export interface Project {
   tags: string[];
   relatedProduct: string;
   status: 'draft' | 'published';
+  gallery?: GalleryItem[];
 }
 
 export interface Post {

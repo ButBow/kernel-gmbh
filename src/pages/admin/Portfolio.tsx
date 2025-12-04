@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import { GalleryUpload } from '@/components/admin/GalleryUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import {
   Dialog,
@@ -16,8 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import type { Project } from '@/data/initialData';
+import { Plus, Pencil, Trash2, Image, Video } from 'lucide-react';
+import type { Project, GalleryItem } from '@/data/initialData';
 
 const projectCategories = ['Video', 'AI-System', 'Tool', 'Beratung', 'Design'];
 
@@ -35,7 +36,8 @@ export default function AdminPortfolio() {
     image: '',
     tags: [],
     relatedProduct: '',
-    status: 'draft'
+    status: 'draft',
+    gallery: []
   });
 
   const resetForm = () => {
@@ -47,7 +49,8 @@ export default function AdminPortfolio() {
       image: '',
       tags: [],
       relatedProduct: '',
-      status: 'draft'
+      status: 'draft',
+      gallery: []
     });
     setEditingProject(null);
     setTagInput('');
@@ -74,7 +77,8 @@ export default function AdminPortfolio() {
       image: project.image,
       tags: [...project.tags],
       relatedProduct: project.relatedProduct,
-      status: project.status
+      status: project.status,
+      gallery: project.gallery ? [...project.gallery] : []
     });
     setDialogOpen(true);
   };
@@ -199,6 +203,14 @@ export default function AdminPortfolio() {
                     value={form.relatedProduct}
                     onChange={(e) => setForm({ ...form, relatedProduct: e.target.value })}
                     placeholder="Produktname (optional)"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Galerie (Bilder & Videos)</label>
+                  <GalleryUpload
+                    value={form.gallery || []}
+                    onChange={(items) => setForm({ ...form, gallery: items })}
                   />
                 </div>
 
