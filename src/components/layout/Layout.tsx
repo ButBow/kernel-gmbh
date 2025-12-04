@@ -10,8 +10,10 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
-      <PromoBanner />
       <Header />
+      <div className="sticky top-16 z-40">
+        <PromoBanner />
+      </div>
       <main className="flex-1 pt-16">
         {children}
       </main>
