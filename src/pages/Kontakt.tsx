@@ -17,10 +17,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useContent } from "@/contexts/ContentContext";
 import { PackageSelector } from "@/components/PackageSelector";
-import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Paperclip, X, FileText, Image as ImageIcon, Package } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Paperclip, X, FileText, Image as ImageIcon, Package, Tag, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
 import { Inquiry, InquiryAttachment, INQUIRY_TYPES, BUDGET_RANGES } from "@/types/inquiry";
+import { Promotion } from "@/types/promotion";
+import { validateDiscountCode } from "@/components/PromoBanner";
 import { 
   MAX_FILE_SIZE, 
   MAX_FILES, 
@@ -40,7 +42,8 @@ const contactSchema = z.object({
   budget: z.string().optional(),
   selectedPackage: z.string().optional(),
   subject: z.string().optional(),
-  message: z.string().min(10, "Nachricht muss mindestens 10 Zeichen haben").max(5000, "Nachricht darf maximal 5000 Zeichen haben")
+  message: z.string().min(10, "Nachricht muss mindestens 10 Zeichen haben").max(5000, "Nachricht darf maximal 5000 Zeichen haben"),
+  discountCode: z.string().optional()
 });
 
 /**
@@ -104,8 +107,13 @@ export default function Kontakt() {
     selectedPackage: getPrefilledPackageString(),
     subject: prefilledProduct ? `Anfrage: ${prefilledProduct}${prefilledPackage ? ` - ${prefilledPackage}` : ''}` : "",
     message: "",
+    discountCode: "",
     honeypot: ""
   });
+
+  // Discount code validation
+  const [validatedPromo, setValidatedPromo] = useState<Promotion | null>(null);
+  const promotions: Promotion[] = settings.promotions || [];
 
   // Published products for PackageSelector
   const publishedProducts = products.filter(p => p.status === 'published');
@@ -250,6 +258,11 @@ export default function Kontakt() {
       createdAt: new Date().toISOString(),
       read: false,
       replied: false,
+      // Discount code info
+      discountCode: validatedPromo?.discountCode,
+      discountCodeValid: !!validatedPromo,
+      discountPercent: validatedPromo?.discountPercent,
+      discountConfirmed: false, // Admin confirms later
     };
 
     // Save locally first
@@ -322,6 +335,7 @@ export default function Kontakt() {
                 setIsSuccess(false);
                 setAttachments([]);
                 setSearchParams({});
+                setValidatedPromo(null);
                 setFormData({
                   name: "",
                   email: "",
@@ -332,6 +346,7 @@ export default function Kontakt() {
                   selectedPackage: "",
                   subject: "",
                   message: "",
+                  discountCode: "",
                   honeypot: ""
                 });
               }}>
@@ -665,6 +680,46 @@ export default function Kontakt() {
                         onChange={handleChange}
                         placeholder="Worum geht es?"
                       />
+                    </div>
+
+                    {/* Discount Code */}
+                    <div className="space-y-2">
+                      <Label htmlFor="discountCode" className="flex items-center gap-2">
+                        <Tag className="h-4 w-4" />
+                        Rabattcode (optional)
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="discountCode"
+                          name="discountCode"
+                          value={formData.discountCode}
+                          onChange={(e) => {
+                            handleChange(e);
+                            // Validate on change
+                            const promo = validateDiscountCode(e.target.value, promotions);
+                            setValidatedPromo(promo);
+                          }}
+                          placeholder="z.B. STUDENT40"
+                          className={validatedPromo ? "border-green-500" : ""}
+                        />
+                        {validatedPromo && (
+                          <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-md text-green-500 text-sm font-medium whitespace-nowrap">
+                            <CheckCircle2 className="h-4 w-4" />
+                            -{validatedPromo.discountPercent}%
+                          </div>
+                        )}
+                      </div>
+                      {validatedPromo && (
+                        <p className="text-sm text-green-500 flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          {validatedPromo.name}: {validatedPromo.description}
+                        </p>
+                      )}
+                      {formData.discountCode && !validatedPromo && (
+                        <p className="text-sm text-muted-foreground">
+                          Code nicht gefunden oder abgelaufen
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">

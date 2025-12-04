@@ -85,6 +85,8 @@ export interface Partner {
   quote?: string;
 }
 
+import { Promotion, DEFAULT_PROMOTIONS } from '@/types/promotion';
+
 export interface SiteSettings {
   companyName: string;
   ownerName: string;
@@ -120,7 +122,11 @@ export interface SiteSettings {
   notionApiKey?: string;
   // Server/API configuration for self-hosting
   apiBaseUrl?: string;
+  // Promotions & Discount Codes
+  promotions?: Promotion[];
 }
+
+export { DEFAULT_PROMOTIONS };
 
 export const initialCategories: Category[] = [
   { id: "video", name: "Video & Social Media Editing", description: "Professionelle Videoproduktion für Social Media und Events.", icon: "Video", order: 1 },
@@ -459,5 +465,6 @@ export const initialSettings: SiteSettings = {
   footerText: "© 2024 Mein Firmenname. Alle Rechte vorbehalten.",
   impressumText: "Angaben gemäss Schweizer Recht...",
   datenschutzText: "Datenschutzerklärung gemäss DSG...",
-  apiBaseUrl: ""
+  apiBaseUrl: "",
+  promotions: DEFAULT_PROMOTIONS
 };
