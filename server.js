@@ -224,6 +224,22 @@ const REQUIRED_NOTION_PROPERTIES = {
   
   /**
    * ============================================================================
+   * AI NOTES: ANFRAGEN-LINK - DIRECT LINK TO ADMIN PANEL
+   * ============================================================================
+   * 
+   * This URL field stores a direct link to the inquiry in the admin panel.
+   * Format: https://yourdomain.com/admin/inquiries/{inquiry-id}
+   * 
+   * Benefits:
+   * - Click directly from Notion to view full inquiry details
+   * - See attachments (not possible in Notion)
+   * - Manage inquiry status
+   * ============================================================================
+   */
+  'Anfragen-Link': { type: 'url' },
+  
+  /**
+   * ============================================================================
    * AI NOTES: PRODUKT/PAKET MULTI-SELECT FIELD
    * ============================================================================
    * 
@@ -439,6 +455,12 @@ async function createNotionPage(data, databaseId, apiKey) {
   }
   if (data.hasAttachments) {
     properties['Hat Anhänge'] = { checkbox: true };
+  }
+  
+  // Add direct link to admin inquiry page
+  if (data.inquiryLink) {
+    properties['Anfragen-Link'] = { url: data.inquiryLink };
+    console.log(`[${new Date().toISOString()}] 🔗 Adding inquiry link to Notion: ${data.inquiryLink}`);
   }
   
   /**
