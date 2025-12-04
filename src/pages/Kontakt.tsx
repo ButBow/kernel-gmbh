@@ -272,6 +272,9 @@ export default function Kontakt() {
     // Try to send to Notion if enabled
     if (settings.notionEnabled && settings.notionDatabaseId && settings.notionApiKey) {
       try {
+        // Generate the admin inquiry link
+        const inquiryLink = `${window.location.origin}/admin/inquiries/${newInquiry.id}`;
+        
         const baseUrl = settings.apiBaseUrl?.replace(/\/$/, '') || '';
         const response = await fetch(`${baseUrl}/api/contact`, {
           method: 'POST',
@@ -289,6 +292,7 @@ export default function Kontakt() {
             subject: newInquiry.subject,
             message: newInquiry.message,
             hasAttachments: attachments.length > 0,
+            inquiryLink: inquiryLink,
             notionDatabaseId: settings.notionDatabaseId,
             notionApiKey: settings.notionApiKey,
           }),

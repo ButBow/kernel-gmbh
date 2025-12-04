@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,9 @@ import {
   Download,
   FileArchive,
   FileText,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Link2,
+  Copy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -57,35 +60,52 @@ const STORAGE_KEY = 'cms_inquiries';
 
 export default function AdminInquiries() {
   const { toast } = useToast();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
 
   useEffect(() => {
     const stored = getStorageItem<Inquiry[]>(STORAGE_KEY, []);
     setInquiries(stored);
-  }, []);
+    
+    // If URL has an ID, open that inquiry
+    if (id) {
+      const inquiry = stored.find(i => i.id === id);
+      if (inquiry) {
+        setSelectedInquiry(inquiry);
+        if (!inquiry.read) {
+          markAsReadById(inquiry.id, stored);
+        }
+      }
+    }
+  }, [id]);
 
   const saveInquiries = (updated: Inquiry[]) => {
     setInquiries(updated);
     setStorageItem(STORAGE_KEY, updated);
   };
 
-  const markAsRead = (id: string) => {
-    const updated = inquiries.map(i => 
-      i.id === id ? { ...i, read: true } : i
+  const markAsReadById = (inquiryId: string, currentInquiries: Inquiry[]) => {
+    const updated = currentInquiries.map(i => 
+      i.id === inquiryId ? { ...i, read: true } : i
     );
     saveInquiries(updated);
-    if (selectedInquiry?.id === id) {
+  };
+
+  const markAsRead = (inquiryId: string) => {
+    markAsReadById(inquiryId, inquiries);
+    if (selectedInquiry?.id === inquiryId) {
       setSelectedInquiry({ ...selectedInquiry, read: true });
     }
   };
 
-  const toggleReplied = (id: string) => {
+  const toggleReplied = (inquiryId: string) => {
     const updated = inquiries.map(i => 
-      i.id === id ? { ...i, replied: !i.replied } : i
+      i.id === inquiryId ? { ...i, replied: !i.replied } : i
     );
     saveInquiries(updated);
-    if (selectedInquiry?.id === id) {
+    if (selectedInquiry?.id === inquiryId) {
       setSelectedInquiry({ ...selectedInquiry, replied: !selectedInquiry.replied });
     }
     toast({
@@ -94,10 +114,11 @@ export default function AdminInquiries() {
     });
   };
 
-  const deleteInquiry = (id: string) => {
-    const updated = inquiries.filter(i => i.id !== id);
+  const deleteInquiry = (inquiryId: string) => {
+    const updated = inquiries.filter(i => i.id !== inquiryId);
     saveInquiries(updated);
     setSelectedInquiry(null);
+    navigate('/admin/inquiries');
     toast({
       title: 'Anfrage gelöscht',
       description: 'Die Anfrage wurde entfernt.',
@@ -105,10 +126,30 @@ export default function AdminInquiries() {
   };
 
   const openInquiry = (inquiry: Inquiry) => {
+    // Update URL to include inquiry ID
+    navigate(`/admin/inquiries/${inquiry.id}`);
     setSelectedInquiry(inquiry);
     if (!inquiry.read) {
       markAsRead(inquiry.id);
     }
+  };
+
+  const closeInquiry = () => {
+    setSelectedInquiry(null);
+    navigate('/admin/inquiries');
+  };
+
+  const getInquiryLink = (inquiryId: string) => {
+    return `${window.location.origin}/admin/inquiries/${inquiryId}`;
+  };
+
+  const copyInquiryLink = (inquiryId: string) => {
+    const link = getInquiryLink(inquiryId);
+    navigator.clipboard.writeText(link);
+    toast({
+      title: 'Link kopiert',
+      description: 'Der Anfrage-Link wurde in die Zwischenablage kopiert.',
+    });
   };
 
   const handleExportSingle = (inquiry: Inquiry) => {
@@ -258,7 +299,7 @@ export default function AdminInquiries() {
       </div>
 
       {/* Inquiry Detail Dialog */}
-      <Dialog open={!!selectedInquiry} onOpenChange={() => setSelectedInquiry(null)}>
+      <Dialog open={!!selectedInquiry} onOpenChange={(open) => !open && closeInquiry()}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -268,6 +309,21 @@ export default function AdminInquiries() {
           </DialogHeader>
           {selectedInquiry && (
             <div className="space-y-4">
+              {/* Inquiry Link */}
+              <div className="flex items-center gap-2 p-3 bg-secondary/50 rounded-lg">
+                <Link2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <code className="text-xs flex-1 truncate text-muted-foreground">
+                  {getInquiryLink(selectedInquiry.id)}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyInquiryLink(selectedInquiry.id)}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+
               {/* Contact Info Grid */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
