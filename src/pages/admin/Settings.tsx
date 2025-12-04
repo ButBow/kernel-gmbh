@@ -12,7 +12,9 @@ import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
 import { BackupRestore } from '@/components/admin/BackupRestore';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag } from 'lucide-react';
+import { PromotionManager } from '@/components/admin/PromotionManager';
+import { Promotion } from '@/types/promotion';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
@@ -78,6 +80,7 @@ export default function AdminSettings() {
           <TabsList className="inline-flex w-max min-w-full sm:w-auto">
             <TabsTrigger value="home" className="text-xs sm:text-sm">Startseite</TabsTrigger>
             <TabsTrigger value="partners" className="text-xs sm:text-sm">Partner</TabsTrigger>
+            <TabsTrigger value="promotions" className="text-xs sm:text-sm">Aktionen</TabsTrigger>
             <TabsTrigger value="about" className="text-xs sm:text-sm">Über mich</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs sm:text-sm">Kontakt</TabsTrigger>
             <TabsTrigger value="integrations" className="text-xs sm:text-sm">Integrationen</TabsTrigger>
@@ -1185,6 +1188,13 @@ export default function AdminSettings() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="promotions">
+          <PromotionManager
+            promotions={form.promotions || []}
+            onChange={(promotions) => setForm({ ...form, promotions })}
+          />
         </TabsContent>
 
         <TabsContent value="theme">

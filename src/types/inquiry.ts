@@ -20,6 +20,11 @@ export interface Inquiry {
   createdAt: string;
   read: boolean;
   replied: boolean;
+  // Discount code fields
+  discountCode?: string;
+  discountCodeValid?: boolean;
+  discountPercent?: number;
+  discountConfirmed?: boolean; // Admin can confirm/reject the discount
 }
 
 export const INQUIRY_TYPES = [
