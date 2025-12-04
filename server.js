@@ -220,7 +220,32 @@ const REQUIRED_NOTION_PROPERTIES = {
     options: ['Unter CHF 500', 'CHF 500-1000', 'CHF 1000-3000', 'CHF 3000-5000', 'Über CHF 5000', 'Auf Anfrage'] 
   },
   'Betreff': { type: 'rich_text' },
-  'Hat Anhänge': { type: 'checkbox' }
+  'Hat Anhänge': { type: 'checkbox' },
+  
+  /**
+   * ============================================================================
+   * AI NOTES: PRODUKT/PAKET MULTI-SELECT FIELD
+   * ============================================================================
+   * 
+   * This multi-select field stores the selected product/package from the contact form.
+   * Format: "ProductName - PackageName (Price)" or "ProductName (Price)"
+   * 
+   * How it works:
+   * - Multi-select allows storing multiple values (though form sends one at a time)
+   * - New packages are automatically added as options when first submitted
+   * - This preserves all historical package options in the database
+   * - Options are NOT pre-defined - they are created dynamically on first use
+   * 
+   * Benefits:
+   * - User sees which package was requested
+   * - Can filter/sort by package in Notion
+   * - Historical tracking of all packages ever requested
+   * ============================================================================
+   */
+  'Produkt/Paket': { 
+    type: 'multi_select',
+    options: [] // Options are created dynamically when new packages are submitted
+  }
 };
 
 /**
@@ -302,6 +327,13 @@ async function ensureNotionProperties(databaseId, apiKey) {
         case 'select':
           propertiesToCreate[propName] = { 
             select: { 
+              options: (propDef.options || []).map(name => ({ name, color: 'default' }))
+            } 
+          };
+          break;
+        case 'multi_select':
+          propertiesToCreate[propName] = { 
+            multi_select: { 
               options: (propDef.options || []).map(name => ({ name, color: 'default' }))
             } 
           };
@@ -407,6 +439,29 @@ async function createNotionPage(data, databaseId, apiKey) {
   }
   if (data.hasAttachments) {
     properties['Hat Anhänge'] = { checkbox: true };
+  }
+  
+  /**
+   * ============================================================================
+   * AI NOTES: MULTI-SELECT HANDLING FOR PRODUKT/PAKET
+   * ============================================================================
+   * 
+   * Multi-select in Notion works differently than select:
+   * - Must pass an array of objects with 'name' property
+   * - New options are automatically created if they don't exist
+   * - Options persist in the database for future filtering
+   * 
+   * Format sent from frontend: "ProductName - PackageName (Price)"
+   * This is stored as a single multi-select option for easy filtering.
+   * ============================================================================
+   */
+  if (data.selectedPackage) {
+    // Truncate to 100 chars (Notion limit for option names)
+    const packageName = sanitizeText(data.selectedPackage).slice(0, 100);
+    properties['Produkt/Paket'] = { 
+      multi_select: [{ name: packageName }] 
+    };
+    console.log(`[${new Date().toISOString()}] 📦 Adding package to Notion: ${packageName}`);
   }
 
   // Message goes into page content, not properties (to allow longer text)

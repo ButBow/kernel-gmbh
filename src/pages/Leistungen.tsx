@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useContent } from "@/contexts/ContentContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { getCategoryColors } from "@/lib/categoryColors";
 import { 
   Video, 
   Cpu, 
@@ -17,66 +18,23 @@ import {
   ChevronRight,
   X,
   Package,
-  Star
+  Star,
+  Send
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import type { Product } from "@/data/initialData";
+import { Link, useNavigate } from "react-router-dom";
+import type { Product, Showcase } from "@/data/initialData";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Video, Cpu, Wrench, Code, Image, FileText, Users, Package
 };
 
-const categoryColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-  video: { 
-    bg: "bg-[hsl(var(--category-video)/.15)]", 
-    border: "border-[hsl(var(--category-video)/.5)]", 
-    text: "text-[hsl(var(--category-video))]",
-    glow: "hover:shadow-[0_0_30px_hsl(var(--category-video)/.3)]"
-  },
-  ai: { 
-    bg: "bg-[hsl(var(--category-ai)/.15)]", 
-    border: "border-[hsl(var(--category-ai)/.5)]", 
-    text: "text-[hsl(var(--category-ai))]",
-    glow: "hover:shadow-[0_0_30px_hsl(var(--category-ai)/.3)]"
-  },
-  support: { 
-    bg: "bg-[hsl(var(--category-support)/.15)]", 
-    border: "border-[hsl(var(--category-support)/.5)]", 
-    text: "text-[hsl(var(--category-support))]",
-    glow: "hover:shadow-[0_0_30px_hsl(var(--category-support)/.3)]"
-  },
-  tools: { 
-    bg: "bg-[hsl(var(--category-tools)/.15)]", 
-    border: "border-[hsl(var(--category-tools)/.5)]", 
-    text: "text-[hsl(var(--category-tools))]",
-    glow: "hover:shadow-[0_0_30px_hsl(var(--category-tools)/.3)]"
-  },
-  design: { 
-    bg: "bg-[hsl(var(--category-design)/.15)]", 
-    border: "border-[hsl(var(--category-design)/.5)]", 
-    text: "text-[hsl(var(--category-design))]",
-    glow: "hover:shadow-[0_0_30px_hsl(var(--category-design)/.3)]"
-  },
-  text: { 
-    bg: "bg-[hsl(var(--category-text)/.15)]", 
-    border: "border-[hsl(var(--category-text)/.5)]", 
-    text: "text-[hsl(var(--category-text))]",
-    glow: "hover:shadow-[0_0_30px_hsl(var(--category-text)/.3)]"
-  },
-  management: { 
-    bg: "bg-[hsl(var(--category-management)/.15)]", 
-    border: "border-[hsl(var(--category-management)/.5)]", 
-    text: "text-[hsl(var(--category-management))]",
-    glow: "hover:shadow-[0_0_30px_hsl(var(--category-management)/.3)]"
-  },
-};
-
 interface ProductDetailProps {
   product: Product;
   onClose: () => void;
+  onInquiry: (product: Product, showcase?: Showcase) => void;
 }
 
-function ProductDetail({ product, onClose }: ProductDetailProps) {
+function ProductDetail({ product, onClose, onInquiry }: ProductDetailProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card rounded-xl border border-border shadow-card animate-scale-in">
@@ -113,12 +71,24 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
               <h3 className="font-display font-semibold mb-4">Pakete & Varianten</h3>
               <div className="space-y-4">
                 {product.showcases.map((showcase, index) => (
-                  <div key={index} className="p-4 rounded-lg bg-secondary/50 border border-border">
+                  <div 
+                    key={index} 
+                    className="p-4 rounded-lg bg-secondary/50 border border-border hover:border-primary/50 transition-colors group"
+                  >
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-semibold">{showcase.title}</h4>
                       <span className="text-primary font-semibold">{showcase.price}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{showcase.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{showcase.description}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => onInquiry(product, showcase)}
+                    >
+                      <Send className="h-3 w-3 mr-1" />
+                      Dieses Paket anfragen
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -126,8 +96,8 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
           )}
           
           <div className="flex gap-4">
-            <Button asChild className="flex-1">
-              <Link to="/kontakt">Anfragen</Link>
+            <Button onClick={() => onInquiry(product)} className="flex-1">
+              Anfragen
             </Button>
             <Button variant="outline" onClick={onClose}>
               Schliessen
@@ -142,6 +112,7 @@ function ProductDetail({ product, onClose }: ProductDetailProps) {
 export default function Leistungen() {
   const { categories, products } = useContent();
   const { trackEvent } = useAnalytics();
+  const navigate = useNavigate();
   usePageTracking();
   
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -170,6 +141,29 @@ export default function Leistungen() {
   const handleCategoryClick = (categoryId: string | null, categoryName: string) => {
     trackEvent('category_click', '/leistungen', { categoryName });
     setSelectedCategory(categoryId);
+  };
+
+  /**
+   * Handle inquiry from product detail - navigates to contact with pre-filled data
+   */
+  const handleInquiry = (product: Product, showcase?: Showcase) => {
+    trackEvent('product_inquiry', '/leistungen', { 
+      productName: product.name,
+      packageName: showcase?.title || 'general'
+    });
+    
+    // Build URL params for contact form pre-fill
+    const params = new URLSearchParams();
+    params.set('product', product.name);
+    params.set('productPrice', product.priceText);
+    
+    if (showcase) {
+      params.set('package', showcase.title);
+      params.set('packagePrice', showcase.price);
+      params.set('packageDescription', showcase.description);
+    }
+    
+    navigate(`/kontakt?${params.toString()}`);
   };
 
   const selectedCategoryData = selectedCategory
@@ -257,7 +251,7 @@ export default function Leistungen() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredProducts.slice(0, 3).map((product) => {
                 const category = categories.find(c => c.id === product.categoryId);
-                const colors = categoryColors[product.categoryId] || categoryColors.video;
+                const colors = getCategoryColors(product.categoryId, categories);
                 return (
                   <Card 
                     key={product.id}
@@ -302,7 +296,7 @@ export default function Leistungen() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProducts.map((product) => {
               const category = categories.find(c => c.id === product.categoryId);
-              const colors = categoryColors[product.categoryId] || categoryColors.video;
+              const colors = getCategoryColors(product.categoryId, categories);
               return (
                 <Card 
                   key={product.id}
@@ -347,7 +341,8 @@ export default function Leistungen() {
       {selectedProduct && (
         <ProductDetail 
           product={selectedProduct} 
-          onClose={() => setSelectedProduct(null)} 
+          onClose={() => setSelectedProduct(null)}
+          onInquiry={handleInquiry}
         />
       )}
     </Layout>
