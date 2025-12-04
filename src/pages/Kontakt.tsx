@@ -605,6 +605,7 @@ export default function Kontakt() {
                         categories={categories}
                         value={formData.selectedPackage}
                         onChange={(value) => handleSelectChange('selectedPackage', value)}
+                        defaultCollapsed={!!prefilledProduct}
                       />
                     </div>
 

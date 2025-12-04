@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronDown, ChevronRight, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getCategoryColors, type CategoryColorSet } from "@/lib/categoryColors";
@@ -25,29 +25,20 @@ interface PackageSelectorProps {
   categories: Category[];
   value: string;
   onChange: (value: string) => void;
+  defaultCollapsed?: boolean;
 }
 
-/**
- * ============================================================================
- * AI NOTES: GROUPED PACKAGE SELECTOR
- * ============================================================================
- * 
- * This component displays packages grouped by category with expandable sections.
- * - Categories are color-coded using the same colors as Leistungen page
- * - Products within each category can be expanded to show individual packages
- * - Clicking a product selects it with its price range
- * - Clicking a package selects that specific package with its price
- * 
- * Data flow:
- * - products: All published products from ContentContext
- * - categories: All categories from ContentContext
- * - value: Currently selected package string (format: "Product - Package (Price)")
- * - onChange: Callback when selection changes
- * ============================================================================
- */
-export function PackageSelector({ products, categories, value, onChange }: PackageSelectorProps) {
+export function PackageSelector({ products, categories, value, onChange, defaultCollapsed = false }: PackageSelectorProps) {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed || !!value);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set());
+
+  // Collapse when value is set externally (e.g., from URL)
+  useEffect(() => {
+    if (value && defaultCollapsed) {
+      setIsCollapsed(true);
+    }
+  }, [value, defaultCollapsed]);
 
   // Sort categories by order
   const sortedCategories = useMemo(() => 
@@ -64,7 +55,6 @@ export function PackageSelector({ products, categories, value, onChange }: Packa
           .map(product => {
             const packages: PackageOption[] = [];
             
-            // Add main product option
             packages.push({
               value: `${product.name} (${product.priceText})`,
               label: product.name,
@@ -72,7 +62,6 @@ export function PackageSelector({ products, categories, value, onChange }: Packa
               isPackage: false
             });
             
-            // Add individual showcases/packages
             if (product.showcases && product.showcases.length > 0) {
               product.showcases.forEach(showcase => {
                 packages.push({
@@ -95,6 +84,18 @@ export function PackageSelector({ products, categories, value, onChange }: Packa
       })
       .filter(group => group.products.length > 0);
   }, [products, sortedCategories]);
+
+  // Find color for selected value
+  const selectedColor = useMemo(() => {
+    for (const group of groupedPackages) {
+      for (const { packages } of group.products) {
+        if (packages.some(pkg => pkg.value === value)) {
+          return group.colors;
+        }
+      }
+    }
+    return null;
+  }, [value, groupedPackages]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev => {
@@ -122,15 +123,46 @@ export function PackageSelector({ products, categories, value, onChange }: Packa
 
   const handleSelect = (optionValue: string) => {
     onChange(optionValue);
+    setIsCollapsed(true);
   };
 
   const clearSelection = () => {
     onChange("");
   };
 
-  // Check if a value is selected
   const isSelected = (optionValue: string) => value === optionValue;
 
+  // Collapsed view
+  if (isCollapsed) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsCollapsed(false)}
+        className={`w-full border rounded-lg overflow-hidden bg-card text-left transition-colors hover:border-primary/50 ${
+          value && selectedColor ? selectedColor.border : 'border-border'
+        }`}
+      >
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            {value ? (
+              <div>
+                <span className="text-xs text-muted-foreground block">Ausgewähltes Paket</span>
+                <span className={`text-sm font-medium ${selectedColor ? selectedColor.text : 'text-foreground'}`}>
+                  {value}
+                </span>
+              </div>
+            ) : (
+              <span className="text-sm text-muted-foreground">Produkt / Paket auswählen</span>
+            )}
+          </div>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </button>
+    );
+  }
+
+  // Expanded view
   return (
     <div className="border border-border rounded-lg overflow-hidden bg-card">
       {/* Header */}
@@ -139,48 +171,47 @@ export function PackageSelector({ products, categories, value, onChange }: Packa
           <Package className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Produkt / Paket auswählen</span>
         </div>
-        {value && (
+        <div className="flex items-center gap-3">
+          {value && (
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Auswahl löschen
+            </button>
+          )}
           <button
             type="button"
-            onClick={clearSelection}
-            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setIsCollapsed(true)}
+            className="text-muted-foreground hover:text-foreground"
           >
-            Auswahl löschen
+            <ChevronDown className="h-4 w-4 rotate-180" />
           </button>
-        )}
-      </div>
-
-      {/* Selected Item Display */}
-      {value && (
-        <div className="px-4 py-2 bg-primary/10 border-b border-primary/20">
-          <p className="text-sm">
-            <span className="text-muted-foreground">Ausgewählt: </span>
-            <span className="font-medium text-primary">{value}</span>
-          </p>
         </div>
-      )}
+      </div>
 
       {/* Category Groups */}
       <div className="max-h-[400px] overflow-y-auto">
         {groupedPackages.map(({ category, colors, products: categoryProducts }) => (
           <div key={category.id} className="border-b border-border last:border-b-0">
-            {/* Category Header */}
+            {/* Category Header - only text is colored */}
             <button
               type="button"
               onClick={() => toggleCategory(category.id)}
-              className={`w-full px-4 py-3 flex items-center justify-between ${colors.bg} hover:opacity-90 transition-opacity`}
+              className="w-full px-4 py-3 flex items-center justify-between bg-secondary/20 hover:bg-secondary/40 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${colors.solid}`} />
+                <div className={`w-2 h-2 rounded-full ${colors.solid}`} />
                 <span className={`font-medium ${colors.text}`}>{category.name}</span>
-                <Badge variant="secondary" className="text-xs">
-                  {categoryProducts.length} {categoryProducts.length === 1 ? 'Produkt' : 'Produkte'}
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  {categoryProducts.length}
                 </Badge>
               </div>
               {expandedCategories.has(category.id) ? (
-                <ChevronDown className={`h-4 w-4 ${colors.text}`} />
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               ) : (
-                <ChevronRight className={`h-4 w-4 ${colors.text}`} />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               )}
             </button>
 
@@ -209,16 +240,18 @@ export function PackageSelector({ products, categories, value, onChange }: Packa
                       <button
                         type="button"
                         onClick={() => handleSelect(packages[0].value)}
-                        className={`flex-1 px-2 py-2 text-left flex items-center justify-between hover:bg-secondary/50 rounded transition-colors ${
-                          isSelected(packages[0].value) ? 'bg-primary/10' : ''
+                        className={`flex-1 px-2 py-2 text-left flex items-center justify-between rounded-md mr-2 transition-all ${
+                          isSelected(packages[0].value) 
+                            ? `${colors.bg} ${colors.border} border` 
+                            : 'hover:bg-secondary/50'
                         }`}
                       >
-                        <span className={`text-sm ${isSelected(packages[0].value) ? 'font-medium text-primary' : ''}`}>
+                        <span className={`text-sm ${isSelected(packages[0].value) ? 'font-medium text-foreground' : ''}`}>
                           {product.name}
                         </span>
-                        <Badge className={`${colors.bg} ${colors.text} border-0 text-xs`}>
+                        <span className={`text-xs ${isSelected(packages[0].value) ? colors.text : 'text-muted-foreground'}`}>
                           {product.priceText}
-                        </Badge>
+                        </span>
                       </button>
                     </div>
 
@@ -230,16 +263,16 @@ export function PackageSelector({ products, categories, value, onChange }: Packa
                             key={`${product.id}-${index}`}
                             type="button"
                             onClick={() => handleSelect(pkg.value)}
-                            className={`w-full px-3 py-2 text-left flex items-center justify-between rounded transition-colors ${
+                            className={`w-full px-3 py-2 text-left flex items-center justify-between rounded-md transition-all ${
                               isSelected(pkg.value) 
-                                ? 'bg-primary/10 border border-primary/30' 
-                                : 'bg-secondary/30 hover:bg-secondary/50 border border-transparent'
+                                ? `${colors.bg} ${colors.border} border` 
+                                : 'bg-secondary/20 hover:bg-secondary/40 border border-transparent'
                             }`}
                           >
-                            <span className={`text-sm ${isSelected(pkg.value) ? 'font-medium text-primary' : 'text-muted-foreground'}`}>
+                            <span className={`text-sm ${isSelected(pkg.value) ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                               {pkg.label}
                             </span>
-                            <span className={`text-xs ${isSelected(pkg.value) ? 'text-primary' : 'text-muted-foreground'}`}>
+                            <span className={`text-xs ${isSelected(pkg.value) ? colors.text : 'text-muted-foreground'}`}>
                               {pkg.price}
                             </span>
                           </button>
