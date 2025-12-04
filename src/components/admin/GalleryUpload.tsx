@@ -3,9 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Image, Video, Link, Upload, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Image, Video, Link, Upload, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import type { GalleryItem } from '@/data/initialData';
+
+const MAX_FILE_SIZE_MB = 5; // Max 5MB for direct uploads
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 interface GalleryUploadProps {
   value: GalleryItem[];
@@ -26,11 +30,20 @@ export function GalleryUpload({ value, onChange, className }: GalleryUploadProps
     const files = e.target.files;
     if (!files) return;
 
+    let skippedFiles: string[] = [];
+
     Array.from(files).forEach((file) => {
+      const isVideo = file.type.startsWith('video/');
+      
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        skippedFiles.push(file.name);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
-        const isVideo = file.type.startsWith('video/');
         
         const newItem: GalleryItem = {
           id: generateId(),
@@ -41,8 +54,18 @@ export function GalleryUpload({ value, onChange, className }: GalleryUploadProps
         
         onChange([...value, newItem]);
       };
+      reader.onerror = () => {
+        toast.error(`Fehler beim Laden von ${file.name}`);
+      };
       reader.readAsDataURL(file);
     });
+
+    if (skippedFiles.length > 0) {
+      toast.error(
+        `Dateien zu gross (max. ${MAX_FILE_SIZE_MB}MB): ${skippedFiles.join(', ')}. Nutze URL-Upload für grössere Videos (YouTube, Vimeo).`,
+        { duration: 6000 }
+      );
+    }
 
     e.target.value = '';
   };
@@ -119,29 +142,37 @@ export function GalleryUpload({ value, onChange, className }: GalleryUploadProps
       </div>
 
       {mode === 'file' ? (
-        <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-          <input
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            onChange={handleFileUpload}
-            className="hidden"
-            id="gallery-upload"
-          />
-          <label htmlFor="gallery-upload" className="cursor-pointer">
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex gap-2">
-                <Image className="h-8 w-8 text-muted-foreground" />
-                <Video className="h-8 w-8 text-muted-foreground" />
+        <div className="space-y-2">
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+            <input
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+              id="gallery-upload"
+            />
+            <label htmlFor="gallery-upload" className="cursor-pointer">
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex gap-2">
+                  <Image className="h-8 w-8 text-muted-foreground" />
+                  <Video className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Bilder oder kurze Videos hochladen
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Mehrfachauswahl möglich (max. {MAX_FILE_SIZE_MB}MB pro Datei)
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Bilder oder Videos hochladen
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Mehrfachauswahl möglich
-              </p>
-            </div>
-          </label>
+            </label>
+          </div>
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              <strong>Tipp für Videos:</strong> Nutze den URL-Modus für YouTube/Vimeo Links oder gehostete Videos. Direkt-Upload funktioniert nur für kleine Dateien.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-2">
