@@ -123,10 +123,19 @@ export default function Leistungen() {
 
   const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
 
-  // Only show published products, featured first
+  // Only show published products, sorted by category order first, then featured within category
   const publishedProducts = products
     .filter(p => p.status === 'published')
     .sort((a, b) => {
+      // First sort by category order
+      const catA = sortedCategories.find(c => c.id === a.categoryId);
+      const catB = sortedCategories.find(c => c.id === b.categoryId);
+      const orderA = catA?.order ?? 999;
+      const orderB = catB?.order ?? 999;
+      
+      if (orderA !== orderB) return orderA - orderB;
+      
+      // Within same category, featured products first
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
       return 0;
