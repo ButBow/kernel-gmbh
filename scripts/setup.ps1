@@ -349,8 +349,11 @@ function Setup-CloudflareTunnel {
     $credFile = Get-ChildItem $cfDir -Filter "*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "^[a-f0-9-]+\.json$" } | Select-Object -First 1
     
     if ($credFile) {
+        # UUID aus Dateiname extrahieren (statt tunnelName verwenden!)
+        $tunnelId = $credFile.BaseName
+        
         $configLines = @(
-            "tunnel: $($config.tunnelName)",
+            "tunnel: $tunnelId",
             "credentials-file: $($credFile.FullName)",
             "",
             "ingress:",
@@ -361,7 +364,7 @@ function Setup-CloudflareTunnel {
             "  - service: http_status:404"
         )
         $configLines -join "`n" | Set-Content $cfConfig -Encoding UTF8
-        Write-Success "Tunnel-Konfiguration erstellt: $cfConfig"
+        Write-Success "Tunnel-Konfiguration erstellt mit UUID: $tunnelId"
     } else {
         Write-Warn "Credentials-Datei nicht gefunden. Bitte config.yml manuell erstellen."
     }
@@ -547,10 +550,38 @@ ingress:
             $newConfig | Set-Content $cfConfig -Encoding UTF8
             Write-Success "config.yml aktualisiert mit neuer Domain/Port"
             
-            # DNS-Routen Hinweis
-            Write-Warn "WICHTIG: Bei Domain-Aenderung muessen DNS-Routen neu gesetzt werden!"
-            Write-Host "  Fuehre aus: cloudflared tunnel route dns $tunnelId $($config.domain)" -ForegroundColor Yellow
-            Write-Host "  Fuehre aus: cloudflared tunnel route dns $tunnelId www.$($config.domain)" -ForegroundColor Yellow
+            # DNS-Routen automatisch setzen
+            Write-Warn "Bei Domain-Aenderung muessen DNS-Routen neu gesetzt werden."
+            $setDns = Read-Host "DNS-Routen automatisch setzen? (j/n)"
+            if (($setDns -eq "j") -or ($setDns -eq "J")) {
+                # Cloudflare-Login pruefen
+                if (-not (Test-TunnelLogin)) {
+                    Write-Warn "Nicht bei Cloudflare angemeldet!"
+                    $login = Read-Host "Jetzt anmelden? (j/n)"
+                    if (($login -eq "j") -or ($login -eq "J")) {
+                        cloudflared tunnel login
+                    } else {
+                        Write-Warn "DNS-Routen uebersprungen (nicht angemeldet)"
+                        return
+                    }
+                }
+                
+                Write-Info "Setze DNS-Route fuer $($config.domain)..."
+                cloudflared tunnel route dns $tunnelId $($config.domain) 2>&1 | Out-Null
+                
+                Write-Info "Setze DNS-Route fuer www.$($config.domain)..."
+                cloudflared tunnel route dns $tunnelId "www.$($config.domain)" 2>&1 | Out-Null
+                
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Success "DNS-Routen erfolgreich gesetzt!"
+                } else {
+                    Write-Warn "DNS-Routen konnten nicht vollstaendig gesetzt werden."
+                    Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId $($config.domain)" -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId $($config.domain)" -ForegroundColor Yellow
+                Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId www.$($config.domain)" -ForegroundColor Yellow
+            }
         } else {
             Write-Warn "Konnte Tunnel-ID nicht aus config.yml lesen"
         }
