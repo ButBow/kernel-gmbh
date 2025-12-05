@@ -6,7 +6,7 @@ export default function Datenschutz() {
   const { settings } = useContent();
 
   return (
-    <Layout>
+    <Layout pageTitle="Datenschutz">
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">

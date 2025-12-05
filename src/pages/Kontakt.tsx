@@ -331,7 +331,7 @@ export default function Kontakt() {
 
   if (isSuccess) {
     return (
-      <Layout>
+      <Layout pageTitle="Kontakt">
         <section className="py-24 md:py-32">
           <div className="container mx-auto px-4">
             <div className="max-w-xl mx-auto text-center">
@@ -374,7 +374,7 @@ export default function Kontakt() {
   }
 
   return (
-    <Layout>
+    <Layout pageTitle="Kontakt">
       {/* Hero */}
       <section className="py-16 md:py-24 bg-gradient-dark">
         <div className="container mx-auto px-4">
