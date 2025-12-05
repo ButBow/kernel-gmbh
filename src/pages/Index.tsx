@@ -7,7 +7,6 @@ import { useContent } from "@/contexts/ContentContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { PartnersSection } from "@/components/PartnersSection";
 import { getCategoryColors } from "@/lib/categoryColors";
-import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { 
   Video, 
   Cpu, 
@@ -35,24 +34,6 @@ export default function Index() {
   const { settings, categories, products } = useContent();
   const { trackEvent } = useAnalytics();
 
-  // Scroll reveal hooks with generous leave margins so content stays visible
-  const servicesReveal = useScrollReveal({ 
-    threshold: 0.05,
-    leaveMargin: '300px 0px -50px 0px' // 300px buffer above before hiding
-  });
-  const featuredReveal = useScrollReveal({ 
-    threshold: 0.05,
-    leaveMargin: '350px 0px -50px 0px' // Even more generous for this section
-  });
-  const benefitsReveal = useScrollReveal({ 
-    threshold: 0.05,
-    leaveMargin: '300px 0px -50px 0px'
-  });
-  const ctaReveal = useScrollReveal({ 
-    threshold: 0.1,
-    leaveMargin: '250px 0px -50px 0px'
-  });
-
   // Get first 4 categories for service teasers
   const serviceCategories = categories.slice(0, 4);
   
@@ -75,16 +56,16 @@ export default function Index() {
         
         <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight animate-slide-up">
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
               <span className="text-gradient">{settings.heroTitle}</span>
             </h1>
             
-            <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: "0.15s" }}>
+            <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               {settings.heroSubtitle}
             </p>
             
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: "0.3s" }}>
-              <Button size="lg" asChild className="glow-pulse">
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" asChild>
                 <Link to="/kontakt">
                   {settings.heroCta}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -101,10 +82,7 @@ export default function Index() {
       {/* Services Section */}
       <section className="py-20 md:py-28">
         <div className="container mx-auto px-4">
-          <div 
-            ref={servicesReveal.ref}
-            className={`text-center mb-12 section-reveal ${servicesReveal.isVisible ? 'in-view' : ''}`}
-          >
+          <div className="text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold">
               Meine Leistungsbereiche
             </h2>
@@ -114,7 +92,7 @@ export default function Index() {
             </p>
           </div>
 
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 card-grid ${servicesReveal.isVisible ? 'in-view' : ''}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {serviceCategories.map((category) => {
               const IconComponent = iconMap[category.icon] || Code;
               const categoryProducts = products.filter(p => p.categoryId === category.id && p.status === 'published');
@@ -127,7 +105,7 @@ export default function Index() {
               const minPrice = prices.length > 0 ? Math.min(...prices) : null;
               
               return (
-                <Link key={category.id} to="/leistungen" className="card-item">
+                <Link key={category.id} to="/leistungen">
                   <Card className="h-full group hover:border-primary/50 transition-all duration-300 hover:shadow-glow cursor-pointer">
                     <CardContent className="p-6">
                       <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
@@ -157,10 +135,7 @@ export default function Index() {
       {featuredProducts.length > 0 && (
         <section className="py-20 md:py-28 bg-card">
           <div className="container mx-auto px-4">
-            <div 
-              ref={featuredReveal.ref}
-              className={`text-center mb-12 section-reveal ${featuredReveal.isVisible ? 'in-view' : ''}`}
-            >
+            <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
                 <Star className="h-4 w-4 fill-current" />
                 <span className="text-sm font-medium">Meist gebucht</span>
@@ -173,7 +148,7 @@ export default function Index() {
               </p>
             </div>
 
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid ${featuredReveal.isVisible ? 'in-view' : ''}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredProducts.map((product) => {
                 const category = categories.find(c => c.id === product.categoryId);
                 const colors = getCategoryColors(product.categoryId, sortedCategories);
@@ -182,7 +157,6 @@ export default function Index() {
                     key={product.id} 
                     to="/leistungen"
                     onClick={() => handleProductClick(product.name)}
-                    className="card-item"
                   >
                     <Card className={`h-full group transition-all duration-300 cursor-pointer border-2 ${colors.border} ${colors.glow}`}>
                       <CardHeader>
@@ -217,7 +191,7 @@ export default function Index() {
               })}
             </div>
 
-            <div className={`mt-10 text-center section-reveal ${featuredReveal.isVisible ? 'in-view' : ''}`}>
+            <div className="mt-10 text-center">
               <Button size="lg" variant="outline" asChild>
                 <Link to="/leistungen">Alle Leistungen ansehen</Link>
               </Button>
@@ -229,20 +203,17 @@ export default function Index() {
       {/* Benefits Section */}
       <section className="py-20 md:py-28">
         <div className="container mx-auto px-4">
-          <div 
-            ref={benefitsReveal.ref}
-            className={`text-center mb-12 section-reveal ${benefitsReveal.isVisible ? 'in-view' : ''}`}
-          >
+          <div className="text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold">
               Warum mit mir arbeiten?
             </h2>
           </div>
 
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto card-grid ${benefitsReveal.isVisible ? 'in-view' : ''}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {settings.whyWorkWithMe.map((item, index) => {
               const Icon = benefitIcons[index % benefitIcons.length];
               return (
-                <div key={index} className="flex gap-4 card-item">
+                <div key={index} className="flex gap-4">
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Icon className="h-5 w-5 text-primary" />
@@ -258,8 +229,8 @@ export default function Index() {
             })}
           </div>
 
-          <div className={`mt-12 text-center section-reveal ${benefitsReveal.isVisible ? 'in-view' : ''}`}>
-            <Button size="lg" asChild className="glow-pulse">
+          <div className="mt-12 text-center">
+            <Button size="lg" asChild>
               <Link to="/kontakt">
                 Jetzt Kontakt aufnehmen
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -275,10 +246,7 @@ export default function Index() {
       {/* CTA Section */}
       <section className="py-20 md:py-28">
         <div className="container mx-auto px-4">
-          <div 
-            ref={ctaReveal.ref}
-            className={`relative rounded-2xl overflow-hidden scale-reveal ${ctaReveal.isVisible ? 'in-view' : ''}`}
-          >
+          <div className="relative rounded-2xl overflow-hidden">
             <div className="absolute inset-0 bg-gradient-primary opacity-90" />
             <div className="relative px-8 py-16 md:py-20 text-center">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground">
