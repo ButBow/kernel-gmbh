@@ -530,35 +530,67 @@ Haftungsansprüche gegen den Autor wegen Schäden materieller oder immaterieller
 ## Urheberrechte
 
 Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos oder anderen Dateien auf der Website gehören ausschliesslich dem Betreiber oder den speziell genannten Rechtsinhabern. Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen.`,
-  datenschutzText: `Allgemeine Hinweise
+  datenschutzText: `## Allgemeine Hinweise
 
 Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.
 
-Datenerfassung auf dieser Website
+## Datenerfassung auf dieser Website
 
-Kontaktformular
+### Kontaktformular
 Wenn Sie uns per Kontaktformular Anfragen zukommen lassen, werden Ihre Angaben aus dem Anfrageformular inklusive der von Ihnen dort angegebenen Kontaktdaten zwecks Bearbeitung der Anfrage und für den Fall von Anschlussfragen bei uns gespeichert. Diese Daten geben wir nicht ohne Ihre Einwilligung weiter.
 
-Server-Log-Dateien
+### Server-Log-Dateien
 Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt. Dies sind:
-• Browsertyp und Browserversion
-• Verwendetes Betriebssystem
-• Referrer URL
-• Hostname des zugreifenden Rechners
-• Uhrzeit der Serveranfrage
-• IP-Adresse
+- Browsertyp und Browserversion
+- Verwendetes Betriebssystem
+- Referrer URL
+- Hostname des zugreifenden Rechners
+- Uhrzeit der Serveranfrage
+- IP-Adresse
 
 Eine Zusammenführung dieser Daten mit anderen Datenquellen wird nicht vorgenommen.
 
-Ihre Rechte
+## Cookies und lokale Speicherung
 
-Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben ausserdem ein Recht, die Berichtigung oder Löschung dieser Daten zu verlangen. Hierzu sowie zu weiteren Fragen zum Thema Datenschutz können Sie sich jederzeit an uns wenden.
+### Cookie-Consent
+Beim ersten Besuch unserer Website werden Sie gefragt, ob Sie der Verwendung von Analyse-Funktionen zustimmen. Ihre Entscheidung wird lokal in Ihrem Browser gespeichert.
 
-Cookies
+### Lokale Analyse (bei Zustimmung)
+Wenn Sie allen Cookies zustimmen, werden folgende Daten **ausschliesslich lokal in Ihrem Browser (localStorage)** gespeichert und **nicht an externe Server übertragen**:
 
-Diese Website verwendet keine Tracking-Cookies. Es werden lediglich technisch notwendige Cookies verwendet, die für den Betrieb der Website erforderlich sind.
+- **Seitenaufrufe**: Welche Seiten Sie besuchen
+- **Produkt-/Kategorie-Klicks**: Interesse an unseren Leistungen
+- **Scroll-Verhalten und Verweildauer**: Zur Optimierung der Benutzerfreundlichkeit
+- **Kontakt-Interaktionen**: Klicks auf Kontakt-Elemente
+- **Formular-Interaktionen**: Nutzung von Formularen
+- **Suchbegriffe**: Falls eine Suchfunktion genutzt wird
 
-Änderungen
+### Chatbot-Interaktionen (bei Zustimmung)
+Unser KI-gestützter Chatbot hilft Ihnen bei Fragen zu unseren Leistungen. Bei Zustimmung zu erweiterten Cookies werden zusätzlich erfasst:
+
+- **Chat-Nachrichten**: Die ersten 100 Zeichen Ihrer Fragen (anonymisiert, zur Verbesserung des Service)
+- **Chat-Sitzungen**: Anzahl und Zeitpunkt der Chatbot-Nutzungen
+
+**Wichtiger Hinweis**: Der Chatbot verarbeitet Ihre Anfragen lokal auf unserem Server. Es werden keine Daten an externe KI-Dienste wie OpenAI oder Google übermittelt. Die Verarbeitung erfolgt durch ein lokal gehostetes Sprachmodell.
+
+### Keine Cookies bei Ablehnung
+Wenn Sie nur notwendige Cookies akzeptieren, werden keinerlei Analyse- oder Chatbot-Daten gespeichert.
+
+## Ihre Rechte
+
+Sie haben jederzeit das Recht:
+- **Auskunft** über Ihre gespeicherten Daten zu erhalten
+- Die **Löschung** Ihrer Daten zu verlangen (lokale Daten können Sie selbst durch Löschen des Browser-Speichers entfernen)
+- Ihre **Einwilligung zu widerrufen** (durch Löschen der Cookies in Ihrem Browser)
+- **Beschwerde** bei einer Aufsichtsbehörde einzureichen
+
+Für Anfragen zum Datenschutz kontaktieren Sie uns bitte über die im Impressum angegebenen Kontaktdaten.
+
+## Datenübertragung
+
+Alle auf dieser Website erfassten Analyse-Daten werden **ausschliesslich lokal in Ihrem Browser** gespeichert. Es erfolgt keine Übertragung an Dritte oder externe Analyse-Dienste.
+
+## Änderungen
 
 Wir können diese Datenschutzerklärung jederzeit ohne Vorankündigung anpassen. Es gilt die jeweils aktuelle, auf unserer Website publizierte Fassung.`,
   apiBaseUrl: "",
