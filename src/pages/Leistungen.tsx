@@ -179,7 +179,7 @@ export default function Leistungen() {
     : null;
 
   return (
-    <Layout>
+    <Layout pageTitle="Leistungen">
       {/* Hero */}
       <section className="py-16 md:py-24 bg-gradient-dark">
         <div className="container mx-auto px-4">

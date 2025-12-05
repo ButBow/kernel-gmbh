@@ -36,7 +36,7 @@ export default function UeberMich() {
   const { settings } = useContent();
 
   return (
-    <Layout>
+    <Layout pageTitle="Über mich">
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         {/* Background decoration */}

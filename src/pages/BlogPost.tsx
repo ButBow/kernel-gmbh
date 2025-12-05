@@ -22,7 +22,7 @@ export default function BlogPost() {
 
   if (!post) {
     return (
-      <Layout>
+      <Layout pageTitle="Beitrag nicht gefunden">
         <div className="container mx-auto px-4 py-24 text-center">
           <h1 className="font-display text-3xl font-bold mb-4">Beitrag nicht gefunden</h1>
           <p className="text-muted-foreground mb-8">
@@ -37,7 +37,7 @@ export default function BlogPost() {
   }
 
   return (
-    <Layout>
+    <Layout pageTitle={post.title}>
       {/* Hero Image */}
       {post.image && (
         <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">

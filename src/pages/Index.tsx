@@ -43,7 +43,7 @@ export default function Index() {
   };
 
   return (
-    <Layout>
+    <Layout pageTitle="Startseite">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-dark" />
