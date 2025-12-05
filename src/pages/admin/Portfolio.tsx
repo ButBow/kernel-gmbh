@@ -233,31 +233,31 @@ export default function AdminPortfolio() {
 
               {/* Preview */}
               <LivePreview title="Portfolio-Vorschau">
-                <div className="bg-slate-950">
+                <div className="bg-background">
                   {form.image ? (
                     <div className="aspect-video">
                       <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className="aspect-video bg-slate-800 flex items-center justify-center text-slate-600">
+                    <div className="aspect-video bg-secondary flex items-center justify-center text-muted-foreground">
                       Projekt-Bild
                     </div>
                   )}
                   <div className="p-4">
                     <div className="flex gap-2 mb-2">
-                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-xs">
+                      <span className="px-2 py-0.5 bg-primary/20 text-primary rounded text-xs">
                         {form.category}
                       </span>
                       {form.tags.slice(0, 2).map((tag, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-slate-800 rounded text-xs text-slate-400">
+                        <span key={i} className="px-2 py-0.5 bg-secondary rounded text-xs text-muted-foreground">
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <h3 className="font-semibold text-white mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                       {form.title || 'Projekttitel'}
                     </h3>
-                    <p className="text-xs text-slate-400 line-clamp-2">
+                    <p className="text-xs text-muted-foreground line-clamp-2">
                       {form.description || 'Projektbeschreibung...'}
                     </p>
                   </div>

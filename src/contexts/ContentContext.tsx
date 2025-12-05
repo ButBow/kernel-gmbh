@@ -27,6 +27,7 @@ interface ContentContextType {
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (id: number, product: Partial<Product>) => void;
   deleteProduct: (id: number) => void;
+  reorderProducts: (products: Product[]) => void;
   importProducts: (products: Product[], mode: 'add' | 'replace') => void;
   
   // Projects
@@ -198,6 +199,11 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     persistContent(categories, updated, projects, posts, settings);
   };
 
+  const reorderProducts = (newProducts: Product[]) => {
+    setProducts(newProducts);
+    persistContent(categories, newProducts, projects, posts, settings);
+  };
+
   const importProducts = (newProducts: Product[], mode: 'add' | 'replace') => {
     let updated: Product[];
     if (mode === 'replace') {
@@ -315,7 +321,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     <ContentContext.Provider value={{
       categories, products, projects, posts, settings, isLoading,
       addCategory, updateCategory, deleteCategory, reorderCategories, importCategories,
-      addProduct, updateProduct, deleteProduct, importProducts,
+      addProduct, updateProduct, deleteProduct, reorderProducts, importProducts,
       addProject, updateProject, deleteProject, importProjects,
       addPost, updatePost, deletePost, importPosts,
       updateSettings
