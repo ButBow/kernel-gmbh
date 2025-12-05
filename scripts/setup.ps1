@@ -12,12 +12,35 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectDir = Split-Path -Parent $ScriptDir
 $ConfigFile = Join-Path $ScriptDir "config.json"
 
-# Farben
-function Write-Success($msg) { Write-Host "✓ $msg" -ForegroundColor Green }
-function Write-Info($msg) { Write-Host "→ $msg" -ForegroundColor Cyan }
-function Write-Warn($msg) { Write-Host "⚠ $msg" -ForegroundColor Yellow }
-function Write-Err($msg) { Write-Host "✗ $msg" -ForegroundColor Red }
-function Write-Step($msg) { Write-Host "`n▶ $msg" -ForegroundColor Magenta }
+# ============================================================================
+# Hilfsfunktionen
+# ============================================================================
+
+function Write-Success {
+    param([string]$msg)
+    Write-Host "[OK] $msg" -ForegroundColor Green
+}
+
+function Write-Info {
+    param([string]$msg)
+    Write-Host "[..] $msg" -ForegroundColor Cyan
+}
+
+function Write-Warn {
+    param([string]$msg)
+    Write-Host "[!!] $msg" -ForegroundColor Yellow
+}
+
+function Write-Err {
+    param([string]$msg)
+    Write-Host "[XX] $msg" -ForegroundColor Red
+}
+
+function Write-Step {
+    param([string]$msg)
+    Write-Host ""
+    Write-Host ">>> $msg" -ForegroundColor Magenta
+}
 
 # ============================================================================
 # Konfiguration laden/speichern
@@ -26,13 +49,15 @@ function Write-Step($msg) { Write-Host "`n▶ $msg" -ForegroundColor Magenta }
 function Get-Config {
     if (Test-Path $ConfigFile) {
         try {
-            $content = Get-Content $ConfigFile -Raw
-            return $content | ConvertFrom-Json
+            $content = Get-Content $ConfigFile -Raw -ErrorAction Stop
+            $parsed = $content | ConvertFrom-Json
+            return $parsed
         } catch {
-            Write-Warn "Config-Datei beschädigt, verwende Standardwerte"
+            Write-Warn "Config-Datei beschaedigt, verwende Standardwerte"
         }
     }
-    $defaultConfig = New-Object PSObject -Property @{
+    
+    $defaultConfig = [PSCustomObject]@{
         tunnelName = "kernel-website"
         domain = "kernel.gmbh"
         port = 3000
@@ -42,7 +67,8 @@ function Get-Config {
     return $defaultConfig
 }
 
-function Save-Config($config) {
+function Save-Config {
+    param($config)
     $config | ConvertTo-Json -Depth 10 | Set-Content $ConfigFile -Encoding UTF8
 }
 
@@ -50,18 +76,20 @@ function Save-Config($config) {
 # Dependency Check
 # ============================================================================
 
-function Test-Command($cmd) {
-    $null = Get-Command $cmd -ErrorAction SilentlyContinue
-    return $?
+function Test-Command {
+    param([string]$cmd)
+    $result = Get-Command $cmd -ErrorAction SilentlyContinue
+    return ($null -ne $result)
 }
 
-function Install-Dependency($name, $wingetId) {
+function Install-Dependency {
+    param([string]$name, [string]$wingetId)
+    
     Write-Info "Installiere $name..."
     
-    # Prüfe ob winget verfügbar ist
     if (-not (Test-Command "winget")) {
-        Write-Err "winget nicht gefunden! Bitte installiere den 'App Installer' aus dem Microsoft Store."
-        Write-Warn "Alternativ: Installiere $name manuell und führe das Setup erneut aus."
+        Write-Err "winget nicht gefunden! Bitte installiere den App Installer aus dem Microsoft Store."
+        Write-Warn "Alternativ: Installiere $name manuell und fuehre das Setup erneut aus."
         return $false
     }
     
@@ -69,7 +97,6 @@ function Install-Dependency($name, $wingetId) {
         $process = Start-Process -FilePath "winget" -ArgumentList "install", "--id", $wingetId, "--silent", "--accept-source-agreements", "--accept-package-agreements" -Wait -PassThru -NoNewWindow
         if ($process.ExitCode -eq 0) {
             Write-Success "$name erfolgreich installiert!"
-            # PATH aktualisieren
             $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
             return $true
         } else {
@@ -83,7 +110,7 @@ function Install-Dependency($name, $wingetId) {
 }
 
 function Check-Dependencies {
-    Write-Step "Prüfe Dependencies..."
+    Write-Step "Pruefe Dependencies..."
     
     $allInstalled = $true
     
@@ -109,7 +136,7 @@ function Check-Dependencies {
         }
     }
     
-    # NPM (kommt mit Node)
+    # NPM
     if (Test-Command "npm") {
         $npmVersion = (npm --version)
         Write-Success "NPM gefunden (v$npmVersion)"
@@ -141,45 +168,43 @@ function Do-GitPull {
     
     Set-Location $ProjectDir
     
-    # Prüfe ob Git-Repo
     if (-not (Test-Path ".git")) {
         Write-Err "Kein Git-Repository gefunden!"
         return $false
     }
     
-    # Prüfe auf lokale Änderungen
     $status = git status --porcelain
     if ($status) {
-        Write-Warn "Lokale Änderungen gefunden:"
+        Write-Warn "Lokale Aenderungen gefunden:"
         git status --short
         Write-Host ""
-        Write-Host "Was möchtest du tun?" -ForegroundColor Yellow
-        Write-Host "[1] Stash - Änderungen temporär speichern, Pull, dann wiederherstellen"
-        Write-Host "[2] Reset - Alle lokalen Änderungen verwerfen (DATENVERLUST!)"
-        Write-Host "[3] Abbrechen - Pull überspringen"
+        Write-Host "Was moechtest du tun?" -ForegroundColor Yellow
+        Write-Host "[1] Stash - Aenderungen temporaer speichern, Pull, dann wiederherstellen"
+        Write-Host "[2] Reset - Alle lokalen Aenderungen verwerfen (DATENVERLUST!)"
+        Write-Host "[3] Abbrechen - Pull ueberspringen"
         
         $choice = Read-Host "Auswahl (1/2/3)"
         
         switch ($choice) {
             "1" {
-                Write-Info "Stashe Änderungen..."
+                Write-Info "Stashe Aenderungen..."
                 git stash
                 git pull
-                Write-Info "Stelle Änderungen wieder her..."
+                Write-Info "Stelle Aenderungen wieder her..."
                 git stash pop
             }
             "2" {
-                Write-Warn "Verwerfe alle lokalen Änderungen..."
+                Write-Warn "Verwerfe alle lokalen Aenderungen..."
                 git checkout .
                 git clean -fd
                 git pull
             }
             "3" {
-                Write-Info "Pull übersprungen"
+                Write-Info "Pull uebersprungen"
                 return $true
             }
             default {
-                Write-Info "Pull übersprungen"
+                Write-Info "Pull uebersprungen"
                 return $true
             }
         }
@@ -223,10 +248,9 @@ function Do-Build {
     
     npm run build 2>&1 | ForEach-Object { Write-Host $_ }
     
-    if ($LASTEXITCODE -eq 0 -and (Test-Path "dist")) {
+    if (($LASTEXITCODE -eq 0) -and (Test-Path "dist")) {
         Write-Success "Build erfolgreich!"
         
-        # Update config
         $config = Get-Config
         $config.lastBuild = (Get-Date).ToString("o")
         Save-Config $config
@@ -235,19 +259,21 @@ function Do-Build {
     } else {
         Write-Err "Build fehlgeschlagen!"
         Write-Host ""
-        Write-Host "Mögliche Lösungen:" -ForegroundColor Yellow
-        Write-Host "1. node_modules löschen und npm install erneut ausführen"
+        Write-Host "Moegliche Loesungen:" -ForegroundColor Yellow
+        Write-Host "1. node_modules loeschen und npm install erneut ausfuehren"
         Write-Host "2. npm cache clean --force"
         Write-Host ""
         
         $retry = Read-Host "Retry mit clean install? (j/n)"
-        if ($retry -eq "j" -or $retry -eq "J") {
-            Write-Info "Lösche node_modules..."
+        if (($retry -eq "j") -or ($retry -eq "J")) {
+            Write-Info "Loesche node_modules..."
             Remove-Item -Recurse -Force "node_modules" -ErrorAction SilentlyContinue
             Remove-Item -Force "package-lock.json" -ErrorAction SilentlyContinue
             
-            if ((Do-NpmInstall) -and (Do-Build)) {
-                return $true
+            $installOk = Do-NpmInstall
+            if ($installOk) {
+                $buildOk = Do-Build
+                return $buildOk
             }
         }
         
@@ -261,7 +287,8 @@ function Do-Build {
 
 function Test-TunnelLogin {
     $cfDir = Join-Path $env:USERPROFILE ".cloudflared"
-    return (Test-Path (Join-Path $cfDir "cert.pem"))
+    $certPath = Join-Path $cfDir "cert.pem"
+    return (Test-Path $certPath)
 }
 
 function Get-TunnelList {
@@ -270,7 +297,7 @@ function Get-TunnelList {
         if ($LASTEXITCODE -eq 0) {
             return $output
         }
-    } catch {}
+    } catch { }
     return $null
 }
 
@@ -279,10 +306,9 @@ function Setup-CloudflareTunnel {
     
     $config = Get-Config
     
-    # Prüfe Login
     if (-not (Test-TunnelLogin)) {
         Write-Warn "Nicht bei Cloudflare angemeldet"
-        Write-Info "Öffne Browser für Login..."
+        Write-Info "Oeffne Browser fuer Login..."
         cloudflared tunnel login
         
         if (-not (Test-TunnelLogin)) {
@@ -294,9 +320,11 @@ function Setup-CloudflareTunnel {
         Write-Success "Bereits bei Cloudflare angemeldet"
     }
     
-    # Prüfe Tunnel
     $tunnels = Get-TunnelList
-    $tunnelExists = $tunnels -match $config.tunnelName
+    $tunnelExists = $false
+    if ($tunnels) {
+        $tunnelExists = $tunnels -match $config.tunnelName
+    }
     
     if (-not $tunnelExists) {
         Write-Info "Erstelle Tunnel '$($config.tunnelName)'..."
@@ -308,20 +336,17 @@ function Setup-CloudflareTunnel {
         }
         Write-Success "Tunnel erstellt!"
         
-        # DNS Route
-        Write-Info "Füge DNS-Route hinzu..."
+        Write-Info "Fuege DNS-Route hinzu..."
         cloudflared tunnel route dns $config.tunnelName $config.domain
         cloudflared tunnel route dns $config.tunnelName "www.$($config.domain)"
     } else {
         Write-Success "Tunnel '$($config.tunnelName)' existiert bereits"
     }
     
-    # Config erstellen
     $cfDir = Join-Path $env:USERPROFILE ".cloudflared"
     $cfConfig = Join-Path $cfDir "config.yml"
     
-    # Finde Credentials-Datei
-    $credFile = Get-ChildItem $cfDir -Filter "*.json" | Where-Object { $_.Name -match "^[a-f0-9-]+\.json$" } | Select-Object -First 1
+    $credFile = Get-ChildItem $cfDir -Filter "*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "^[a-f0-9-]+\.json$" } | Select-Object -First 1
     
     if ($credFile) {
         $configLines = @(
@@ -348,19 +373,21 @@ function Setup-CloudflareTunnel {
 # Server Start
 # ============================================================================
 
-function Test-PortInUse($port) {
+function Test-PortInUse {
+    param([int]$port)
     $connection = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
-    return $null -ne $connection
+    return ($null -ne $connection)
 }
 
-function Stop-ProcessOnPort($port) {
+function Stop-ProcessOnPort {
+    param([int]$port)
     $connection = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
     if ($connection) {
         $process = Get-Process -Id $connection.OwningProcess -ErrorAction SilentlyContinue
         if ($process) {
             Write-Warn "Prozess auf Port ${port}: $($process.ProcessName) (PID: $($process.Id))"
             $kill = Read-Host "Prozess beenden? (j/n)"
-            if ($kill -eq "j" -or $kill -eq "J") {
+            if (($kill -eq "j") -or ($kill -eq "J")) {
                 Stop-Process -Id $process.Id -Force
                 Start-Sleep -Seconds 1
                 return $true
@@ -376,47 +403,44 @@ function Start-Server {
     Set-Location $ProjectDir
     $config = Get-Config
     
-    # Prüfe ob dist existiert
     if (-not (Test-Path "dist")) {
         Write-Warn "Build nicht gefunden!"
-        if (-not (Do-Build)) {
+        $buildOk = Do-Build
+        if (-not $buildOk) {
             return $false
         }
     }
     
-    # Prüfe Port
     if (Test-PortInUse $config.port) {
         Write-Warn "Port $($config.port) ist bereits belegt!"
-        if (-not (Stop-ProcessOnPort $config.port)) {
+        $stopped = Stop-ProcessOnPort $config.port
+        if (-not $stopped) {
             Write-Err "Server kann nicht gestartet werden - Port belegt"
             return $false
         }
     }
     
-    # Starte Server in neuem Fenster
     Write-Info "Starte Node.js Server..."
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectDir'; node server.js" -WindowStyle Normal
     
     Start-Sleep -Seconds 2
     
-    # Starte Tunnel in neuem Fenster
     Write-Info "Starte Cloudflare Tunnel..."
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "cloudflared tunnel run $($config.tunnelName)" -WindowStyle Normal
     
     Start-Sleep -Seconds 3
     
-    # Zeige Status
     Write-Host ""
-    Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║              🚀 SERVER LÄUFT ERFOLGREICH!                      ║" -ForegroundColor Green
-    Write-Host "╠════════════════════════════════════════════════════════════════╣" -ForegroundColor Green
-    Write-Host "║  Lokal:      http://localhost:$($config.port)                             ║" -ForegroundColor Green
-    Write-Host "║  Tunnel:     https://$($config.domain)                               ║" -ForegroundColor Green
-    Write-Host "║  Admin:      https://$($config.domain)/admin/login             ║" -ForegroundColor Green
-    Write-Host "╠════════════════════════════════════════════════════════════════╣" -ForegroundColor Green
-    Write-Host "║  Server-Fenster und Tunnel-Fenster offen lassen!               ║" -ForegroundColor Green
-    Write-Host "║  Zum Stoppen: Beide Fenster schließen (oder Ctrl+C)            ║" -ForegroundColor Green
-    Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
+    Write-Host "              SERVER LAEUFT ERFOLGREICH!                        " -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
+    Write-Host "  Lokal:      http://localhost:$($config.port)" -ForegroundColor Green
+    Write-Host "  Tunnel:     https://$($config.domain)" -ForegroundColor Green
+    Write-Host "  Admin:      https://$($config.domain)/admin/login" -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
+    Write-Host "  Server-Fenster und Tunnel-Fenster offen lassen!" -ForegroundColor Green
+    Write-Host "  Zum Stoppen: Beide Fenster schliessen (oder Ctrl+C)" -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
     
     return $true
 }
@@ -455,60 +479,57 @@ function Setup-EnvFile {
     }
     
     Write-Host ""
-    $edit = Read-Host "In Editor öffnen? (j/n)"
-    if ($edit -eq "j" -or $edit -eq "J") {
+    $edit = Read-Host "In Editor oeffnen? (j/n)"
+    if (($edit -eq "j") -or ($edit -eq "J")) {
         Start-Process notepad $envFile -Wait
         Write-Success ".env Datei aktualisiert"
     }
 }
 
 # ============================================================================
-# Vollständiges Setup
+# Vollstaendiges Setup
 # ============================================================================
 
 function Do-FullSetup {
     Write-Host ""
-    Write-Host "════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-    Write-Host "          VOLLSTÄNDIGES SETUP WIRD GESTARTET                    " -ForegroundColor Cyan
-    Write-Host "════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "================================================================" -ForegroundColor Cyan
+    Write-Host "          VOLLSTAENDIGES SETUP WIRD GESTARTET                   " -ForegroundColor Cyan
+    Write-Host "================================================================" -ForegroundColor Cyan
     
-    # 1. Dependencies
-    if (-not (Check-Dependencies)) {
+    $depsOk = Check-Dependencies
+    if (-not $depsOk) {
         Write-Err "Nicht alle Dependencies konnten installiert werden!"
-        Write-Warn "Bitte installiere fehlende Software manuell und führe das Setup erneut aus."
+        Write-Warn "Bitte installiere fehlende Software manuell und fuehre das Setup erneut aus."
         return
     }
     
-    # 2. Git Pull (optional)
     Write-Host ""
-    $pull = Read-Host "Git Pull ausführen? (j/n)"
-    if ($pull -eq "j" -or $pull -eq "J") {
+    $pull = Read-Host "Git Pull ausfuehren? (j/n)"
+    if (($pull -eq "j") -or ($pull -eq "J")) {
         Do-GitPull
     }
     
-    # 3. NPM Install
-    if (-not (Do-NpmInstall)) {
+    $installOk = Do-NpmInstall
+    if (-not $installOk) {
         Write-Err "NPM Install fehlgeschlagen!"
         return
     }
     
-    # 4. Build
-    if (-not (Do-Build)) {
+    $buildOk = Do-Build
+    if (-not $buildOk) {
         Write-Err "Build fehlgeschlagen!"
         return
     }
     
-    # 5. Cloudflare Tunnel
     Write-Host ""
     $tunnel = Read-Host "Cloudflare Tunnel einrichten? (j/n)"
-    if ($tunnel -eq "j" -or $tunnel -eq "J") {
+    if (($tunnel -eq "j") -or ($tunnel -eq "J")) {
         Setup-CloudflareTunnel
     }
     
-    # 6. Server starten
     Write-Host ""
     $start = Read-Host "Server jetzt starten? (j/n)"
-    if ($start -eq "j" -or $start -eq "J") {
+    if (($start -eq "j") -or ($start -eq "J")) {
         Start-Server
     }
     
@@ -517,31 +538,31 @@ function Do-FullSetup {
 }
 
 # ============================================================================
-# Hauptmenü
+# Hauptmenue
 # ============================================================================
 
 function Show-Menu {
     Clear-Host
     Write-Host ""
-    Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║           🚀 KERNEL WEBSITE - SETUP WIZARD                     ║" -ForegroundColor Cyan
-    Write-Host "╠════════════════════════════════════════════════════════════════╣" -ForegroundColor Cyan
-    Write-Host "║                                                                ║" -ForegroundColor Cyan
-    Write-Host "║  [1] Vollständiges Setup (Erstinstallation)                    ║" -ForegroundColor White
-    Write-Host "║  [2] Nur Dependencies prüfen/installieren                      ║" -ForegroundColor White
-    Write-Host "║  [3] Git Pull + Build (Update)                                 ║" -ForegroundColor White
-    Write-Host "║  [4] Server starten (Quick-Start)                              ║" -ForegroundColor White
-    Write-Host "║  [5] Cloudflare Tunnel konfigurieren                           ║" -ForegroundColor White
-    Write-Host "║  [6] .env Datei erstellen/bearbeiten                           ║" -ForegroundColor White
-    Write-Host "║                                                                ║" -ForegroundColor Cyan
-    Write-Host "║  [0] Beenden                                                   ║" -ForegroundColor Gray
-    Write-Host "║                                                                ║" -ForegroundColor Cyan
-    Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "================================================================" -ForegroundColor Cyan
+    Write-Host "           KERNEL WEBSITE - SETUP WIZARD                        " -ForegroundColor Cyan
+    Write-Host "================================================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  [1] Vollstaendiges Setup (Erstinstallation)" -ForegroundColor White
+    Write-Host "  [2] Nur Dependencies pruefen/installieren" -ForegroundColor White
+    Write-Host "  [3] Git Pull + Build (Update)" -ForegroundColor White
+    Write-Host "  [4] Server starten (Quick-Start)" -ForegroundColor White
+    Write-Host "  [5] Cloudflare Tunnel konfigurieren" -ForegroundColor White
+    Write-Host "  [6] .env Datei erstellen/bearbeiten" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  [0] Beenden" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "================================================================" -ForegroundColor Cyan
     Write-Host ""
 }
 
 # ============================================================================
-# Main
+# Main - Programmeinstieg
 # ============================================================================
 
 Set-Location $ProjectDir
@@ -551,21 +572,38 @@ while ($true) {
     $choice = Read-Host "Auswahl"
     
     switch ($choice) {
-        "1" { Do-FullSetup }
-        "2" { Check-Dependencies; Read-Host "`nWeiter mit Enter" }
+        "1" { 
+            Do-FullSetup 
+        }
+        "2" { 
+            Check-Dependencies
+            Read-Host "`nWeiter mit Enter"
+        }
         "3" { 
             Do-GitPull
             Do-NpmInstall
             Do-Build
             Read-Host "`nWeiter mit Enter"
         }
-        "4" { Start-Server; Read-Host "`nWeiter mit Enter" }
-        "5" { Setup-CloudflareTunnel; Read-Host "`nWeiter mit Enter" }
-        "6" { Setup-EnvFile; Read-Host "`nWeiter mit Enter" }
+        "4" { 
+            Start-Server
+            Read-Host "`nWeiter mit Enter"
+        }
+        "5" { 
+            Setup-CloudflareTunnel
+            Read-Host "`nWeiter mit Enter"
+        }
+        "6" { 
+            Setup-EnvFile
+            Read-Host "`nWeiter mit Enter"
+        }
         "0" { 
             Write-Host "`nAuf Wiedersehen!" -ForegroundColor Cyan
             exit 0
         }
-        default { Write-Warn "Ungültige Auswahl" }
+        default { 
+            Write-Warn "Ungueltige Auswahl"
+            Start-Sleep -Seconds 1
+        }
     }
 }
