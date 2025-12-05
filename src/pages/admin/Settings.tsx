@@ -12,7 +12,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
 import { BackupRestore } from '@/components/admin/BackupRestore';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag, FileText } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 import { PromotionManager } from '@/components/admin/PromotionManager';
 import { Promotion } from '@/types/promotion';
 import { Switch } from '@/components/ui/switch';
@@ -72,6 +72,17 @@ export default function AdminSettings() {
 
   const removeSkill = (index: number) => {
     setForm({ ...form, skills: form.skills.filter((_, i) => i !== index) });
+  };
+
+  // Generic move function for arrays
+  const moveItem = <T,>(array: T[], index: number, direction: 'up' | 'down'): T[] => {
+    const newArray = [...array];
+    if (direction === 'up' && index > 0) {
+      [newArray[index], newArray[index - 1]] = [newArray[index - 1], newArray[index]];
+    } else if (direction === 'down' && index < array.length - 1) {
+      [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
+    }
+    return newArray;
   };
 
   return (
@@ -148,6 +159,14 @@ export default function AdminSettings() {
                   <div className="space-y-2">
                     {form.whyWorkWithMe.map((item, i) => (
                       <div key={i} className="flex items-center gap-2 p-2 bg-secondary rounded-lg">
+                        <div className="flex flex-col">
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, whyWorkWithMe: moveItem(form.whyWorkWithMe, i, 'up') })} disabled={i === 0}>
+                            <ChevronUp className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, whyWorkWithMe: moveItem(form.whyWorkWithMe, i, 'down') })} disabled={i === form.whyWorkWithMe.length - 1}>
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </div>
                         <span className="flex-1">{item}</span>
                         <Button variant="ghost" size="sm" onClick={() => removeWhyItem(i)}>×</Button>
                       </div>
@@ -225,6 +244,15 @@ export default function AdminSettings() {
               {(form.partners || []).map((partner, i) => (
                 <div key={i} className="p-4 border border-border rounded-lg space-y-3">
                   <div className="flex gap-3 items-start">
+                    {/* Reorder buttons */}
+                    <div className="flex flex-col">
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, partners: moveItem(form.partners || [], i, 'up') })} disabled={i === 0}>
+                        <ChevronUp className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, partners: moveItem(form.partners || [], i, 'down') })} disabled={i === (form.partners || []).length - 1}>
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </div>
                     {/* Logo Preview */}
                     <div className="w-16 h-16 rounded-lg bg-secondary flex-shrink-0 overflow-hidden">
                       <img 
@@ -395,6 +423,14 @@ export default function AdminSettings() {
               <CardContent className="space-y-3">
                 {(form.stats || []).map((stat, i) => (
                   <div key={i} className="flex gap-2 items-center">
+                    <div className="flex flex-col">
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, stats: moveItem(form.stats || [], i, 'up') })} disabled={i === 0}>
+                        <ChevronUp className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, stats: moveItem(form.stats || [], i, 'down') })} disabled={i === (form.stats || []).length - 1}>
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </div>
                     <Input
                       value={stat.value}
                       onChange={(e) => {
@@ -453,7 +489,15 @@ export default function AdminSettings() {
               <CardContent className="space-y-4">
                 {(form.coreValues || []).map((value, i) => (
                   <div key={i} className="p-3 border border-border rounded-lg space-y-3">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-start">
+                      <div className="flex flex-col">
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, coreValues: moveItem(form.coreValues || [], i, 'up') })} disabled={i === 0}>
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, coreValues: moveItem(form.coreValues || [], i, 'down') })} disabled={i === (form.coreValues || []).length - 1}>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </div>
                       <Select
                         value={value.icon}
                         onValueChange={(v) => {
@@ -529,7 +573,15 @@ export default function AdminSettings() {
               <CardContent className="space-y-4">
                 {(form.milestones || []).map((milestone, i) => (
                   <div key={i} className="p-3 border border-border rounded-lg space-y-3">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      <div className="flex flex-col">
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, milestones: moveItem(form.milestones || [], i, 'up') })} disabled={i === 0}>
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, milestones: moveItem(form.milestones || [], i, 'down') })} disabled={i === (form.milestones || []).length - 1}>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </div>
                       <Input
                         value={milestone.year}
                         onChange={(e) => {
@@ -609,6 +661,14 @@ export default function AdminSettings() {
                 {(form.testimonials || []).map((testimonial, i) => (
                   <div key={i} className="p-4 border border-border rounded-lg space-y-3">
                     <div className="flex gap-2 items-start">
+                      <div className="flex flex-col">
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, testimonials: moveItem(form.testimonials || [], i, 'up') })} disabled={i === 0}>
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, testimonials: moveItem(form.testimonials || [], i, 'down') })} disabled={i === (form.testimonials || []).length - 1}>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </div>
                       <div className="flex-1 space-y-3">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <Input
@@ -723,11 +783,20 @@ export default function AdminSettings() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-2">
                   {form.skills.map((skill, i) => (
-                    <Badge key={i} variant="secondary" className="cursor-pointer" onClick={() => removeSkill(i)}>
-                      {skill} ×
-                    </Badge>
+                    <div key={i} className="flex items-center gap-2 p-2 bg-secondary rounded-lg">
+                      <div className="flex flex-col">
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, skills: moveItem(form.skills, i, 'up') })} disabled={i === 0}>
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setForm({ ...form, skills: moveItem(form.skills, i, 'down') })} disabled={i === form.skills.length - 1}>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <span className="flex-1">{skill}</span>
+                      <Button variant="ghost" size="sm" onClick={() => removeSkill(i)}>×</Button>
+                    </div>
                   ))}
                 </div>
               </CardContent>
