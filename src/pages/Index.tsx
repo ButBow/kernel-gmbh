@@ -35,11 +35,23 @@ export default function Index() {
   const { settings, categories, products } = useContent();
   const { trackEvent } = useAnalytics();
 
-  // Scroll reveal hooks
-  const servicesReveal = useScrollReveal({ threshold: 0.1 });
-  const featuredReveal = useScrollReveal({ threshold: 0.1 });
-  const benefitsReveal = useScrollReveal({ threshold: 0.1 });
-  const ctaReveal = useScrollReveal({ threshold: 0.2 });
+  // Scroll reveal hooks with generous leave margins so content stays visible
+  const servicesReveal = useScrollReveal({ 
+    threshold: 0.05,
+    leaveMargin: '300px 0px -50px 0px' // 300px buffer above before hiding
+  });
+  const featuredReveal = useScrollReveal({ 
+    threshold: 0.05,
+    leaveMargin: '350px 0px -50px 0px' // Even more generous for this section
+  });
+  const benefitsReveal = useScrollReveal({ 
+    threshold: 0.05,
+    leaveMargin: '300px 0px -50px 0px'
+  });
+  const ctaReveal = useScrollReveal({ 
+    threshold: 0.1,
+    leaveMargin: '250px 0px -50px 0px'
+  });
 
   // Get first 4 categories for service teasers
   const serviceCategories = categories.slice(0, 4);
