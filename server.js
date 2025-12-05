@@ -161,6 +161,7 @@ function getChatbotSettings() {
     welcomeMessage: 'Willkommen! Ich bin der KernelFlow Assistent. Wie kann ich Ihnen helfen?',
     placeholderText: 'Schreiben Sie eine Nachricht...',
     suggestedQuestions: ['Was bietet KernelFlow?', 'Preise & Pakete', 'Kontakt'],
+    pythonServerUrl: process.env.PYTHON_CHATBOT_URL || 'http://localhost:8001',
     ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
     ollamaModel: process.env.OLLAMA_MODEL || 'llama3.2:latest',
     maxTokens: 1024,
@@ -975,6 +976,88 @@ async function handleAPI(req, res, urlPath) {
       }
     } catch (error) {
       sendJSON(res, 200, { available: false, enabled: true, reason: 'Ollama not reachable' });
+    }
+    return true;
+  }
+  
+  // POST /api/python-chat - Proxy to Python chatbot server
+  if (urlPath === '/api/python-chat' && req.method === 'POST') {
+    console.log(`[${timestamp}] 🐍 Proxying to Python chatbot server...`);
+    
+    const chatSettings = getChatbotSettings();
+    if (!chatSettings.enabled) {
+      sendJSON(res, 403, { error: 'Der Chatbot ist momentan deaktiviert.' });
+      return true;
+    }
+    
+    // Rate limiting
+    if (!checkRateLimit(ip)) {
+      sendJSON(res, 429, { error: 'Zu viele Anfragen. Bitte warten Sie eine Minute.' });
+      return true;
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const pythonServerUrl = chatSettings.pythonServerUrl || 'http://localhost:8001';
+      
+      // Get session ID from header or body
+      const sessionId = req.headers['x-session-id'] || body.session_id;
+      
+      // Forward request to Python server
+      const proxyResponse = await fetch(`${pythonServerUrl}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionId && { 'X-Session-ID': sessionId })
+        },
+        body: JSON.stringify(body)
+      });
+      
+      const data = await proxyResponse.json();
+      
+      if (!proxyResponse.ok) {
+        console.error(`[${timestamp}] ❌ Python server error:`, data);
+        sendJSON(res, proxyResponse.status, data);
+        return true;
+      }
+      
+      console.log(`[${timestamp}] ✅ Python chatbot response received`);
+      sendJSON(res, 200, data);
+    } catch (error) {
+      console.error(`[${timestamp}] ❌ Python proxy error:`, error.message);
+      sendJSON(res, 503, { 
+        error: 'Python Chatbot-Server nicht erreichbar.',
+        hint: 'Starte den Python-Server mit: python scripts/chatbot_server.py'
+      });
+    }
+    return true;
+  }
+  
+  // GET /api/python-chat/health - Check Python server health
+  if (urlPath === '/api/python-chat/health' && req.method === 'GET') {
+    console.log(`[${timestamp}] 🐍 Checking Python chatbot health...`);
+    const chatSettings = getChatbotSettings();
+    const pythonServerUrl = chatSettings.pythonServerUrl || 'http://localhost:8001';
+    
+    try {
+      const response = await fetch(`${pythonServerUrl}/health`);
+      if (response.ok) {
+        const data = await response.json();
+        sendJSON(res, 200, { 
+          available: true,
+          python_server: data,
+          ollama_url: chatSettings.ollamaUrl,
+          model: chatSettings.ollamaModel
+        });
+      } else {
+        sendJSON(res, 200, { available: false, reason: 'Python server not responding' });
+      }
+    } catch (error) {
+      sendJSON(res, 200, { 
+        available: false, 
+        reason: 'Python server not reachable',
+        hint: 'Starte mit: python scripts/chatbot_server.py'
+      });
     }
     return true;
   }

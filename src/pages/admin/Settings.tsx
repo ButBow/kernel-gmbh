@@ -1572,16 +1572,38 @@ export default function AdminSettings() {
                     </div>
                   </div>
 
-                  {/* Ollama Settings */}
+                  {/* Python Backend & Ollama Settings */}
                   <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Ollama / LLM Konfiguration</h4>
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Python Backend Konfiguration</h4>
                     
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        Ollama muss auf dem Server installiert und gestartet sein. Installieren mit: <code className="text-xs bg-secondary px-1 rounded">curl -fsSL https://ollama.com/install.sh | sh</code>
+                      <AlertDescription className="space-y-2">
+                        <p><strong>Voraussetzungen für den Chatbot:</strong></p>
+                        <ol className="list-decimal list-inside text-xs space-y-1">
+                          <li>Python 3.8+ installiert</li>
+                          <li>Ollama installiert: <code className="bg-secondary px-1 rounded">curl -fsSL https://ollama.com/install.sh | sh</code></li>
+                          <li>Modell herunterladen: <code className="bg-secondary px-1 rounded">ollama pull llama3.2:latest</code></li>
+                          <li>Ollama starten: <code className="bg-secondary px-1 rounded">ollama serve</code></li>
+                          <li>Python-Server starten: <code className="bg-secondary px-1 rounded">python scripts/chatbot_server.py</code></li>
+                        </ol>
                       </AlertDescription>
                     </Alert>
+
+                    <div>
+                      <Label>Python Chatbot-Server URL</Label>
+                      <Input
+                        value={form.chatbotSettings?.pythonServerUrl ?? defaultChatbotSettings.pythonServerUrl}
+                        onChange={(e) => setForm({
+                          ...form,
+                          chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, pythonServerUrl: e.target.value }
+                        })}
+                        placeholder="http://localhost:8001"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        URL des Python-Backend-Servers. Standard: http://localhost:8001
+                      </p>
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -1594,6 +1616,9 @@ export default function AdminSettings() {
                           })}
                           placeholder="http://localhost:11434"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Wird vom Python-Server verwendet
+                        </p>
                       </div>
 
                       <div>
@@ -1644,6 +1669,18 @@ export default function AdminSettings() {
                           0 = sehr präzise, 1 = kreativ, 2 = sehr kreativ
                         </p>
                       </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-secondary/30 border border-border">
+                      <h5 className="font-medium text-sm mb-2 flex items-center gap-2">
+                        <Bot className="h-4 w-4" />
+                        Session-Verwaltung
+                      </h5>
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Kontext-Beibehaltung:</strong> Der Chatbot behält den Konversationskontext während einer Chat-Sitzung bei. 
+                        Bei einem Seiten-Reload wird eine neue Sitzung gestartet und der Kontext zurückgesetzt.
+                        Sessions laufen nach 30 Minuten Inaktivität automatisch ab.
+                      </p>
                     </div>
                   </div>
 
@@ -1785,12 +1822,15 @@ export default function AdminSettings() {
                   </p>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-border">
+                <div className="mt-4 pt-4 border-t border-border space-y-1">
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-medium">Modell:</span> {form.chatbotSettings?.ollamaModel ?? defaultChatbotSettings.ollamaModel}
+                    <span className="font-medium">Python-Server:</span> {form.chatbotSettings?.pythonServerUrl ?? defaultChatbotSettings.pythonServerUrl}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-medium">Server:</span> {form.chatbotSettings?.ollamaUrl ?? defaultChatbotSettings.ollamaUrl}
+                    <span className="font-medium">Ollama:</span> {form.chatbotSettings?.ollamaUrl ?? defaultChatbotSettings.ollamaUrl}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium">Modell:</span> {form.chatbotSettings?.ollamaModel ?? defaultChatbotSettings.ollamaModel}
                   </p>
                 </div>
               </div>
