@@ -5,15 +5,25 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage } from './ChatMessage';
 import { useChatBot } from '@/hooks/useChatBot';
+import { useContent } from '@/contexts/ContentContext';
+import { defaultChatbotSettings } from '@/data/initialData';
 import { cn } from '@/lib/utils';
 
 export function ChatBot() {
+  const { settings } = useContent();
+  const chatbotConfig = settings.chatbotSettings || defaultChatbotSettings;
+  
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const { messages, isLoading, sendMessage, clearMessages } = useChatBot();
+
+  // Don't render if chatbot is disabled
+  if (!chatbotConfig.enabled) {
+    return null;
+  }
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -85,7 +95,7 @@ export function ChatBot() {
               <MessageCircle className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-display font-semibold text-foreground text-sm">KernelFlow Assistent</h3>
+              <h3 className="font-display font-semibold text-foreground text-sm">{settings.companyName} Assistent</h3>
               <p className="text-xs text-muted-foreground">Fragen Sie mich etwas</p>
             </div>
           </div>
@@ -122,11 +132,11 @@ export function ChatBot() {
                 <div>
                   <h4 className="font-display font-semibold text-foreground">Willkommen!</h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Ich bin der KernelFlow Assistent. Wie kann ich Ihnen helfen?
+                    {chatbotConfig.welcomeMessage}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 justify-center pt-2">
-                  {['Was bietet KernelFlow?', 'Preise & Pakete', 'Kontakt'].map((suggestion) => (
+                  {chatbotConfig.suggestedQuestions.map((suggestion) => (
                     <button
                       key={suggestion}
                       onClick={() => sendMessage(suggestion)}
@@ -158,7 +168,7 @@ export function ChatBot() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Schreiben Sie eine Nachricht..."
+              placeholder={chatbotConfig.placeholderText}
               className="flex-1 bg-background/50 border-border/50 focus-visible:ring-primary/50"
               disabled={isLoading}
             />
@@ -172,7 +182,7 @@ export function ChatBot() {
             </Button>
           </div>
           <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            Powered by KernelFlow AI
+            Powered by {settings.companyName} AI
           </p>
         </form>
       </div>

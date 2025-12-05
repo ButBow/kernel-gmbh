@@ -12,14 +12,15 @@ import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
 import { BackupRestore } from '@/components/admin/BackupRestore';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag, FileText, ChevronUp, ChevronDown, Cookie } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag, FileText, ChevronUp, ChevronDown, Cookie, MessageCircle, Bot } from 'lucide-react';
 import { PromotionManager } from '@/components/admin/PromotionManager';
 import { Promotion } from '@/types/promotion';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner, Executive } from '@/data/initialData';
+import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner, Executive, ChatbotSettings } from '@/data/initialData';
 import { defaultCookieSettings, CookieSettings, ALL_TRACKING_OPTIONS, TrackingConfig } from '@/types/cookieSettings';
+import { defaultChatbotSettings } from '@/data/initialData';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { Label } from '@/components/ui/label';
 
@@ -98,6 +99,7 @@ export default function AdminSettings() {
             <TabsTrigger value="about" className="text-xs sm:text-sm">Über mich</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs sm:text-sm">Kontakt</TabsTrigger>
             <TabsTrigger value="integrations" className="text-xs sm:text-sm">Integrationen</TabsTrigger>
+            <TabsTrigger value="chatbot" className="text-xs sm:text-sm">Chatbot</TabsTrigger>
             <TabsTrigger value="theme" className="text-xs sm:text-sm">Design</TabsTrigger>
             <TabsTrigger value="backup" className="text-xs sm:text-sm">Backup</TabsTrigger>
             <TabsTrigger value="cookies" className="text-xs sm:text-sm">Cookies</TabsTrigger>
@@ -1493,6 +1495,232 @@ export default function AdminSettings() {
             promotions={form.promotions || []}
             onChange={(promotions) => setForm({ ...form, promotions })}
           />
+        </TabsContent>
+
+        <TabsContent value="chatbot">
+          <div className="mobile-stack">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bot className="h-5 w-5" />
+                    AI-Chatbot Einstellungen
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Enable/Disable */}
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+                    <div className="space-y-0.5">
+                      <Label className="text-base font-medium">Chatbot aktivieren</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Zeigt den Chat-Button unten rechts auf der Webseite an
+                      </p>
+                    </div>
+                    <Switch
+                      checked={form.chatbotSettings?.enabled ?? defaultChatbotSettings.enabled}
+                      onCheckedChange={(checked) => setForm({
+                        ...form,
+                        chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, enabled: checked }
+                      })}
+                    />
+                  </div>
+
+                  {/* Appearance Settings */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Erscheinung</h4>
+                    
+                    <div>
+                      <Label>Begrüßungsnachricht</Label>
+                      <Textarea
+                        value={form.chatbotSettings?.welcomeMessage ?? defaultChatbotSettings.welcomeMessage}
+                        onChange={(e) => setForm({
+                          ...form,
+                          chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, welcomeMessage: e.target.value }
+                        })}
+                        rows={2}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Platzhalter-Text im Eingabefeld</Label>
+                      <Input
+                        value={form.chatbotSettings?.placeholderText ?? defaultChatbotSettings.placeholderText}
+                        onChange={(e) => setForm({
+                          ...form,
+                          chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, placeholderText: e.target.value }
+                        })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Vorgeschlagene Fragen (kommagetrennt)</Label>
+                      <Input
+                        value={(form.chatbotSettings?.suggestedQuestions ?? defaultChatbotSettings.suggestedQuestions).join(', ')}
+                        onChange={(e) => setForm({
+                          ...form,
+                          chatbotSettings: { 
+                            ...defaultChatbotSettings, 
+                            ...form.chatbotSettings, 
+                            suggestedQuestions: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                          }
+                        })}
+                        placeholder="Frage 1, Frage 2, Frage 3"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Diese werden als Schnell-Buttons im Chat angezeigt
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Ollama Settings */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Ollama / LLM Konfiguration</h4>
+                    
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Ollama muss auf dem Server installiert und gestartet sein. Installieren mit: <code className="text-xs bg-secondary px-1 rounded">curl -fsSL https://ollama.com/install.sh | sh</code>
+                      </AlertDescription>
+                    </Alert>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Ollama Server URL</Label>
+                        <Input
+                          value={form.chatbotSettings?.ollamaUrl ?? defaultChatbotSettings.ollamaUrl}
+                          onChange={(e) => setForm({
+                            ...form,
+                            chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, ollamaUrl: e.target.value }
+                          })}
+                          placeholder="http://localhost:11434"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Modell</Label>
+                        <Input
+                          value={form.chatbotSettings?.ollamaModel ?? defaultChatbotSettings.ollamaModel}
+                          onChange={(e) => setForm({
+                            ...form,
+                            chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, ollamaModel: e.target.value }
+                          })}
+                          placeholder="llama3.2:latest"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          z.B. llama3.2:latest, mistral:latest, gemma2:7b
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Max. Tokens (Antwortlänge)</Label>
+                        <Input
+                          type="number"
+                          min={100}
+                          max={4096}
+                          value={form.chatbotSettings?.maxTokens ?? defaultChatbotSettings.maxTokens}
+                          onChange={(e) => setForm({
+                            ...form,
+                            chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, maxTokens: parseInt(e.target.value) || 1024 }
+                          })}
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Temperature (Kreativität)</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={2}
+                          step={0.1}
+                          value={form.chatbotSettings?.temperature ?? defaultChatbotSettings.temperature}
+                          onChange={(e) => setForm({
+                            ...form,
+                            chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, temperature: parseFloat(e.target.value) || 0.7 }
+                          })}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          0 = sehr präzise, 1 = kreativ, 2 = sehr kreativ
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* System Prompt Addition */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Zusätzliche Anweisungen</h4>
+                    
+                    <div>
+                      <Label>Zusätzlicher System-Prompt</Label>
+                      <Textarea
+                        value={form.chatbotSettings?.systemPromptAddition ?? defaultChatbotSettings.systemPromptAddition}
+                        onChange={(e) => setForm({
+                          ...form,
+                          chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, systemPromptAddition: e.target.value }
+                        })}
+                        rows={4}
+                        placeholder="Zusätzliche Anweisungen für den Chatbot, z.B. spezielle Verhaltensregeln oder Informationen..."
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Diese Anweisungen werden zum Standard-Prompt hinzugefügt
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Preview */}
+            <LivePreview title="Chat-Vorschau">
+              <div className="p-4 bg-background rounded-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <MessageCircle className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{form.companyName} Assistent</p>
+                      <p className="text-xs text-muted-foreground">
+                        {form.chatbotSettings?.enabled ?? defaultChatbotSettings.enabled ? 'Aktiv' : 'Deaktiviert'}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant={form.chatbotSettings?.enabled ?? defaultChatbotSettings.enabled ? 'default' : 'secondary'}>
+                    {form.chatbotSettings?.enabled ?? defaultChatbotSettings.enabled ? 'An' : 'Aus'}
+                  </Badge>
+                </div>
+                
+                <div className="text-center py-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {form.chatbotSettings?.welcomeMessage ?? defaultChatbotSettings.welcomeMessage}
+                  </p>
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    {(form.chatbotSettings?.suggestedQuestions ?? defaultChatbotSettings.suggestedQuestions).map((q, i) => (
+                      <span key={i} className="px-2 py-1 text-xs rounded-full bg-secondary">
+                        {q}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 p-2 rounded-lg bg-secondary/50">
+                  <p className="text-xs text-muted-foreground">
+                    {form.chatbotSettings?.placeholderText ?? defaultChatbotSettings.placeholderText}
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium">Modell:</span> {form.chatbotSettings?.ollamaModel ?? defaultChatbotSettings.ollamaModel}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium">Server:</span> {form.chatbotSettings?.ollamaUrl ?? defaultChatbotSettings.ollamaUrl}
+                  </p>
+                </div>
+              </div>
+            </LivePreview>
+          </div>
         </TabsContent>
 
         <TabsContent value="theme">

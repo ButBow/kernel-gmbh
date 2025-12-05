@@ -102,6 +102,31 @@ export interface Executive {
 import { Promotion, DEFAULT_PROMOTIONS } from '@/types/promotion';
 import { CookieSettings, defaultCookieSettings } from '@/types/cookieSettings';
 
+// Chatbot Configuration
+export interface ChatbotSettings {
+  enabled: boolean;
+  welcomeMessage: string;
+  placeholderText: string;
+  suggestedQuestions: string[];
+  ollamaUrl: string;
+  ollamaModel: string;
+  maxTokens: number;
+  temperature: number;
+  systemPromptAddition: string;
+}
+
+export const defaultChatbotSettings: ChatbotSettings = {
+  enabled: true,
+  welcomeMessage: 'Willkommen! Ich bin der KernelFlow Assistent. Wie kann ich Ihnen helfen?',
+  placeholderText: 'Schreiben Sie eine Nachricht...',
+  suggestedQuestions: ['Was bietet KernelFlow?', 'Preise & Pakete', 'Kontakt'],
+  ollamaUrl: 'http://localhost:11434',
+  ollamaModel: 'llama3.2:latest',
+  maxTokens: 1024,
+  temperature: 0.7,
+  systemPromptAddition: '',
+};
+
 export interface SiteSettings {
   companyName: string;
   ownerName: string;
@@ -146,6 +171,8 @@ export interface SiteSettings {
   promotions?: Promotion[];
   // Cookie Consent Settings
   cookieSettings?: CookieSettings;
+  // Chatbot Settings
+  chatbotSettings?: ChatbotSettings;
 }
 
 export { DEFAULT_PROMOTIONS, defaultCookieSettings };
