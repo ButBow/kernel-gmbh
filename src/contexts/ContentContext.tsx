@@ -1,5 +1,8 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { STORAGE_KEYS, getStorageItem, setStorageItem } from '@/lib/storage';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { 
+  STORAGE_KEYS, getStorageItem, setStorageItem,
+  fetchContentFromServer, saveContentToServer 
+} from '@/lib/storage';
 import {
   Category, Product, Project, Post, SiteSettings,
   initialCategories, initialProducts, initialProjects, initialPosts, initialSettings
@@ -11,6 +14,7 @@ interface ContentContextType {
   projects: Project[];
   posts: Post[];
   settings: SiteSettings;
+  isLoading: boolean;
   
   // Categories
   addCategory: (category: Omit<Category, 'id' | 'order'>) => void;
@@ -49,14 +53,68 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(initialSettings);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load data from localStorage on mount
+  // Save all content to server and localStorage
+  const persistContent = useCallback(async (
+    newCategories: Category[],
+    newProducts: Product[],
+    newProjects: Project[],
+    newPosts: Post[],
+    newSettings: SiteSettings
+  ) => {
+    // Always save to localStorage as backup
+    setStorageItem(STORAGE_KEYS.CATEGORIES, newCategories);
+    setStorageItem(STORAGE_KEYS.PRODUCTS, newProducts);
+    setStorageItem(STORAGE_KEYS.PROJECTS, newProjects);
+    setStorageItem(STORAGE_KEYS.POSTS, newPosts);
+    setStorageItem(STORAGE_KEYS.SETTINGS, newSettings);
+
+    // Try to save to server
+    await saveContentToServer({
+      categories: newCategories,
+      products: newProducts,
+      projects: newProjects,
+      posts: newPosts,
+      settings: newSettings,
+    });
+  }, []);
+
+  // Load data from server first, fallback to localStorage
   useEffect(() => {
-    setCategories(getStorageItem(STORAGE_KEYS.CATEGORIES, initialCategories));
-    setProducts(getStorageItem(STORAGE_KEYS.PRODUCTS, initialProducts));
-    setProjects(getStorageItem(STORAGE_KEYS.PROJECTS, initialProjects));
-    setPosts(getStorageItem(STORAGE_KEYS.POSTS, initialPosts));
-    setSettings(getStorageItem(STORAGE_KEYS.SETTINGS, initialSettings));
+    const loadContent = async () => {
+      setIsLoading(true);
+      
+      // Try to load from server first
+      const serverContent = await fetchContentFromServer();
+      
+      if (serverContent) {
+        // Server data available - use it
+        setCategories(serverContent.categories as Category[] || initialCategories);
+        setProducts(serverContent.products as Product[] || initialProducts);
+        setProjects(serverContent.projects as Project[] || initialProjects);
+        setPosts(serverContent.posts as Post[] || initialPosts);
+        setSettings(serverContent.settings as SiteSettings || initialSettings);
+        
+        // Also update localStorage as cache
+        setStorageItem(STORAGE_KEYS.CATEGORIES, serverContent.categories);
+        setStorageItem(STORAGE_KEYS.PRODUCTS, serverContent.products);
+        setStorageItem(STORAGE_KEYS.PROJECTS, serverContent.projects);
+        setStorageItem(STORAGE_KEYS.POSTS, serverContent.posts);
+        setStorageItem(STORAGE_KEYS.SETTINGS, serverContent.settings);
+      } else {
+        // Fallback to localStorage (for Lovable preview)
+        setCategories(getStorageItem(STORAGE_KEYS.CATEGORIES, initialCategories));
+        setProducts(getStorageItem(STORAGE_KEYS.PRODUCTS, initialProducts));
+        setProjects(getStorageItem(STORAGE_KEYS.PROJECTS, initialProjects));
+        setPosts(getStorageItem(STORAGE_KEYS.POSTS, initialPosts));
+        setSettings(getStorageItem(STORAGE_KEYS.SETTINGS, initialSettings));
+      }
+      
+      setIsLoading(false);
+    };
+    
+    loadContent();
   }, []);
 
   // Categories
@@ -68,13 +126,13 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     };
     const updated = [...categories, newCategory];
     setCategories(updated);
-    setStorageItem(STORAGE_KEYS.CATEGORIES, updated);
+    persistContent(updated, products, projects, posts, settings);
   };
 
   const updateCategory = (id: string, category: Partial<Category>) => {
     const updated = categories.map(c => c.id === id ? { ...c, ...category } : c);
     setCategories(updated);
-    setStorageItem(STORAGE_KEYS.CATEGORIES, updated);
+    persistContent(updated, products, projects, posts, settings);
   };
 
   const deleteCategory = (id: string) => {
@@ -85,13 +143,13 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     }
     const updated = categories.filter(c => c.id !== id);
     setCategories(updated);
-    setStorageItem(STORAGE_KEYS.CATEGORIES, updated);
+    persistContent(updated, products, projects, posts, settings);
   };
 
   const reorderCategories = (newCategories: Category[]) => {
     const updated = newCategories.map((c, i) => ({ ...c, order: i + 1 }));
     setCategories(updated);
-    setStorageItem(STORAGE_KEYS.CATEGORIES, updated);
+    persistContent(updated, products, projects, posts, settings);
   };
 
   const importCategories = (newCategories: Category[], mode: 'add' | 'replace') => {
@@ -114,7 +172,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       ];
     }
     setCategories(updated);
-    setStorageItem(STORAGE_KEYS.CATEGORIES, updated);
+    persistContent(updated, products, projects, posts, settings);
   };
 
   // Products
@@ -125,19 +183,19 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     };
     const updated = [...products, newProduct];
     setProducts(updated);
-    setStorageItem(STORAGE_KEYS.PRODUCTS, updated);
+    persistContent(categories, updated, projects, posts, settings);
   };
 
   const updateProduct = (id: number, product: Partial<Product>) => {
     const updated = products.map(p => p.id === id ? { ...p, ...product } : p);
     setProducts(updated);
-    setStorageItem(STORAGE_KEYS.PRODUCTS, updated);
+    persistContent(categories, updated, projects, posts, settings);
   };
 
   const deleteProduct = (id: number) => {
     const updated = products.filter(p => p.id !== id);
     setProducts(updated);
-    setStorageItem(STORAGE_KEYS.PRODUCTS, updated);
+    persistContent(categories, updated, projects, posts, settings);
   };
 
   const importProducts = (newProducts: Product[], mode: 'add' | 'replace') => {
@@ -157,7 +215,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       ];
     }
     setProducts(updated);
-    setStorageItem(STORAGE_KEYS.PRODUCTS, updated);
+    persistContent(categories, updated, projects, posts, settings);
   };
 
   // Projects
@@ -168,19 +226,19 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     };
     const updated = [...projects, newProject];
     setProjects(updated);
-    setStorageItem(STORAGE_KEYS.PROJECTS, updated);
+    persistContent(categories, products, updated, posts, settings);
   };
 
   const updateProject = (id: number, project: Partial<Project>) => {
     const updated = projects.map(p => p.id === id ? { ...p, ...project } : p);
     setProjects(updated);
-    setStorageItem(STORAGE_KEYS.PROJECTS, updated);
+    persistContent(categories, products, updated, posts, settings);
   };
 
   const deleteProject = (id: number) => {
     const updated = projects.filter(p => p.id !== id);
     setProjects(updated);
-    setStorageItem(STORAGE_KEYS.PROJECTS, updated);
+    persistContent(categories, products, updated, posts, settings);
   };
 
   const importProjects = (newProjects: Project[], mode: 'add' | 'replace') => {
@@ -200,7 +258,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       ];
     }
     setProjects(updated);
-    setStorageItem(STORAGE_KEYS.PROJECTS, updated);
+    persistContent(categories, products, updated, posts, settings);
   };
 
   // Posts
@@ -211,19 +269,19 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     };
     const updated = [...posts, newPost];
     setPosts(updated);
-    setStorageItem(STORAGE_KEYS.POSTS, updated);
+    persistContent(categories, products, projects, updated, settings);
   };
 
   const updatePost = (id: number, post: Partial<Post>) => {
     const updated = posts.map(p => p.id === id ? { ...p, ...post } : p);
     setPosts(updated);
-    setStorageItem(STORAGE_KEYS.POSTS, updated);
+    persistContent(categories, products, projects, updated, settings);
   };
 
   const deletePost = (id: number) => {
     const updated = posts.filter(p => p.id !== id);
     setPosts(updated);
-    setStorageItem(STORAGE_KEYS.POSTS, updated);
+    persistContent(categories, products, projects, updated, settings);
   };
 
   const importPosts = (newPosts: Post[], mode: 'add' | 'replace') => {
@@ -243,19 +301,19 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       ];
     }
     setPosts(updated);
-    setStorageItem(STORAGE_KEYS.POSTS, updated);
+    persistContent(categories, products, projects, updated, settings);
   };
 
   // Settings
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
     const updated = { ...settings, ...newSettings };
     setSettings(updated);
-    setStorageItem(STORAGE_KEYS.SETTINGS, updated);
+    persistContent(categories, products, projects, posts, updated);
   };
 
   return (
     <ContentContext.Provider value={{
-      categories, products, projects, posts, settings,
+      categories, products, projects, posts, settings, isLoading,
       addCategory, updateCategory, deleteCategory, reorderCategories, importCategories,
       addProduct, updateProduct, deleteProduct, importProducts,
       addProject, updateProject, deleteProject, importProjects,

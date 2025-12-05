@@ -1,5 +1,8 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { STORAGE_KEYS, getStorageItem, setStorageItem } from '@/lib/storage';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { 
+  STORAGE_KEYS, getStorageItem, setStorageItem,
+  fetchThemeFromServer, saveThemeToServer 
+} from '@/lib/storage';
 import { 
   Theme, ThemeConfig, ThemeColors,
   initialThemeConfig, presetThemes, getActiveTheme, applyThemeToDocument 
@@ -9,6 +12,7 @@ interface ThemeContextType {
   themeConfig: ThemeConfig;
   activeTheme: Theme;
   allThemes: Theme[];
+  isLoading: boolean;
   
   setActiveTheme: (themeId: string) => void;
   addCustomTheme: (theme: Omit<Theme, 'id' | 'isPreset' | 'createdAt'>) => void;
@@ -22,11 +26,45 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeConfig, setThemeConfig] = useState<ThemeConfig>(initialThemeConfig);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load theme config from localStorage
+  // Persist theme to server and localStorage
+  const persistTheme = useCallback(async (config: ThemeConfig) => {
+    // Always save to localStorage as backup
+    setStorageItem(STORAGE_KEYS.THEME, config);
+    
+    // Try to save to server
+    await saveThemeToServer(config);
+  }, []);
+
+  // Load theme config from server first, fallback to localStorage
   useEffect(() => {
-    const saved = getStorageItem<ThemeConfig>(STORAGE_KEYS.THEME, initialThemeConfig);
-    setThemeConfig(saved);
+    const loadTheme = async () => {
+      setIsLoading(true);
+      
+      // Try to load from server first
+      const serverTheme = await fetchThemeFromServer();
+      
+      if (serverTheme) {
+        // Server data available - use it
+        const config: ThemeConfig = {
+          activeThemeId: serverTheme.activeThemeId || 'default-amber',
+          customThemes: (serverTheme.customThemes as Theme[]) || [],
+        };
+        setThemeConfig(config);
+        
+        // Also update localStorage as cache
+        setStorageItem(STORAGE_KEYS.THEME, config);
+      } else {
+        // Fallback to localStorage (for Lovable preview)
+        const saved = getStorageItem<ThemeConfig>(STORAGE_KEYS.THEME, initialThemeConfig);
+        setThemeConfig(saved);
+      }
+      
+      setIsLoading(false);
+    };
+    
+    loadTheme();
   }, []);
 
   // Apply theme whenever config changes
@@ -41,7 +79,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setActiveTheme = (themeId: string) => {
     const updated = { ...themeConfig, activeThemeId: themeId };
     setThemeConfig(updated);
-    setStorageItem(STORAGE_KEYS.THEME, updated);
+    persistTheme(updated);
   };
 
   const addCustomTheme = (theme: Omit<Theme, 'id' | 'isPreset' | 'createdAt'>) => {
@@ -56,7 +94,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       customThemes: [...themeConfig.customThemes, newTheme],
     };
     setThemeConfig(updated);
-    setStorageItem(STORAGE_KEYS.THEME, updated);
+    persistTheme(updated);
   };
 
   const updateCustomTheme = (id: string, updates: Partial<Theme>) => {
@@ -67,7 +105,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       ),
     };
     setThemeConfig(updated);
-    setStorageItem(STORAGE_KEYS.THEME, updated);
+    persistTheme(updated);
   };
 
   const deleteCustomTheme = (id: string) => {
@@ -82,7 +120,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       customThemes: themeConfig.customThemes.filter(t => t.id !== id),
     };
     setThemeConfig(updated);
-    setStorageItem(STORAGE_KEYS.THEME, updated);
+    persistTheme(updated);
   };
 
   const duplicateTheme = (themeId: string) => {
@@ -126,7 +164,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       };
     }
     setThemeConfig(updated);
-    setStorageItem(STORAGE_KEYS.THEME, updated);
+    persistTheme(updated);
   };
 
   return (
@@ -134,6 +172,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       themeConfig,
       activeTheme,
       allThemes,
+      isLoading,
       setActiveTheme,
       addCustomTheme,
       updateCustomTheme,
