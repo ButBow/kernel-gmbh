@@ -6,20 +6,51 @@
     <title>Mein Firmenname | KI, Automatisierung & Content</title>
     <meta name="description" content="Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen." />
     <meta name="author" content="Mein Firmenname" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <link rel="canonical" href="https://meinfirmenname.ch" />
 
+    <!-- Performance: Preconnect to external origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Performance: DNS prefetch for potential external resources -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
+    <!-- Open Graph -->
     <meta property="og:title" content="Mein Firmenname | KI, Automatisierung & Content" />
     <meta property="og:description" content="Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen." />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="de_CH" />
+    <meta property="og:site_name" content="Mein Firmenname" />
 
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Mein Firmenname | KI, Automatisierung & Content" />
     <meta name="twitter:description" content="KI, Automatisierung & Content-Produktion für Unternehmen, Creators und Einzelunternehmer." />
+
+    <!-- Performance: Theme color for browser UI -->
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
+    <!-- Performance: Mobile optimization -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   </head>
 
   <body>
+    <!-- Noscript fallback -->
+    <noscript>
+      <div style="padding: 20px; text-align: center; font-family: system-ui, sans-serif;">
+        <h1>JavaScript erforderlich</h1>
+        <p>Diese Website benötigt JavaScript. Bitte aktivieren Sie JavaScript in Ihrem Browser.</p>
+      </div>
+    </noscript>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
