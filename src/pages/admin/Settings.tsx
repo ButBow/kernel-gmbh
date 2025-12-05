@@ -12,14 +12,16 @@ import { ImageUpload } from '@/components/admin/ImageUpload';
 import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
 import { BackupRestore } from '@/components/admin/BackupRestore';
-import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag, FileText, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag, FileText, ChevronUp, ChevronDown, Cookie } from 'lucide-react';
 import { PromotionManager } from '@/components/admin/PromotionManager';
 import { Promotion } from '@/types/promotion';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner, Executive } from '@/data/initialData';
+import { defaultCookieSettings, CookieSettings } from '@/types/cookieSettings';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { Label } from '@/components/ui/label';
 
 const benefitIcons = [Zap, Lightbulb, Shield, CheckCircle];
 const valueIconOptions = ['Star', 'Lightbulb', 'Eye', 'Zap', 'Target', 'Heart', 'Shield', 'Rocket', 'Award'];
@@ -98,6 +100,7 @@ export default function AdminSettings() {
             <TabsTrigger value="integrations" className="text-xs sm:text-sm">Integrationen</TabsTrigger>
             <TabsTrigger value="theme" className="text-xs sm:text-sm">Design</TabsTrigger>
             <TabsTrigger value="backup" className="text-xs sm:text-sm">Backup</TabsTrigger>
+            <TabsTrigger value="cookies" className="text-xs sm:text-sm">Cookies</TabsTrigger>
             <TabsTrigger value="general" className="text-xs sm:text-sm">Allgemein</TabsTrigger>
             <TabsTrigger value="legal" className="text-xs sm:text-sm">Rechtliches</TabsTrigger>
           </TabsList>
@@ -1498,6 +1501,291 @@ export default function AdminSettings() {
 
         <TabsContent value="backup">
           <BackupRestore />
+        </TabsContent>
+
+        <TabsContent value="cookies">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cookie className="h-5 w-5" />
+                  Cookie-Banner Einstellungen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Enable/Disable */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Cookie-Banner aktiviert</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Zeigt den Cookie-Consent-Banner für neue Besucher
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.cookieSettings?.enabled ?? defaultCookieSettings.enabled}
+                    onCheckedChange={(checked) => setForm({
+                      ...form,
+                      cookieSettings: {
+                        ...defaultCookieSettings,
+                        ...form.cookieSettings,
+                        enabled: checked
+                      }
+                    })}
+                  />
+                </div>
+
+                {/* Texts */}
+                <div className="space-y-4">
+                  <div>
+                    <Label>Titel</Label>
+                    <Input
+                      value={form.cookieSettings?.title ?? defaultCookieSettings.title}
+                      onChange={(e) => setForm({
+                        ...form,
+                        cookieSettings: {
+                          ...defaultCookieSettings,
+                          ...form.cookieSettings,
+                          title: e.target.value
+                        }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Beschreibung</Label>
+                    <Textarea
+                      value={form.cookieSettings?.description ?? defaultCookieSettings.description}
+                      onChange={(e) => setForm({
+                        ...form,
+                        cookieSettings: {
+                          ...defaultCookieSettings,
+                          ...form.cookieSettings,
+                          description: e.target.value
+                        }
+                      })}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Button Texts */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Akzeptieren-Button</Label>
+                    <Input
+                      value={form.cookieSettings?.acceptAllText ?? defaultCookieSettings.acceptAllText}
+                      onChange={(e) => setForm({
+                        ...form,
+                        cookieSettings: {
+                          ...defaultCookieSettings,
+                          ...form.cookieSettings,
+                          acceptAllText: e.target.value
+                        }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Ablehnen-Button</Label>
+                    <Input
+                      value={form.cookieSettings?.rejectText ?? defaultCookieSettings.rejectText}
+                      onChange={(e) => setForm({
+                        ...form,
+                        cookieSettings: {
+                          ...defaultCookieSettings,
+                          ...form.cookieSettings,
+                          rejectText: e.target.value
+                        }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Mehr erfahren-Button</Label>
+                    <Input
+                      value={form.cookieSettings?.moreInfoText ?? defaultCookieSettings.moreInfoText}
+                      onChange={(e) => setForm({
+                        ...form,
+                        cookieSettings: {
+                          ...defaultCookieSettings,
+                          ...form.cookieSettings,
+                          moreInfoText: e.target.value
+                        }
+                      })}
+                    />
+                  </div>
+                </div>
+
+                {/* Position & Style */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Position</Label>
+                    <Select
+                      value={form.cookieSettings?.position ?? defaultCookieSettings.position}
+                      onValueChange={(value: 'bottom' | 'top' | 'center') => setForm({
+                        ...form,
+                        cookieSettings: {
+                          ...defaultCookieSettings,
+                          ...form.cookieSettings,
+                          position: value
+                        }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bottom">Unten</SelectItem>
+                        <SelectItem value="top">Oben</SelectItem>
+                        <SelectItem value="center">Mitte</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Stil</Label>
+                    <Select
+                      value={form.cookieSettings?.style ?? defaultCookieSettings.style}
+                      onValueChange={(value: 'minimal' | 'detailed' | 'floating') => setForm({
+                        ...form,
+                        cookieSettings: {
+                          ...defaultCookieSettings,
+                          ...form.cookieSettings,
+                          style: value
+                        }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="minimal">Minimal</SelectItem>
+                        <SelectItem value="detailed">Detailliert</SelectItem>
+                        <SelectItem value="floating">Schwebend</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Detailed Info Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Details anzeigen</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Ermöglicht Besuchern, Details zu erfassten Daten anzusehen
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.cookieSettings?.showDetailedInfo ?? defaultCookieSettings.showDetailedInfo}
+                    onCheckedChange={(checked) => setForm({
+                      ...form,
+                      cookieSettings: {
+                        ...defaultCookieSettings,
+                        ...form.cookieSettings,
+                        showDetailedInfo: checked
+                      }
+                    })}
+                  />
+                </div>
+
+                {/* Collected Data Items */}
+                <div>
+                  <Label className="mb-2 block">Erfasste Daten (werden in Details angezeigt)</Label>
+                  <div className="space-y-2">
+                    {(form.cookieSettings?.collectedDataItems ?? defaultCookieSettings.collectedDataItems).map((item, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          value={item}
+                          onChange={(e) => {
+                            const newItems = [...(form.cookieSettings?.collectedDataItems ?? defaultCookieSettings.collectedDataItems)];
+                            newItems[index] = e.target.value;
+                            setForm({
+                              ...form,
+                              cookieSettings: {
+                                ...defaultCookieSettings,
+                                ...form.cookieSettings,
+                                collectedDataItems: newItems
+                              }
+                            });
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newItems = (form.cookieSettings?.collectedDataItems ?? defaultCookieSettings.collectedDataItems).filter((_, i) => i !== index);
+                            setForm({
+                              ...form,
+                              cookieSettings: {
+                                ...defaultCookieSettings,
+                                ...form.cookieSettings,
+                                collectedDataItems: newItems
+                              }
+                            });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setForm({
+                        ...form,
+                        cookieSettings: {
+                          ...defaultCookieSettings,
+                          ...form.cookieSettings,
+                          collectedDataItems: [
+                            ...(form.cookieSettings?.collectedDataItems ?? defaultCookieSettings.collectedDataItems),
+                            'Neuer Datenpunkt'
+                          ]
+                        }
+                      })}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Datenpunkt hinzufügen
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Vorschau</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative bg-muted/30 rounded-lg p-4 min-h-[200px] flex items-end justify-center">
+                  <div className="w-full max-w-lg bg-background/95 backdrop-blur border rounded-lg p-4 shadow-xl">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-full bg-primary/10">
+                        <Cookie className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h4 className="font-semibold text-sm">{form.cookieSettings?.title ?? defaultCookieSettings.title}</h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {form.cookieSettings?.description ?? defaultCookieSettings.description}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" className="h-7 text-xs">
+                            {form.cookieSettings?.acceptAllText ?? defaultCookieSettings.acceptAllText}
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs">
+                            {form.cookieSettings?.rejectText ?? defaultCookieSettings.rejectText}
+                          </Button>
+                          {(form.cookieSettings?.showDetailedInfo ?? defaultCookieSettings.showDetailedInfo) && (
+                            <Button variant="ghost" size="sm" className="h-7 text-xs">
+                              {form.cookieSettings?.moreInfoText ?? defaultCookieSettings.moreInfoText}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 

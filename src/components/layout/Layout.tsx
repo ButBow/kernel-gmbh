@@ -1,7 +1,9 @@
 import { ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { PromoBanner } from "@/components/PromoBanner";
+import { SEOHead } from "@/components/SEOHead";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useContent } from "@/contexts/ContentContext";
@@ -10,10 +12,12 @@ import { Loader2 } from "lucide-react";
 
 interface LayoutProps {
   pageTitle?: string;
+  pageDescription?: string;
   children: ReactNode;
 }
 
-export function Layout({ children, pageTitle }: LayoutProps) {
+export function Layout({ children, pageTitle, pageDescription }: LayoutProps) {
+  const location = useLocation();
   // Automatically track all pages
   usePageTracking();
   // Set document title based on company name
@@ -21,6 +25,14 @@ export function Layout({ children, pageTitle }: LayoutProps) {
   
   const { isLoading: isContentLoading } = useContent();
   const { isLoading: isThemeLoading } = useTheme();
+  
+  // Determine page type for structured data
+  const getPageType = (): 'website' | 'article' | 'product' | 'profile' => {
+    if (location.pathname.startsWith('/blog/')) return 'article';
+    if (location.pathname === '/ueber-mich') return 'profile';
+    if (location.pathname === '/leistungen') return 'product';
+    return 'website';
+  };
   
   // Show loading state until BOTH content AND theme are loaded to prevent flash
   if (isContentLoading || isThemeLoading) {
@@ -38,6 +50,12 @@ export function Layout({ children, pageTitle }: LayoutProps) {
   
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title={pageTitle}
+        description={pageDescription}
+        canonicalPath={location.pathname}
+        type={getPageType()}
+      />
       <Header />
       <div className="sticky top-16 z-40">
         <PromoBanner />

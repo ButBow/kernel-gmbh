@@ -145,7 +145,7 @@ export default function Portfolio() {
   };
 
   return (
-    <Layout pageTitle="Portfolio">
+    <Layout pageTitle="Portfolio" pageDescription="Ausgewählte Projekte aus den Bereichen Video, Automatisierung, und Content-Produktion.">
       {/* Hero */}
       <section className="py-16 md:py-24 bg-gradient-dark">
         <div className="container mx-auto px-4">

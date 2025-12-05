@@ -48,7 +48,7 @@ export default function Index() {
   };
 
   return (
-    <Layout pageTitle="Startseite">
+    <Layout pageTitle="Startseite" pageDescription={settings.heroSubtitle}>
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-dark" />

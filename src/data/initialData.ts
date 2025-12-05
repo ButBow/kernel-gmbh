@@ -100,6 +100,7 @@ export interface Executive {
 }
 
 import { Promotion, DEFAULT_PROMOTIONS } from '@/types/promotion';
+import { CookieSettings, defaultCookieSettings } from '@/types/cookieSettings';
 
 export interface SiteSettings {
   companyName: string;
@@ -143,9 +144,11 @@ export interface SiteSettings {
   apiBaseUrl?: string;
   // Promotions & Discount Codes
   promotions?: Promotion[];
+  // Cookie Consent Settings
+  cookieSettings?: CookieSettings;
 }
 
-export { DEFAULT_PROMOTIONS };
+export { DEFAULT_PROMOTIONS, defaultCookieSettings };
 
 export const initialCategories: Category[] = [
   { id: "video", name: "Video & Social Media Editing", description: "Professionelle Videoproduktion für Social Media und Events.", icon: "Video", order: 1 },
