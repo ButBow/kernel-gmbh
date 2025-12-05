@@ -213,36 +213,37 @@ export default function AdminSettings() {
         </TabsContent>
 
         <TabsContent value="partners">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Handshake className="h-5 w-5" />
-                  Partner & Kooperationen
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setForm({
-                    ...form,
-                    partners: [...(form.partners || []), {
-                      name: '',
-                      logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=200&q=80',
-                      link: '',
-                      quote: ''
-                    }]
-                  })}
-                >
-                  <Plus className="h-4 w-4 mr-1" /> Partner hinzufügen
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Partner-Logos werden auf der Startseite als scrollende Leiste angezeigt. Auch mit nur 1-2 Partnern funktioniert die Animation.
-              </p>
-              {(form.partners || []).map((partner, i) => (
-                <div key={i} className="p-4 border border-border rounded-lg space-y-3">
+          <div className="mobile-stack">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Handshake className="h-5 w-5" />
+                    Partner & Kooperationen
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm({
+                      ...form,
+                      partners: [...(form.partners || []), {
+                        name: '',
+                        logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=200&q=80',
+                        link: '',
+                        quote: ''
+                      }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Partner hinzufügen
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Partner-Logos werden auf der Startseite als scrollende Leiste angezeigt. Auch mit nur 1-2 Partnern funktioniert die Animation.
+                </p>
+                {(form.partners || []).map((partner, i) => (
+                  <div key={i} className="p-4 border border-border rounded-lg space-y-3">
                   <div className="flex gap-3 items-start">
                     {/* Reorder buttons */}
                     <div className="flex flex-col">
@@ -335,15 +336,35 @@ export default function AdminSettings() {
               )}
             </CardContent>
           </Card>
+
+          <LivePreview title="Partner-Vorschau">
+            <div className="p-4 bg-background">
+              <p className="text-xs text-muted-foreground mb-3 text-center">Partner-Leiste (scrollend)</p>
+              <div className="flex gap-4 overflow-hidden">
+                {(form.partners || []).length > 0 ? (
+                  (form.partners || []).map((partner, i) => (
+                    <div key={i} className="flex-shrink-0 w-16 h-16 rounded-lg bg-secondary flex items-center justify-center overflow-hidden">
+                      <img src={partner.logo} alt={partner.name || 'Partner'} className="w-full h-full object-contain p-2" />
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center w-full">Keine Partner</p>
+                )}
+              </div>
+            </div>
+          </LivePreview>
+          </div>
         </TabsContent>
 
         <TabsContent value="about">
-          <div className="space-y-6">
-            {/* Persönliche Daten */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Persönliche Daten</CardTitle>
-              </CardHeader>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Form Section - spans 2 columns */}
+            <div className="xl:col-span-2 space-y-6">
+              {/* Persönliche Daten */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Persönliche Daten</CardTitle>
+                </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -801,6 +822,65 @@ export default function AdminSettings() {
                 </div>
               </CardContent>
             </Card>
+            </div>
+
+            {/* Preview Section */}
+            <div className="xl:col-span-1">
+              <LivePreview title="Über mich-Vorschau">
+                <div className="p-4 bg-background space-y-4">
+                  {/* Profile Header */}
+                  <div className="flex items-center gap-3">
+                    {form.aboutImage ? (
+                      <img src={form.aboutImage} alt={form.ownerName} className="w-12 h-12 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                        <User className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-semibold text-foreground text-sm">{form.ownerName || 'Name'}</h3>
+                      <p className="text-xs text-muted-foreground">{form.aboutTagline || 'Tagline'}</p>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  {(form.stats || []).length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 py-2 border-t border-b border-border">
+                      {(form.stats || []).slice(0, 3).map((stat, i) => (
+                        <div key={i} className="text-center">
+                          <p className="text-sm font-bold text-primary">{stat.value}</p>
+                          <p className="text-xs text-muted-foreground">{stat.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Values */}
+                  {(form.coreValues || []).length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Werte:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {(form.coreValues || []).slice(0, 3).map((val, i) => (
+                          <span key={i} className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded">{val.title}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Skills */}
+                  {form.skills.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Skills:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {form.skills.slice(0, 4).map((skill, i) => (
+                          <span key={i} className="text-xs px-2 py-0.5 bg-secondary rounded text-muted-foreground">{skill}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </LivePreview>
+            </div>
           </div>
         </TabsContent>
 
