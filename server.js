@@ -34,6 +34,12 @@ if (fs.existsSync(envPath)) {
 
 const PORT = process.env.PORT || 3000;
 const DIST_DIR = path.join(__dirname, 'dist');
+const DATA_DIR = path.join(__dirname, 'data');
+
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 // Rate limiting storage
 const rateLimitStore = new Map();
@@ -81,9 +87,37 @@ const SECURITY_HEADERS = {
 // CORS headers for API
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+// ============================================================================
+// DATA FILE HELPERS
+// ============================================================================
+
+function readDataFile(filename, defaultValue) {
+  const filePath = path.join(DATA_DIR, filename);
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(content);
+    }
+  } catch (error) {
+    console.error(`Error reading ${filename}:`, error.message);
+  }
+  return defaultValue;
+}
+
+function writeDataFile(filename, data) {
+  const filePath = path.join(DATA_DIR, filename);
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    return true;
+  } catch (error) {
+    console.error(`Error writing ${filename}:`, error.message);
+    return false;
+  }
+}
 
 // Cache durations (in seconds)
 const CACHE_DURATIONS = {
@@ -709,6 +743,153 @@ async function handleAPI(req, res, urlPath) {
     return true;
   }
 
+  // ============================================================================
+  // CONTENT API - Central data storage for all site content
+  // ============================================================================
+
+  // GET /api/content - Get all content data
+  if (urlPath === '/api/content' && req.method === 'GET') {
+    console.log(`[${timestamp}] 📖 Fetching content data...`);
+    const content = readDataFile('content.json', null);
+    if (content) {
+      sendJSON(res, 200, content);
+    } else {
+      sendJSON(res, 404, { error: 'Content not initialized' });
+    }
+    return true;
+  }
+
+  // POST /api/content - Save content data
+  if (urlPath === '/api/content' && req.method === 'POST') {
+    console.log(`[${timestamp}] 💾 Saving content data...`);
+    try {
+      const body = await parseBody(req);
+      const success = writeDataFile('content.json', body);
+      if (success) {
+        console.log(`[${timestamp}] ✅ Content saved successfully`);
+        sendJSON(res, 200, { success: true });
+      } else {
+        sendJSON(res, 500, { error: 'Failed to save content' });
+      }
+    } catch (error) {
+      console.error(`[${timestamp}] ❌ Content save error:`, error.message);
+      sendJSON(res, 500, { error: error.message });
+    }
+    return true;
+  }
+
+  // ============================================================================
+  // THEME API - Central theme configuration
+  // ============================================================================
+
+  // GET /api/theme - Get theme config
+  if (urlPath === '/api/theme' && req.method === 'GET') {
+    console.log(`[${timestamp}] 🎨 Fetching theme data...`);
+    const theme = readDataFile('theme.json', null);
+    if (theme) {
+      sendJSON(res, 200, theme);
+    } else {
+      sendJSON(res, 404, { error: 'Theme not initialized' });
+    }
+    return true;
+  }
+
+  // POST /api/theme - Save theme config
+  if (urlPath === '/api/theme' && req.method === 'POST') {
+    console.log(`[${timestamp}] 🎨 Saving theme data...`);
+    try {
+      const body = await parseBody(req);
+      const success = writeDataFile('theme.json', body);
+      if (success) {
+        console.log(`[${timestamp}] ✅ Theme saved successfully`);
+        sendJSON(res, 200, { success: true });
+      } else {
+        sendJSON(res, 500, { error: 'Failed to save theme' });
+      }
+    } catch (error) {
+      console.error(`[${timestamp}] ❌ Theme save error:`, error.message);
+      sendJSON(res, 500, { error: error.message });
+    }
+    return true;
+  }
+
+  // ============================================================================
+  // INQUIRIES API - Contact form submissions
+  // ============================================================================
+
+  // GET /api/inquiries - Get all inquiries
+  if (urlPath === '/api/inquiries' && req.method === 'GET') {
+    console.log(`[${timestamp}] 📋 Fetching inquiries...`);
+    const inquiries = readDataFile('inquiries.json', []);
+    sendJSON(res, 200, inquiries);
+    return true;
+  }
+
+  // POST /api/inquiries - Add new inquiry
+  if (urlPath === '/api/inquiries' && req.method === 'POST') {
+    console.log(`[${timestamp}] 📝 Saving new inquiry...`);
+    try {
+      const body = await parseBody(req);
+      const inquiries = readDataFile('inquiries.json', []);
+      inquiries.push(body);
+      const success = writeDataFile('inquiries.json', inquiries);
+      if (success) {
+        console.log(`[${timestamp}] ✅ Inquiry saved successfully`);
+        sendJSON(res, 200, { success: true, id: body.id });
+      } else {
+        sendJSON(res, 500, { error: 'Failed to save inquiry' });
+      }
+    } catch (error) {
+      console.error(`[${timestamp}] ❌ Inquiry save error:`, error.message);
+      sendJSON(res, 500, { error: error.message });
+    }
+    return true;
+  }
+
+  // DELETE /api/inquiries/:id - Delete inquiry
+  if (urlPath.startsWith('/api/inquiries/') && req.method === 'DELETE') {
+    const inquiryId = urlPath.split('/').pop();
+    console.log(`[${timestamp}] 🗑️ Deleting inquiry: ${inquiryId}`);
+    try {
+      const inquiries = readDataFile('inquiries.json', []);
+      const filtered = inquiries.filter(i => i.id !== inquiryId);
+      if (filtered.length === inquiries.length) {
+        sendJSON(res, 404, { error: 'Inquiry not found' });
+        return true;
+      }
+      const success = writeDataFile('inquiries.json', filtered);
+      if (success) {
+        console.log(`[${timestamp}] ✅ Inquiry deleted successfully`);
+        sendJSON(res, 200, { success: true });
+      } else {
+        sendJSON(res, 500, { error: 'Failed to delete inquiry' });
+      }
+    } catch (error) {
+      console.error(`[${timestamp}] ❌ Inquiry delete error:`, error.message);
+      sendJSON(res, 500, { error: error.message });
+    }
+    return true;
+  }
+
+  // PUT /api/inquiries - Update all inquiries (bulk save)
+  if (urlPath === '/api/inquiries' && req.method === 'PUT') {
+    console.log(`[${timestamp}] 💾 Bulk saving inquiries...`);
+    try {
+      const body = await parseBody(req);
+      const success = writeDataFile('inquiries.json', body);
+      if (success) {
+        console.log(`[${timestamp}] ✅ Inquiries bulk saved successfully`);
+        sendJSON(res, 200, { success: true });
+      } else {
+        sendJSON(res, 500, { error: 'Failed to save inquiries' });
+      }
+    } catch (error) {
+      console.error(`[${timestamp}] ❌ Inquiries bulk save error:`, error.message);
+      sendJSON(res, 500, { error: error.message });
+    }
+    return true;
+  }
+
   console.log(`[${timestamp}] ⚠️ Unknown API endpoint: ${urlPath}`);
   return false; // Not an API request
 }
@@ -720,8 +901,8 @@ const server = http.createServer(async (req, res) => {
   // Log every incoming request
   console.log(`[${timestamp}] ${req.method} ${req.url} - IP: ${clientIP}`);
   
-  // Only allow GET, HEAD, POST, OPTIONS methods
-  if (!['GET', 'HEAD', 'POST', 'OPTIONS'].includes(req.method)) {
+  // Only allow GET, HEAD, POST, PUT, DELETE, OPTIONS methods
+  if (!['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'].includes(req.method)) {
     console.log(`[${timestamp}] ❌ Method not allowed: ${req.method}`);
     res.writeHead(405, { 'Content-Type': 'text/plain' });
     res.end('Method Not Allowed');
@@ -807,11 +988,18 @@ server.listen(PORT, '127.0.0.1', () => {
 ║  Status:  Running                                       ║
 ║  URL:     http://127.0.0.1:${PORT.toString().padEnd(28)}║
 ║  Mode:    Production                                    ║
+║  Data:    ${DATA_DIR.padEnd(43)}║
 ╠════════════════════════════════════════════════════════╣
-║  API Endpoints:                                         ║
-║  POST /api/contact     - Contact form to Notion         ║
-║  GET  /api/notion/test - Test Notion connection         ║
-║  GET  /api/notion/status - Check Notion config          ║
+║  Content API (Central Data Storage):                    ║
+║  GET/POST  /api/content    - Site content (all data)    ║
+║  GET/POST  /api/theme      - Theme configuration        ║
+║  GET/POST  /api/inquiries  - Contact inquiries          ║
+║  DELETE    /api/inquiries/:id - Delete inquiry          ║
+╠════════════════════════════════════════════════════════╣
+║  Notion API:                                            ║
+║  POST /api/contact       - Send to Notion               ║
+║  GET  /api/notion/test   - Test connection              ║
+║  GET  /api/notion/status - Check config                 ║
 ╠════════════════════════════════════════════════════════╣
 ║  Notion: ${process.env.NOTION_API_TOKEN ? 'Configured ✓' : 'Not configured (add .env)'}                        ║
 ╠════════════════════════════════════════════════════════╣

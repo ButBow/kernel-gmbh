@@ -1,0 +1,92 @@
+{
+  "categories": [
+    { "id": "video", "name": "Video & Social Media Editing", "description": "Professionelle Videoproduktion für Social Media und Events.", "icon": "Video", "order": 1 },
+    { "id": "ai", "name": "AI-Systeme & Automation", "description": "Intelligente Automatisierungen und KI-gestützte Workflows.", "icon": "Cpu", "order": 2 },
+    { "id": "support", "name": "IT-Support & Beratung", "description": "Technische Unterstützung und strategische Beratung.", "icon": "Wrench", "order": 3 },
+    { "id": "tools", "name": "Programmierung & Tools", "description": "Massgeschneiderte Software und Micro-SaaS Lösungen.", "icon": "Code", "order": 4 },
+    { "id": "design", "name": "Bild & Design", "description": "Visuelles Design für Social Media und Marketing.", "icon": "Image", "order": 5 },
+    { "id": "text", "name": "Texterstellung & Konzeption", "description": "Professionelle Texte und Content-Strategien.", "icon": "FileText", "order": 6 },
+    { "id": "management", "name": "Management & Account-Betreuung", "description": "Vollständige Betreuung Ihrer digitalen Präsenz.", "icon": "Users", "order": 7 }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "categoryId": "video",
+      "name": "Kurzvideo Social Media (30–60s)",
+      "type": "Service",
+      "shortDescription": "Kurzes, dynamisches Social-Media-Video mit Fokus auf Hook & Message.",
+      "description": "Professionell produzierte Kurzvideos, optimiert für maximales Engagement auf Instagram, TikTok und LinkedIn.",
+      "priceText": "CHF 120–350",
+      "showcases": [
+        { "title": "Basic", "description": "1 Video, Light Color-Grading, Simple Cuts", "price": "CHF 120–180" },
+        { "title": "Standard", "description": "1–2 Videos (bis 90s), Sounddesign, Color-Grading, Social Media Optimierung", "price": "CHF 260–350" }
+      ],
+      "targetAudience": ["Einzelunternehmer", "KMU", "Creators"],
+      "status": "published",
+      "featured": true
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "title": "Social Media Kampagne – TechStartup X",
+      "category": "Video",
+      "description": "Komplette Social Media Video-Kampagne für einen Schweizer Tech-Startup.",
+      "fullDescription": "Für TechStartup X haben wir eine umfassende Social Media Kampagne entwickelt und produziert.",
+      "image": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80",
+      "tags": ["Social Media", "Video Production", "Campaign"],
+      "relatedProduct": "Kurzvideo Social Media (30–60s)",
+      "status": "published"
+    }
+  ],
+  "posts": [
+    {
+      "id": 1,
+      "slug": "12-monats-business-roadmap",
+      "title": "Meine 12-Monats Business-Roadmap",
+      "excerpt": "Ein detaillierter Einblick in meine strategische Planung für das kommende Jahr.",
+      "content": "# Meine 12-Monats Business-Roadmap\n\nEin detaillierter Einblick in meine strategische Planung.",
+      "date": "2024-01-15",
+      "tags": ["Strategie", "Business", "Planung"],
+      "image": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80",
+      "status": "published"
+    }
+  ],
+  "settings": {
+    "companyName": "Mein Firmenname",
+    "ownerName": "Max Mustermann",
+    "heroTitle": "Effizienz durch Technologie & Kreativität",
+    "heroSubtitle": "Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen.",
+    "heroCta": "Projekt anfragen",
+    "whyWorkWithMe": [
+      "Schnelle, zuverlässige Umsetzung",
+      "Technisch & kreativ stark",
+      "Modular, zukunftssicher",
+      "Fokus auf echte Effizienz"
+    ],
+    "aboutText": "Als Einzelunternehmer verbinde ich technisches Know-how mit kreativem Denken.",
+    "aboutImage": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+    "aboutTagline": "Technologie trifft Kreativität",
+    "aboutMission": "Meine Mission ist es, Unternehmen und Creators dabei zu helfen, das volle Potenzial moderner Technologien auszuschöpfen.",
+    "milestones": [
+      { "year": "2024", "title": "Gründung", "description": "Start als Einzelunternehmer mit Fokus auf AI & Automation" }
+    ],
+    "coreValues": [
+      { "title": "Qualität", "description": "Jedes Projekt verdient höchste Sorgfalt und Präzision", "icon": "Star" }
+    ],
+    "stats": [
+      { "value": "50+", "label": "Projekte" },
+      { "value": "30+", "label": "Zufriedene Kunden" }
+    ],
+    "testimonials": [],
+    "partners": [],
+    "skills": ["Python", "AI/ML", "Video Editing", "Automation", "Web Development"],
+    "contactEmail": "kontakt@example.com",
+    "contactPhone": "+41 00 000 00 00",
+    "contactLocation": "Schweiz",
+    "footerText": "© 2024 Mein Firmenname. Alle Rechte vorbehalten.",
+    "impressumText": "Impressum Text hier...",
+    "datenschutzText": "Datenschutz Text hier...",
+    "promotions": []
+  }
+}
