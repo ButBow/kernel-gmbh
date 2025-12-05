@@ -1,17 +1,31 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Message } from '@/components/chat/ChatMessage';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
+import { useContent } from '@/contexts/ContentContext';
 
 interface ChatResponse {
   response: string;
+  session_id?: string;
   error?: string;
+  hint?: string;
 }
+
+// Chatbot-Server URLs (Python Backend)
+const CHATBOT_URLS = {
+  // Versuche zuerst den Python-Server
+  python: '/api/python-chat',
+  // Fallback auf Node.js Server
+  node: '/api/chat',
+};
 
 export function useChatBot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { trackEvent, isTrackingTypeEnabled } = useAnalytics();
+  const { settings } = useContent();
   const sessionTracked = useRef(false);
+  // Session-ID für Python-Backend (wird bei Page-Reload zurückgesetzt)
+  const sessionIdRef = useRef<string | null>(null);
 
   // Track chat session when first message is sent
   useEffect(() => {
@@ -24,6 +38,18 @@ export function useChatBot() {
       }
     }
   }, [messages.length, trackEvent, isTrackingTypeEnabled]);
+
+  // Generiere API-URL basierend auf Einstellungen
+  const getChatApiUrl = useCallback(() => {
+    const pythonServerUrl = settings.chatbotSettings?.pythonServerUrl;
+    if (pythonServerUrl) {
+      return `${pythonServerUrl.replace(/\/$/, '')}/chat`;
+    }
+    // Fallback: verwende Proxy über Node.js Server
+    return settings.apiBaseUrl 
+      ? `${settings.apiBaseUrl.replace(/\/$/, '')}/api/python-chat`
+      : '/api/python-chat';
+  }, [settings.apiBaseUrl, settings.chatbotSettings?.pythonServerUrl]);
 
   const sendMessage = useCallback(async (content: string) => {
     // Add user message
@@ -48,34 +74,40 @@ export function useChatBot() {
     }
 
     try {
-      // Prepare conversation history for context
-      const conversationHistory = messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+      const chatApiUrl = getChatApiUrl();
+      
+      // Headers mit Session-ID für Kontext-Beibehaltung
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (sessionIdRef.current) {
+        headers['X-Session-ID'] = sessionIdRef.current;
+      }
 
-      // Add current message
-      conversationHistory.push({ role: 'user', content });
-
-      const response = await fetch('/api/chat', {
+      const response = await fetch(chatApiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           message: content,
-          history: conversationHistory.slice(-10), // Last 10 messages for context
+          session_id: sessionIdRef.current,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Verbindungsfehler zum Chat-Server');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Verbindungsfehler zum Chat-Server');
       }
 
       const data: ChatResponse = await response.json();
 
       if (data.error) {
-        throw new Error(data.error);
+        throw new Error(data.hint ? `${data.error} - ${data.hint}` : data.error);
+      }
+
+      // Speichere Session-ID für nachfolgende Nachrichten
+      if (data.session_id) {
+        sessionIdRef.current = data.session_id;
       }
 
       // Add assistant response
@@ -104,11 +136,12 @@ export function useChatBot() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, trackEvent, isTrackingTypeEnabled]);
+  }, [messages, trackEvent, isTrackingTypeEnabled, getChatApiUrl]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
     sessionTracked.current = false;
+    sessionIdRef.current = null; // Reset session on clear
   }, []);
 
   return {

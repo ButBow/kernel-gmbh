@@ -108,6 +108,9 @@ export interface ChatbotSettings {
   welcomeMessage: string;
   placeholderText: string;
   suggestedQuestions: string[];
+  // Python Backend URL (direkte Verbindung zum Python-Server)
+  pythonServerUrl: string;
+  // Ollama Konfiguration (wird vom Python-Server verwendet)
   ollamaUrl: string;
   ollamaModel: string;
   maxTokens: number;
@@ -123,6 +126,7 @@ export const defaultChatbotSettings: ChatbotSettings = {
   welcomeMessage: 'Willkommen! Ich bin der KernelFlow Assistent. Wie kann ich Ihnen helfen?',
   placeholderText: 'Schreiben Sie eine Nachricht...',
   suggestedQuestions: ['Was bietet KernelFlow?', 'Preise & Pakete', 'Kontakt'],
+  pythonServerUrl: 'http://localhost:8001',
   ollamaUrl: 'http://localhost:11434',
   ollamaModel: 'llama3.2:latest',
   maxTokens: 1024,
