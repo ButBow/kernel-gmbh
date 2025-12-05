@@ -1,0 +1,7 @@
+{
+  "tunnelName": "kernel-website",
+  "domain": "kernel.gmbh",
+  "port": 3000,
+  "autoPull": false,
+  "lastBuild": null
+}
