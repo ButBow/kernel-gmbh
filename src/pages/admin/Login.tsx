@@ -4,13 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, AlertTriangle, Clock } from 'lucide-react';
+import { Lock, AlertTriangle, Clock, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, loginAttempts, isLocked, lockoutEndTime } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, loginAttempts, isLocked, lockoutEndTime, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -42,7 +43,7 @@ export default function AdminLogin() {
     return () => clearInterval(interval);
   }, [isLocked, lockoutEndTime]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -51,18 +52,33 @@ export default function AdminLogin() {
       return;
     }
     
-    if (login(password)) {
-      // Redirect to the originally requested page
-      navigate(from, { replace: true });
-    } else {
-      const attemptsLeft = 5 - (loginAttempts + 1);
-      if (attemptsLeft > 0) {
-        setError(`Falsches Passwort. Noch ${attemptsLeft} Versuche.`);
+    setIsSubmitting(true);
+    
+    try {
+      const success = await login(password);
+      if (success) {
+        // Redirect to the originally requested page
+        navigate(from, { replace: true });
       } else {
-        setError('Konto gesperrt. Bitte 15 Minuten warten.');
+        const attemptsLeft = 5 - (loginAttempts + 1);
+        if (attemptsLeft > 0) {
+          setError(`Falsches Passwort. Noch ${attemptsLeft} Versuche.`);
+        } else {
+          setError('Konto gesperrt. Bitte 15 Minuten warten.');
+        }
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -108,8 +124,15 @@ export default function AdminLogin() {
                 <p className="text-sm text-destructive mt-2 text-center">{error}</p>
               )}
             </div>
-            <Button type="submit" className="w-full" disabled={isLocked}>
-              Anmelden
+            <Button type="submit" className="w-full" disabled={isLocked || isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Anmelden...
+                </>
+              ) : (
+                'Anmelden'
+              )}
             </Button>
           </form>
         </CardContent>

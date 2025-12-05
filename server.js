@@ -46,6 +46,64 @@ const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 const RATE_LIMIT_MAX = 5; // max 5 requests per minute
 
+// ============================================================================
+// AUTHENTICATION
+// ============================================================================
+
+// Admin password - CHANGE THIS before deployment!
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Kernel#Admin2024!';
+
+// Active auth tokens (in-memory, cleared on server restart)
+const authTokens = new Map(); // token -> { createdAt, expiresAt }
+const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Generate secure random token
+function generateAuthToken() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 64; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+// Validate auth token
+function validateAuthToken(token) {
+  if (!token) return false;
+  const tokenData = authTokens.get(token);
+  if (!tokenData) return false;
+  if (Date.now() > tokenData.expiresAt) {
+    authTokens.delete(token);
+    return false;
+  }
+  return true;
+}
+
+// Extract token from request headers
+function getAuthToken(req) {
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  return null;
+}
+
+// Check if request is authenticated
+function isAuthenticated(req) {
+  const token = getAuthToken(req);
+  return validateAuthToken(token);
+}
+
+// Timing-safe password comparison
+function secureCompare(a, b) {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 // MIME types for static files
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -87,8 +145,8 @@ const SECURITY_HEADERS = {
 // CORS headers for API
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 // ============================================================================
@@ -744,6 +802,73 @@ async function handleAPI(req, res, urlPath) {
   }
 
   // ============================================================================
+  // AUTHENTICATION API
+  // ============================================================================
+
+  // POST /api/auth/login - Login and get auth token
+  if (urlPath === '/api/auth/login' && req.method === 'POST') {
+    console.log(`[${timestamp}] 🔐 Login attempt from ${ip}`);
+    
+    // Rate limit login attempts
+    if (!checkRateLimit(ip)) {
+      console.log(`[${timestamp}] ❌ Too many login attempts from ${ip}`);
+      sendJSON(res, 429, { error: 'Zu viele Anmeldeversuche. Bitte warten Sie.' });
+      return true;
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const { password } = body;
+      
+      if (!password) {
+        sendJSON(res, 400, { error: 'Passwort erforderlich' });
+        return true;
+      }
+      
+      if (secureCompare(password, ADMIN_PASSWORD)) {
+        const token = generateAuthToken();
+        authTokens.set(token, {
+          createdAt: Date.now(),
+          expiresAt: Date.now() + TOKEN_EXPIRY_MS
+        });
+        
+        console.log(`[${timestamp}] ✅ Login successful`);
+        sendJSON(res, 200, { 
+          success: true, 
+          token,
+          expiresIn: TOKEN_EXPIRY_MS 
+        });
+      } else {
+        console.log(`[${timestamp}] ❌ Login failed - wrong password`);
+        sendJSON(res, 401, { error: 'Falsches Passwort' });
+      }
+    } catch (error) {
+      console.error(`[${timestamp}] ❌ Login error:`, error.message);
+      sendJSON(res, 500, { error: error.message });
+    }
+    return true;
+  }
+
+  // POST /api/auth/logout - Invalidate token
+  if (urlPath === '/api/auth/logout' && req.method === 'POST') {
+    const token = getAuthToken(req);
+    if (token) {
+      authTokens.delete(token);
+      console.log(`[${timestamp}] 🔓 Logout successful`);
+    }
+    sendJSON(res, 200, { success: true });
+    return true;
+  }
+
+  // GET /api/auth/verify - Verify token is valid
+  if (urlPath === '/api/auth/verify' && req.method === 'GET') {
+    const valid = isAuthenticated(req);
+    console.log(`[${timestamp}] 🔑 Token verification: ${valid ? 'valid' : 'invalid'}`);
+    sendJSON(res, valid ? 200 : 401, { valid });
+    return true;
+  }
+
+  // ============================================================================
   // CONTENT API - Central data storage for all site content
   // ============================================================================
 
@@ -759,8 +884,13 @@ async function handleAPI(req, res, urlPath) {
     return true;
   }
 
-  // POST /api/content - Save content data
+  // POST /api/content - Save content data (PROTECTED)
   if (urlPath === '/api/content' && req.method === 'POST') {
+    if (!isAuthenticated(req)) {
+      console.log(`[${timestamp}] 🚫 Unauthorized content save attempt`);
+      sendJSON(res, 401, { error: 'Nicht autorisiert' });
+      return true;
+    }
     console.log(`[${timestamp}] 💾 Saving content data...`);
     try {
       const body = await parseBody(req);
@@ -794,8 +924,13 @@ async function handleAPI(req, res, urlPath) {
     return true;
   }
 
-  // POST /api/theme - Save theme config
+  // POST /api/theme - Save theme config (PROTECTED)
   if (urlPath === '/api/theme' && req.method === 'POST') {
+    if (!isAuthenticated(req)) {
+      console.log(`[${timestamp}] 🚫 Unauthorized theme save attempt`);
+      sendJSON(res, 401, { error: 'Nicht autorisiert' });
+      return true;
+    }
     console.log(`[${timestamp}] 🎨 Saving theme data...`);
     try {
       const body = await parseBody(req);
@@ -817,8 +952,13 @@ async function handleAPI(req, res, urlPath) {
   // INQUIRIES API - Contact form submissions
   // ============================================================================
 
-  // GET /api/inquiries - Get all inquiries
+  // GET /api/inquiries - Get all inquiries (PROTECTED - only admin can see all)
   if (urlPath === '/api/inquiries' && req.method === 'GET') {
+    if (!isAuthenticated(req)) {
+      console.log(`[${timestamp}] 🚫 Unauthorized inquiries fetch attempt`);
+      sendJSON(res, 401, { error: 'Nicht autorisiert' });
+      return true;
+    }
     console.log(`[${timestamp}] 📋 Fetching inquiries...`);
     const inquiries = readDataFile('inquiries.json', []);
     sendJSON(res, 200, inquiries);
@@ -846,8 +986,13 @@ async function handleAPI(req, res, urlPath) {
     return true;
   }
 
-  // DELETE /api/inquiries/:id - Delete inquiry
+  // DELETE /api/inquiries/:id - Delete inquiry (PROTECTED)
   if (urlPath.startsWith('/api/inquiries/') && req.method === 'DELETE') {
+    if (!isAuthenticated(req)) {
+      console.log(`[${timestamp}] 🚫 Unauthorized inquiry delete attempt`);
+      sendJSON(res, 401, { error: 'Nicht autorisiert' });
+      return true;
+    }
     const inquiryId = urlPath.split('/').pop();
     console.log(`[${timestamp}] 🗑️ Deleting inquiry: ${inquiryId}`);
     try {
@@ -871,8 +1016,13 @@ async function handleAPI(req, res, urlPath) {
     return true;
   }
 
-  // PUT /api/inquiries - Update all inquiries (bulk save)
+  // PUT /api/inquiries - Update all inquiries (bulk save) (PROTECTED)
   if (urlPath === '/api/inquiries' && req.method === 'PUT') {
+    if (!isAuthenticated(req)) {
+      console.log(`[${timestamp}] 🚫 Unauthorized inquiries bulk save attempt`);
+      sendJSON(res, 401, { error: 'Nicht autorisiert' });
+      return true;
+    }
     console.log(`[${timestamp}] 💾 Bulk saving inquiries...`);
     try {
       const body = await parseBody(req);
@@ -990,11 +1140,19 @@ server.listen(PORT, '127.0.0.1', () => {
 ║  Mode:    Production                                    ║
 ║  Data:    ${DATA_DIR.padEnd(43)}║
 ╠════════════════════════════════════════════════════════╣
-║  Content API (Central Data Storage):                    ║
-║  GET/POST  /api/content    - Site content (all data)    ║
-║  GET/POST  /api/theme      - Theme configuration        ║
-║  GET/POST  /api/inquiries  - Contact inquiries          ║
-║  DELETE    /api/inquiries/:id - Delete inquiry          ║
+║  Auth API (Protected Endpoints):                        ║
+║  POST /api/auth/login    - Login & get token            ║
+║  POST /api/auth/logout   - Invalidate token             ║
+║  GET  /api/auth/verify   - Verify token                 ║
+╠════════════════════════════════════════════════════════╣
+║  Content API (🔒 = requires auth):                       ║
+║  GET      /api/content      - Site content              ║
+║  POST 🔒  /api/content      - Save content              ║
+║  GET      /api/theme        - Theme config              ║
+║  POST 🔒  /api/theme        - Save theme                ║
+║  GET  🔒  /api/inquiries    - Contact inquiries         ║
+║  POST     /api/inquiries    - New inquiry (public)      ║
+║  DELETE🔒 /api/inquiries/:id - Delete inquiry           ║
 ╠════════════════════════════════════════════════════════╣
 ║  Notion API:                                            ║
 ║  POST /api/contact       - Send to Notion               ║

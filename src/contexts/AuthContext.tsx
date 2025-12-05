@@ -1,20 +1,29 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { STORAGE_KEYS, getStorageItem, setStorageItem, removeStorageItem } from '@/lib/storage';
+import { 
+  STORAGE_KEYS, 
+  getStorageItem, 
+  setStorageItem, 
+  removeStorageItem,
+  serverLogin,
+  serverLogout,
+  verifyAuthToken,
+  getAuthToken
+} from '@/lib/storage';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (password: string) => boolean;
+  login: (password: string) => Promise<boolean>;
   logout: () => void;
   loginAttempts: number;
   isLocked: boolean;
   lockoutEndTime: number | null;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Stronger password - change this to your secure password before deployment!
-// Minimum 12 characters with uppercase, lowercase, numbers, and symbols recommended
-const ADMIN_PASSWORD = 'Kernel#Admin2024!';
+// Fallback password for Lovable preview (where server is not available)
+const FALLBACK_PASSWORD = 'Kernel#Admin2024!';
 
 // Security: Rate limiting configuration
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -30,40 +39,73 @@ const secureCompare = (a: string, b: string): boolean => {
   return result === 0;
 };
 
+// Check if we're on production server
+function isServerAvailable(): boolean {
+  return typeof window !== 'undefined' && !window.location.hostname.includes('lovable');
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [lockoutEndTime, setLockoutEndTime] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getStorageItem<boolean>(STORAGE_KEYS.AUTH, false);
-    const storedAttempts = getStorageItem<number>('login_attempts', 0);
-    const storedLockout = getStorageItem<number | null>('lockout_end', null);
-    
-    setIsAuthenticated(auth);
-    setLoginAttempts(storedAttempts);
-    
-    // Check if lockout has expired
-    if (storedLockout && Date.now() > storedLockout) {
-      setLockoutEndTime(null);
-      setLoginAttempts(0);
-      removeStorageItem('lockout_end');
-      setStorageItem('login_attempts', 0);
-    } else {
-      setLockoutEndTime(storedLockout);
-    }
+    const checkAuth = async () => {
+      const storedAttempts = getStorageItem<number>('login_attempts', 0);
+      const storedLockout = getStorageItem<number | null>('lockout_end', null);
+      
+      setLoginAttempts(storedAttempts);
+      
+      // Check if lockout has expired
+      if (storedLockout && Date.now() > storedLockout) {
+        setLockoutEndTime(null);
+        setLoginAttempts(0);
+        removeStorageItem('lockout_end');
+        setStorageItem('login_attempts', 0);
+      } else {
+        setLockoutEndTime(storedLockout);
+      }
+
+      // Check if we have a valid auth token (server mode)
+      if (isServerAvailable()) {
+        const token = getAuthToken();
+        if (token) {
+          const valid = await verifyAuthToken();
+          setIsAuthenticated(valid);
+        }
+      } else {
+        // Fallback for Lovable preview - use localStorage
+        const auth = getStorageItem<boolean>(STORAGE_KEYS.AUTH, false);
+        setIsAuthenticated(auth);
+      }
+      
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const isLocked = lockoutEndTime !== null && Date.now() < lockoutEndTime;
 
-  const login = (password: string): boolean => {
+  const login = async (password: string): Promise<boolean> => {
     // Check if account is locked
     if (isLocked) {
       return false;
     }
 
-    // Use timing-safe comparison
-    if (secureCompare(password, ADMIN_PASSWORD)) {
+    let success = false;
+
+    // Try server auth first (production)
+    if (isServerAvailable()) {
+      const result = await serverLogin(password);
+      success = result.success;
+    } else {
+      // Fallback for Lovable preview
+      success = secureCompare(password, FALLBACK_PASSWORD);
+    }
+
+    if (success) {
       setIsAuthenticated(true);
       setStorageItem(STORAGE_KEYS.AUTH, true);
       // Reset attempts on successful login
@@ -89,7 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await serverLogout();
     setIsAuthenticated(false);
     removeStorageItem(STORAGE_KEYS.AUTH);
   };
@@ -101,7 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout, 
       loginAttempts, 
       isLocked, 
-      lockoutEndTime 
+      lockoutEndTime,
+      isLoading
     }}>
       {children}
     </AuthContext.Provider>
