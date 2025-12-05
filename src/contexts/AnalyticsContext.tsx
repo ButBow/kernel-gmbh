@@ -29,6 +29,8 @@ export interface AnalyticsSummary {
   avgScrollDepth: number;
   avgTimeOnPage: number;
   sessions: number;
+  chatMessages: Record<string, number>;
+  chatSessions: number;
 }
 
 interface AnalyticsContextType {
@@ -69,7 +71,9 @@ function calculateSummary(events: AnalyticsEvent[], cookieSettings: CookieSettin
     videoPlays: {},
     avgScrollDepth: 0,
     avgTimeOnPage: 0,
-    sessions: 0
+    sessions: 0,
+    chatMessages: {},
+    chatSessions: 0
   };
 
   const scrollDepths: number[] = [];
@@ -126,6 +130,13 @@ function calculateSummary(events: AnalyticsEvent[], cookieSettings: CookieSettin
         break;
       case 'time_on_page':
         if (event.data?.seconds) timesOnPage.push(event.data.seconds as number);
+        break;
+      case 'chat_message':
+        const chatQuery = event.data?.message as string || 'unknown';
+        summary.chatMessages[chatQuery] = (summary.chatMessages[chatQuery] || 0) + 1;
+        break;
+      case 'chat_session':
+        summary.chatSessions++;
         break;
     }
   });
