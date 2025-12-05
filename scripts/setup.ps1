@@ -25,15 +25,21 @@ function Write-Step($msg) { Write-Host "`n▶ $msg" -ForegroundColor Magenta }
 
 function Get-Config {
     if (Test-Path $ConfigFile) {
-        return Get-Content $ConfigFile -Raw | ConvertFrom-Json
+        try {
+            $content = Get-Content $ConfigFile -Raw
+            return $content | ConvertFrom-Json
+        } catch {
+            Write-Warn "Config-Datei beschädigt, verwende Standardwerte"
+        }
     }
-    return @{
+    $defaultConfig = New-Object PSObject -Property @{
         tunnelName = "kernel-website"
         domain = "kernel.gmbh"
         port = 3000
         autoPull = $false
         lastBuild = $null
     }
+    return $defaultConfig
 }
 
 function Save-Config($config) {
@@ -318,19 +324,18 @@ function Setup-CloudflareTunnel {
     $credFile = Get-ChildItem $cfDir -Filter "*.json" | Where-Object { $_.Name -match "^[a-f0-9-]+\.json$" } | Select-Object -First 1
     
     if ($credFile) {
-        $configContent = @"
-tunnel: $($config.tunnelName)
-credentials-file: $($credFile.FullName)
-
-ingress:
-  - hostname: $($config.domain)
-    service: http://localhost:$($config.port)
-  - hostname: www.$($config.domain)
-    service: http://localhost:$($config.port)
-  - service: http_status:404
-"@
-        
-        $configContent | Set-Content $cfConfig -Encoding UTF8
+        $configLines = @(
+            "tunnel: $($config.tunnelName)",
+            "credentials-file: $($credFile.FullName)",
+            "",
+            "ingress:",
+            "  - hostname: $($config.domain)",
+            "    service: http://localhost:$($config.port)",
+            "  - hostname: www.$($config.domain)",
+            "    service: http://localhost:$($config.port)",
+            "  - service: http_status:404"
+        )
+        $configLines -join "`n" | Set-Content $cfConfig -Encoding UTF8
         Write-Success "Tunnel-Konfiguration erstellt: $cfConfig"
     } else {
         Write-Warn "Credentials-Datei nicht gefunden. Bitte config.yml manuell erstellen."
@@ -432,11 +437,8 @@ function Setup-EnvFile {
             Copy-Item $envExample $envFile
             Write-Info ".env aus .env.example erstellt"
         } else {
-            @"
-# Notion Integration
-NOTION_API_TOKEN=
-NOTION_DATABASE_ID=
-"@ | Set-Content $envFile -Encoding UTF8
+            $envContent = "# Notion Integration`nNOTION_API_TOKEN=`nNOTION_DATABASE_ID="
+            $envContent | Set-Content $envFile -Encoding UTF8
             Write-Info ".env Datei erstellt"
         }
     }
