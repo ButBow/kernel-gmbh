@@ -23,13 +23,13 @@ import {
   Download, Upload, AlertCircle, CheckCircle2, 
   FileJson, Database, Palette, BarChart3,
   FileText, FolderOpen, Package, ShoppingBag,
-  AlertTriangle, Info, MessageSquare
+  AlertTriangle, Info, MessageSquare, Save, Loader2
 } from 'lucide-react';
 import { useContent } from '@/contexts/ContentContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { toast } from 'sonner';
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
+import { getStorageItem, setStorageItem, STORAGE_KEYS, saveContentToServer } from '@/lib/storage';
 import { Inquiry } from '@/types/inquiry';
 import {
   BackupOptions,
@@ -84,7 +84,32 @@ export function BackupRestore() {
   const [importValidation, setImportValidation] = useState<ValidationResult | null>(null);
   const [importData, setImportData] = useState<unknown>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isSavingDefaults, setIsSavingDefaults] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Save current content as server defaults
+  const handleSaveAsDefault = async () => {
+    setIsSavingDefaults(true);
+    try {
+      const success = await saveContentToServer({
+        categories,
+        products,
+        projects,
+        posts,
+        settings,
+      });
+      
+      if (success) {
+        toast.success('Daten als Standard gespeichert! Beim nächsten Laden werden diese Daten sofort angezeigt.');
+      } else {
+        toast.error('Konnte nicht zum Server speichern. Bitte prüfe die Verbindung.');
+      }
+    } catch (error) {
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setIsSavingDefaults(false);
+    }
+  };
 
   // Handle export
   const handleExport = () => {
@@ -480,6 +505,47 @@ export function BackupRestore() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Save as Default Section */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Save className="h-5 w-5" />
+            Als Standard speichern
+          </CardTitle>
+          <CardDescription>
+            Speichert die aktuellen Daten als Standard auf dem Server. 
+            Dadurch werden diese Daten beim Laden der Seite sofort angezeigt (kein Flash).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Dies überschreibt die <code className="bg-muted px-1 rounded">data/content.json</code> auf dem Server.
+              Verwende dies, wenn du deine Änderungen permanent machen möchtest.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Aktuelle Daten: {counts.categories} Kategorien, {counts.products} Produkte, {counts.projects} Projekte
+            </div>
+            <Button 
+              onClick={handleSaveAsDefault} 
+              disabled={isSavingDefaults}
+              className="gap-2"
+            >
+              {isSavingDefaults ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Als Standard speichern
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
