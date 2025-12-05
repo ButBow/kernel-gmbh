@@ -1578,17 +1578,57 @@ export default function AdminSettings() {
                     
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="space-y-2">
-                        <p><strong>Voraussetzungen für den Chatbot:</strong></p>
-                        <ol className="list-decimal list-inside text-xs space-y-1">
-                          <li>Python 3.8+ installiert</li>
-                          <li>Ollama installiert: <code className="bg-secondary px-1 rounded">curl -fsSL https://ollama.com/install.sh | sh</code></li>
-                          <li>Modell herunterladen: <code className="bg-secondary px-1 rounded">ollama pull llama3.2:latest</code></li>
-                          <li>Ollama starten: <code className="bg-secondary px-1 rounded">ollama serve</code></li>
-                          <li>Python-Server starten: <code className="bg-secondary px-1 rounded">python scripts/chatbot_server.py</code></li>
+                      <AlertDescription className="space-y-3">
+                        <p><strong>Setup-Anleitung für den Chatbot:</strong></p>
+                        <ol className="list-decimal list-inside text-xs space-y-2">
+                          <li><strong>Python 3.8+</strong> installieren (falls nicht vorhanden)</li>
+                          <li><strong>Ollama installieren:</strong>
+                            <ul className="ml-4 mt-1 space-y-1">
+                              <li>Windows: <a href="https://ollama.com/download" target="_blank" rel="noopener" className="text-primary hover:underline">ollama.com/download</a></li>
+                              <li>Linux/Mac: <code className="bg-secondary px-1 rounded">curl -fsSL https://ollama.com/install.sh | sh</code></li>
+                            </ul>
+                          </li>
+                          <li><strong>Modell herunterladen (WICHTIG!):</strong>
+                            <div className="mt-1 p-2 bg-destructive/10 rounded border border-destructive/20">
+                              <code className="text-xs">ollama pull llama3.2:latest</code>
+                              <p className="text-[10px] mt-1 text-destructive">⚠️ Ohne diesen Schritt erscheint: "model not found"</p>
+                            </div>
+                          </li>
+                          <li><strong>Ollama starten:</strong> <code className="bg-secondary px-1 rounded">ollama serve</code></li>
+                          <li><strong>Python-Server starten:</strong> <code className="bg-secondary px-1 rounded">python scripts/chatbot_server.py</code></li>
                         </ol>
                       </AlertDescription>
                     </Alert>
+
+                    <Alert variant="destructive" className="bg-destructive/5 border-destructive/20">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="space-y-2">
+                        <p><strong>Häufige Fehler & Lösungen:</strong></p>
+                        <ul className="text-xs space-y-2">
+                          <li>
+                            <strong>❌ "model not found" (404):</strong><br/>
+                            → Modell wurde noch nicht heruntergeladen. Führe aus:<br/>
+                            <code className="bg-background px-1 rounded">ollama pull {form.chatbotSettings?.ollamaModel || 'llama3.2:latest'}</code>
+                          </li>
+                          <li>
+                            <strong>❌ "Connection refused" / "Failed to fetch":</strong><br/>
+                            → Ollama läuft nicht. Starte mit: <code className="bg-background px-1 rounded">ollama serve</code>
+                          </li>
+                          <li>
+                            <strong>❌ Langsame Antworten:</strong><br/>
+                            → Wähle ein kleineres Modell wie <code className="bg-background px-1 rounded">llama3.2:1b</code> oder <code className="bg-background px-1 rounded">gemma2:2b</code>
+                          </li>
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+
+                    <div className="p-3 rounded-lg bg-secondary/30 border border-border">
+                      <p className="text-xs font-medium mb-2">📋 Verfügbare Modelle anzeigen:</p>
+                      <code className="text-xs bg-background px-2 py-1 rounded block">ollama list</code>
+                      <p className="text-[10px] text-muted-foreground mt-2">
+                        Beliebte Modelle: llama3.2:latest, mistral:latest, gemma2:7b, phi3:latest, codellama:latest
+                      </p>
+                    </div>
 
                     <div>
                       <Label>Python Chatbot-Server URL</Label>
