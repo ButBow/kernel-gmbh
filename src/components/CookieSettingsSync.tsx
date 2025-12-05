@@ -8,14 +8,16 @@ import { defaultCookieSettings } from '@/types/cookieSettings';
  * This ensures that when settings are changed in admin, they are reflected in tracking
  */
 export function CookieSettingsSync() {
-  const { settings } = useContent();
+  const { settings, isLoading } = useContent();
   const { updateCookieSettings } = useAnalytics();
 
   useEffect(() => {
-    // Sync cookie settings from content to analytics
+    // Only sync when content is loaded
+    if (isLoading) return;
+    
     const cookieSettings = settings.cookieSettings || defaultCookieSettings;
     updateCookieSettings(cookieSettings);
-  }, [settings.cookieSettings, updateCookieSettings]);
+  }, [settings.cookieSettings, updateCookieSettings, isLoading]);
 
   return null;
 }
