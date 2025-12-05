@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useContent } from "@/contexts/ContentContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { PartnersSection } from "@/components/PartnersSection";
+import { getCategoryColors } from "@/lib/categoryColors";
 import { 
   Video, 
   Cpu, 
@@ -19,7 +20,8 @@ import {
   Image,
   FileText,
   Users,
-  Star
+  Star,
+  ChevronRight
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -34,6 +36,9 @@ export default function Index() {
 
   // Get first 4 categories for service teasers
   const serviceCategories = categories.slice(0, 4);
+  
+  // Sorted categories for color mapping
+  const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
 
   // Get all featured products
   const featuredProducts = products.filter(p => p.status === 'published' && p.featured);
@@ -151,6 +156,7 @@ export default function Index() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredProducts.map((product, index) => {
                 const category = categories.find(c => c.id === product.categoryId);
+                const colors = getCategoryColors(product.categoryId, sortedCategories);
                 return (
                   <Link 
                     key={product.id} 
@@ -158,7 +164,7 @@ export default function Index() {
                     onClick={() => handleProductClick(product.name)}
                   >
                     <Card 
-                      className="h-full group hover:border-primary/50 transition-all duration-300 hover:shadow-glow cursor-pointer animate-fade-in"
+                      className={`h-full group transition-all duration-300 cursor-pointer animate-fade-in border-2 ${colors.border} ${colors.glow}`}
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
                       <CardHeader>
@@ -167,13 +173,14 @@ export default function Index() {
                             <Star className="h-3 w-3 mr-1 fill-current" />
                             Beliebt
                           </Badge>
+                          <Badge className={`${colors.bg} ${colors.text} border-0`}>{product.type}</Badge>
                           {category && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className={`text-xs ${colors.border} ${colors.text}`}>
                               {category.name}
                             </Badge>
                           )}
                         </div>
-                        <CardTitle className="font-display text-lg group-hover:text-primary transition-colors">
+                        <CardTitle className={`font-display text-lg transition-colors ${colors.hoverText}`}>
                           {product.name}
                         </CardTitle>
                       </CardHeader>
@@ -182,8 +189,8 @@ export default function Index() {
                           {product.shortDescription}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-primary">{product.priceText}</span>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className={`font-semibold ${colors.text}`}>{product.priceText}</span>
+                          <ChevronRight className={`h-5 w-5 text-muted-foreground transition-colors ${colors.hoverText}`} />
                         </div>
                       </CardContent>
                     </Card>
