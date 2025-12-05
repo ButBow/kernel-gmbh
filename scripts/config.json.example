@@ -1,7 +1,10 @@
 {
   "tunnelName": "kernel-website",
+  "tunnelId": null,
   "domain": "kernel.gmbh",
   "port": 3000,
   "autoPull": false,
+  "autoOpenBrowser": true,
+  "preferredLink": "local",
   "lastBuild": null
 }

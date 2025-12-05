@@ -441,6 +441,20 @@ function Start-Server {
     Write-Host "  Server-Fenster und Tunnel-Fenster offen lassen!" -ForegroundColor Green
     Write-Host "  Zum Stoppen: Beide Fenster schliessen (oder Ctrl+C)" -ForegroundColor Green
     Write-Host "================================================================" -ForegroundColor Green
+    Write-Host ""
+    
+    # Browser öffnen Option
+    $openBrowser = Read-Host "Browser oeffnen? (j=lokal, p=public, n=nein)"
+    switch ($openBrowser.ToLower()) {
+        "j" { 
+            Start-Process "http://localhost:$($config.port)"
+            Write-Success "Browser geoeffnet (lokal)"
+        }
+        "p" { 
+            Start-Process "https://$($config.domain)"
+            Write-Success "Browser geoeffnet (public)"
+        }
+    }
     
     return $true
 }
@@ -483,6 +497,166 @@ function Setup-EnvFile {
     if (($edit -eq "j") -or ($edit -eq "J")) {
         Start-Process notepad $envFile -Wait
         Write-Success ".env Datei aktualisiert"
+    }
+}
+
+# ============================================================================
+# Konfiguration bearbeiten
+# ============================================================================
+
+function Apply-ConfigChanges {
+    param($config)
+    
+    Write-Step "Konfigurationsaenderungen anwenden..."
+    
+    # 1. config.json speichern
+    Save-Config $config
+    Write-Success "config.json aktualisiert"
+    
+    # 2. Cloudflare config.yml aktualisieren (falls vorhanden)
+    $cfDir = Join-Path $env:USERPROFILE ".cloudflared"
+    $cfConfig = Join-Path $cfDir "config.yml"
+    
+    if (Test-Path $cfConfig) {
+        Write-Info "Aktualisiere Cloudflare config.yml..."
+        
+        # Lese aktuelle Tunnel-ID aus bestehender config.yml
+        $existingContent = Get-Content $cfConfig -Raw
+        $tunnelId = $null
+        $credFile = $null
+        
+        if ($existingContent -match "tunnel:\s*([a-f0-9-]+)") {
+            $tunnelId = $Matches[1]
+        }
+        if ($existingContent -match "credentials-file:\s*(.+)") {
+            $credFile = $Matches[1].Trim()
+        }
+        
+        if ($tunnelId -and $credFile) {
+            $newConfig = @"
+tunnel: $tunnelId
+credentials-file: $credFile
+
+ingress:
+  - hostname: $($config.domain)
+    service: http://localhost:$($config.port)
+  - hostname: www.$($config.domain)
+    service: http://localhost:$($config.port)
+  - service: http_status:404
+"@
+            $newConfig | Set-Content $cfConfig -Encoding UTF8
+            Write-Success "config.yml aktualisiert mit neuer Domain/Port"
+            
+            # DNS-Routen Hinweis
+            Write-Warn "WICHTIG: Bei Domain-Aenderung muessen DNS-Routen neu gesetzt werden!"
+            Write-Host "  Fuehre aus: cloudflared tunnel route dns $tunnelId $($config.domain)" -ForegroundColor Yellow
+            Write-Host "  Fuehre aus: cloudflared tunnel route dns $tunnelId www.$($config.domain)" -ForegroundColor Yellow
+        } else {
+            Write-Warn "Konnte Tunnel-ID nicht aus config.yml lesen"
+        }
+    } else {
+        Write-Info "Keine config.yml gefunden - wird bei Tunnel-Setup erstellt"
+    }
+    
+    # 3. .env Datei pruefen/aktualisieren (PORT)
+    $envPath = Join-Path $ProjectDir ".env"
+    if (Test-Path $envPath) {
+        $envContent = Get-Content $envPath -Raw
+        if ($envContent -match "PORT=\d+") {
+            $envContent = $envContent -replace "PORT=\d+", "PORT=$($config.port)"
+            $envContent | Set-Content $envPath -Encoding UTF8
+            Write-Success ".env PORT aktualisiert"
+        }
+    }
+    
+    Write-Host ""
+    Write-Success "Alle Konfigurationen aktualisiert!"
+    Write-Host ""
+    Write-Host "Zusammenfassung:" -ForegroundColor Cyan
+    Write-Host "  Port:         $($config.port)" -ForegroundColor White
+    Write-Host "  Domain:       $($config.domain)" -ForegroundColor White
+    Write-Host "  Tunnel-Name:  $($config.tunnelName)" -ForegroundColor White
+    Write-Host "  Auto-Pull:    $($config.autoPull)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Lokaler Zugriff:       http://localhost:$($config.port)" -ForegroundColor Green
+    Write-Host "  Oeffentlicher Zugriff: https://$($config.domain)" -ForegroundColor Green
+}
+
+function Edit-Configuration {
+    $config = Get-Config
+    
+    while ($true) {
+        Clear-Host
+        Write-Host ""
+        Write-Host "================================================================" -ForegroundColor Cyan
+        Write-Host "           SERVER-EINSTELLUNGEN                                 " -ForegroundColor Cyan
+        Write-Host "================================================================" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  Aktuelle Konfiguration:" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  [1] Port:         $($config.port)" -ForegroundColor White
+        Write-Host "  [2] Domain:       $($config.domain)" -ForegroundColor White
+        Write-Host "  [3] Tunnel-Name:  $($config.tunnelName)" -ForegroundColor White
+        Write-Host "  [4] Auto-Pull:    $($config.autoPull)" -ForegroundColor White
+        Write-Host ""
+        Write-Host "  [5] Alle Einstellungen anwenden" -ForegroundColor Green
+        Write-Host "  [0] Zurueck zum Hauptmenue" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "================================================================" -ForegroundColor Cyan
+        
+        $choice = Read-Host "Was moechtest du aendern?"
+        
+        switch ($choice) {
+            "1" {
+                $newPort = Read-Host "Neuer Port (aktuell: $($config.port))"
+                if ($newPort -match '^\d+$') {
+                    $config.port = [int]$newPort
+                    Save-Config $config
+                    Write-Success "Port geaendert auf $newPort"
+                } else {
+                    Write-Err "Ungueltiger Port!"
+                }
+                Start-Sleep -Seconds 1
+            }
+            "2" {
+                $newDomain = Read-Host "Neue Domain (aktuell: $($config.domain))"
+                if ($newDomain -and $newDomain.Length -gt 0) {
+                    $config.domain = $newDomain
+                    Save-Config $config
+                    Write-Success "Domain geaendert auf $newDomain"
+                } else {
+                    Write-Err "Domain darf nicht leer sein!"
+                }
+                Start-Sleep -Seconds 1
+            }
+            "3" {
+                $newTunnelName = Read-Host "Neuer Tunnel-Name (aktuell: $($config.tunnelName))"
+                if ($newTunnelName -and $newTunnelName.Length -gt 0) {
+                    $config.tunnelName = $newTunnelName
+                    Save-Config $config
+                    Write-Success "Tunnel-Name geaendert auf $newTunnelName"
+                    Write-Warn "HINWEIS: Ein neuer Tunnel muss erstellt werden!"
+                } else {
+                    Write-Err "Tunnel-Name darf nicht leer sein!"
+                }
+                Start-Sleep -Seconds 2
+            }
+            "4" {
+                $config.autoPull = -not $config.autoPull
+                Save-Config $config
+                Write-Success "Auto-Pull ist jetzt: $($config.autoPull)"
+                Start-Sleep -Seconds 1
+            }
+            "5" {
+                Apply-ConfigChanges $config
+                Read-Host "`nWeiter mit Enter"
+            }
+            "0" { return }
+            default {
+                Write-Warn "Ungueltige Auswahl"
+                Start-Sleep -Seconds 1
+            }
+        }
     }
 }
 
@@ -554,6 +728,7 @@ function Show-Menu {
     Write-Host "  [4] Server starten (Quick-Start)" -ForegroundColor White
     Write-Host "  [5] Cloudflare Tunnel konfigurieren" -ForegroundColor White
     Write-Host "  [6] .env Datei erstellen/bearbeiten" -ForegroundColor White
+    Write-Host "  [7] Einstellungen bearbeiten" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  [0] Beenden" -ForegroundColor Gray
     Write-Host ""
@@ -596,6 +771,9 @@ while ($true) {
         "6" { 
             Setup-EnvFile
             Read-Host "`nWeiter mit Enter"
+        }
+        "7" { 
+            Edit-Configuration
         }
         "0" { 
             Write-Host "`nAuf Wiedersehen!" -ForegroundColor Cyan
