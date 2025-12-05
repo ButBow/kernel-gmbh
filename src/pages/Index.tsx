@@ -7,6 +7,7 @@ import { useContent } from "@/contexts/ContentContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { PartnersSection } from "@/components/PartnersSection";
 import { getCategoryColors } from "@/lib/categoryColors";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { 
   Video, 
   Cpu, 
@@ -33,6 +34,12 @@ const benefitIcons = [Zap, Lightbulb, Shield, CheckCircle];
 export default function Index() {
   const { settings, categories, products } = useContent();
   const { trackEvent } = useAnalytics();
+
+  // Scroll reveal refs for each section
+  const servicesReveal = useScrollReveal();
+  const featuredReveal = useScrollReveal();
+  const benefitsReveal = useScrollReveal();
+  const ctaReveal = useScrollReveal({ threshold: 0.2 });
 
   // Get first 4 categories for service teasers
   const serviceCategories = categories.slice(0, 4);
@@ -82,7 +89,10 @@ export default function Index() {
       {/* Services Section */}
       <section className="py-20 md:py-28">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div 
+            ref={servicesReveal.ref}
+            className={`text-center mb-12 ${servicesReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+          >
             <h2 className="font-display text-3xl md:text-4xl font-bold">
               Meine Leistungsbereiche
             </h2>
@@ -92,7 +102,9 @@ export default function Index() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div 
+            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ${servicesReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+          >
             {serviceCategories.map((category, index) => {
               const IconComponent = iconMap[category.icon] || Code;
               // Find minimum price from products in this category
@@ -107,10 +119,9 @@ export default function Index() {
               const minPrice = prices.length > 0 ? Math.min(...prices) : null;
               
               return (
-                <Link key={category.id} to="/leistungen">
+                <Link key={category.id} to="/leistungen" className="reveal-item">
                   <Card 
-                    className="h-full group hover:border-primary/50 transition-all duration-300 hover:shadow-glow cursor-pointer animate-fade-in"
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    className="h-full group hover:border-primary/50 transition-all duration-300 hover:shadow-glow cursor-pointer"
                   >
                     <CardContent className="p-6">
                       <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
@@ -140,7 +151,10 @@ export default function Index() {
       {featuredProducts.length > 0 && (
         <section className="py-20 md:py-28 bg-card">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
+            <div 
+              ref={featuredReveal.ref}
+              className={`text-center mb-12 ${featuredReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+            >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
                 <Star className="h-4 w-4 fill-current" />
                 <span className="text-sm font-medium">Meist gebucht</span>
@@ -153,7 +167,7 @@ export default function Index() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${featuredReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}>
               {featuredProducts.map((product, index) => {
                 const category = categories.find(c => c.id === product.categoryId);
                 const colors = getCategoryColors(product.categoryId, sortedCategories);
@@ -162,10 +176,10 @@ export default function Index() {
                     key={product.id} 
                     to="/leistungen"
                     onClick={() => handleProductClick(product.name)}
+                    className="reveal-item"
                   >
                     <Card 
-                      className={`h-full group transition-all duration-300 cursor-pointer animate-fade-in border-2 ${colors.border} ${colors.glow}`}
-                      style={{ animationDelay: `${index * 0.1}s` }}
+                      className={`h-full group transition-all duration-300 cursor-pointer border-2 ${colors.border} ${colors.glow}`}
                     >
                       <CardHeader>
                         <div className="flex items-center gap-2 mb-2">
@@ -199,7 +213,7 @@ export default function Index() {
               })}
             </div>
 
-            <div className="mt-10 text-center">
+            <div className={`mt-10 text-center ${featuredReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`} style={{ transitionDelay: '0.3s' }}>
               <Button size="lg" variant="outline" asChild>
                 <Link to="/leistungen">Alle Leistungen ansehen</Link>
               </Button>
@@ -211,20 +225,22 @@ export default function Index() {
       {/* Benefits Section */}
       <section className="py-20 md:py-28 bg-card">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div 
+            ref={benefitsReveal.ref}
+            className={`text-center mb-12 ${benefitsReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+          >
             <h2 className="font-display text-3xl md:text-4xl font-bold">
               Warum mit mir arbeiten?
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto ${benefitsReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}>
             {settings.whyWorkWithMe.map((item, index) => {
               const Icon = benefitIcons[index % benefitIcons.length];
               return (
                 <div 
                   key={index} 
-                  className="flex gap-4 animate-fade-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="flex gap-4 reveal-item"
                 >
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -241,7 +257,7 @@ export default function Index() {
             })}
           </div>
 
-          <div className="mt-12 text-center">
+          <div className={`mt-12 text-center ${benefitsReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`} style={{ transitionDelay: '0.4s' }}>
             <Button size="lg" asChild>
               <Link to="/kontakt">
                 Jetzt Kontakt aufnehmen
@@ -258,7 +274,10 @@ export default function Index() {
       {/* CTA Section */}
       <section className="py-20 md:py-28">
         <div className="container mx-auto px-4">
-          <div className="relative rounded-2xl overflow-hidden">
+          <div 
+            ref={ctaReveal.ref}
+            className={`relative rounded-2xl overflow-hidden scroll-reveal-scale ${ctaReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+          >
             <div className="absolute inset-0 bg-gradient-primary opacity-90" />
             <div className="relative px-8 py-16 md:py-20 text-center">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground">
