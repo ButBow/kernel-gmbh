@@ -35,8 +35,8 @@ export default function Index() {
   // Get first 4 categories for service teasers
   const serviceCategories = categories.slice(0, 4);
 
-  // Get featured products
-  const featuredProducts = products.filter(p => p.status === 'published' && p.featured).slice(0, 3);
+  // Get all featured products
+  const featuredProducts = products.filter(p => p.status === 'published' && p.featured);
 
   const handleProductClick = (productName: string) => {
     trackEvent('product_click', '/', { productName });
@@ -148,7 +148,7 @@ export default function Index() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredProducts.map((product, index) => {
                 const category = categories.find(c => c.id === product.categoryId);
                 return (
