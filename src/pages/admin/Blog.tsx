@@ -237,35 +237,35 @@ export default function AdminBlog() {
 
               {/* Preview */}
               <LivePreview title="Blog-Vorschau">
-                <div className="bg-slate-950">
+                <div className="bg-background">
                   {form.image ? (
                     <div className="aspect-video">
                       <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className="aspect-video bg-slate-800 flex items-center justify-center text-slate-600">
+                    <div className="aspect-video bg-secondary flex items-center justify-center text-muted-foreground">
                       Titelbild
                     </div>
                   )}
                   <div className="p-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                       <Calendar className="h-3 w-3" />
                       {form.date ? formatDate(form.date) : 'Datum'}
                     </div>
-                    <h3 className="font-semibold text-white mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                       {form.title || 'Beitragstitel'}
                     </h3>
-                    <p className="text-xs text-slate-400 mb-3 line-clamp-2">
+                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
                       {form.excerpt || 'Teaser...'}
                     </p>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {form.tags.map((tag, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-slate-800 rounded text-xs text-slate-400">
+                        <span key={i} className="px-2 py-0.5 bg-secondary rounded text-xs text-muted-foreground">
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <div className="flex items-center text-amber-400 text-xs font-medium">
+                    <div className="flex items-center text-primary text-xs font-medium">
                       Weiterlesen
                       <ArrowRight className="ml-1 h-3 w-3" />
                     </div>

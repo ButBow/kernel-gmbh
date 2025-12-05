@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useContent } from '@/contexts/ContentContext';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown, Star, ChevronUp, ChevronDown } from 'lucide-react';
 import { ImportExport } from '@/components/admin/ImportExport';
 import type { Category, Product, Showcase } from '@/data/initialData';
 
 export default function AdminProducts() {
-  const { categories, products, addCategory, updateCategory, deleteCategory, addProduct, updateProduct, deleteProduct } = useContent();
+  const { categories, products, addCategory, updateCategory, deleteCategory, addProduct, updateProduct, deleteProduct, reorderProducts } = useContent();
+  const scrollPositionRef = useRef<number>(0);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -101,6 +102,7 @@ export default function AdminProducts() {
 
   const handleSaveProduct = () => {
     if (!productForm.name || !productForm.categoryId) return;
+    scrollPositionRef.current = window.scrollY;
     if (editingProduct) {
       updateProduct(editingProduct.id, productForm);
     } else {
@@ -108,6 +110,43 @@ export default function AdminProducts() {
     }
     setProductDialogOpen(false);
     resetProductForm();
+    // Restore scroll position after React re-render
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollPositionRef.current);
+    });
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      scrollPositionRef.current = window.scrollY;
+      setProductDialogOpen(false);
+      resetProductForm();
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositionRef.current);
+      });
+    } else {
+      setProductDialogOpen(true);
+    }
+  };
+
+  const moveProduct = (categoryId: string, productId: number, direction: 'up' | 'down') => {
+    scrollPositionRef.current = window.scrollY;
+    const categoryProducts = products.filter(p => p.categoryId === categoryId);
+    const otherProducts = products.filter(p => p.categoryId !== categoryId);
+    const currentIndex = categoryProducts.findIndex(p => p.id === productId);
+    
+    if (direction === 'up' && currentIndex > 0) {
+      [categoryProducts[currentIndex], categoryProducts[currentIndex - 1]] = 
+      [categoryProducts[currentIndex - 1], categoryProducts[currentIndex]];
+    } else if (direction === 'down' && currentIndex < categoryProducts.length - 1) {
+      [categoryProducts[currentIndex], categoryProducts[currentIndex + 1]] = 
+      [categoryProducts[currentIndex + 1], categoryProducts[currentIndex]];
+    }
+    
+    reorderProducts([...otherProducts, ...categoryProducts]);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollPositionRef.current);
+    });
   };
 
   const handleEditProduct = (product: Product) => {
@@ -181,10 +220,7 @@ export default function AdminProducts() {
             <p className="text-muted-foreground">
               Verwalten Sie Ihre Produkte und Services
             </p>
-            <Dialog open={productDialogOpen} onOpenChange={(open) => {
-              setProductDialogOpen(open);
-              if (!open) resetProductForm();
-            }}>
+            <Dialog open={productDialogOpen} onOpenChange={handleDialogClose}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
@@ -370,35 +406,35 @@ export default function AdminProducts() {
 
                   {/* Preview */}
                   <LivePreview title="Produkt-Vorschau">
-                    <div className="p-4 bg-slate-950">
-                      <div className="rounded-lg border border-slate-800 p-4">
+                    <div className="p-4 bg-background">
+                      <div className="rounded-lg border border-border p-4">
                         <div className="flex gap-2 mb-2">
-                          <span className="px-2 py-0.5 bg-slate-800 rounded text-xs text-slate-300">
+                          <span className="px-2 py-0.5 bg-secondary rounded text-xs text-muted-foreground">
                             {productForm.type || 'Typ'}
                           </span>
                         </div>
-                        <h3 className="font-semibold text-white mb-2">
+                        <h3 className="font-semibold text-foreground mb-2">
                           {productForm.name || 'Produktname'}
                         </h3>
-                        <p className="text-xs text-slate-400 mb-3">
+                        <p className="text-xs text-muted-foreground mb-3">
                           {productForm.shortDescription || 'Kurzbeschreibung...'}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-amber-400 font-semibold text-sm">
+                          <span className="text-primary font-semibold text-sm">
                             {productForm.priceText || 'Preis'}
                           </span>
-                          <ChevronRight className="h-4 w-4 text-slate-500" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
                       
                       {productForm.showcases.length > 0 && (
                         <div className="mt-4 space-y-2">
-                          <p className="text-xs text-slate-500">Pakete:</p>
+                          <p className="text-xs text-muted-foreground">Pakete:</p>
                           {productForm.showcases.map((s, i) => (
-                            <div key={i} className="p-2 bg-slate-900 rounded text-xs">
+                            <div key={i} className="p-2 bg-secondary rounded text-xs">
                               <div className="flex justify-between">
-                                <span className="text-white">{s.title}</span>
-                                <span className="text-amber-400">{s.price}</span>
+                                <span className="text-foreground">{s.title}</span>
+                                <span className="text-primary">{s.price}</span>
                               </div>
                             </div>
                           ))}
@@ -409,7 +445,7 @@ export default function AdminProducts() {
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
-                  <Button variant="outline" onClick={() => setProductDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => handleDialogClose(false)}>
                     Abbrechen
                   </Button>
                   <Button onClick={handleSaveProduct}>
@@ -432,23 +468,45 @@ export default function AdminProducts() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {categoryProducts.map((product) => (
+                      {categoryProducts.map((product, index) => (
                         <div
                           key={product.id}
                           className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
                         >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              {product.featured && (
-                                <Star className="h-4 w-4 text-primary fill-primary" />
-                              )}
-                              <span className="font-medium">{product.name}</span>
-                              <Badge variant={product.status === 'published' ? 'default' : 'outline'}>
-                                {product.status === 'published' ? 'Live' : 'Entwurf'}
-                              </Badge>
-                              <Badge variant="secondary">{product.type}</Badge>
+                          <div className="flex items-center gap-2">
+                            <div className="flex flex-col">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-5 w-5"
+                                onClick={() => moveProduct(category.id, product.id, 'up')}
+                                disabled={index === 0}
+                              >
+                                <ChevronUp className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-5 w-5"
+                                onClick={() => moveProduct(category.id, product.id, 'down')}
+                                disabled={index === categoryProducts.length - 1}
+                              >
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <p className="text-sm text-muted-foreground">{product.priceText}</p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                {product.featured && (
+                                  <Star className="h-4 w-4 text-primary fill-primary" />
+                                )}
+                                <span className="font-medium">{product.name}</span>
+                                <Badge variant={product.status === 'published' ? 'default' : 'outline'}>
+                                  {product.status === 'published' ? 'Live' : 'Entwurf'}
+                                </Badge>
+                                <Badge variant="secondary">{product.type}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{product.priceText}</p>
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Button variant="ghost" size="icon" onClick={() => handleEditProduct(product)}>

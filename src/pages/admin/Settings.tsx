@@ -159,28 +159,28 @@ export default function AdminSettings() {
 
             {/* Live Preview */}
             <LivePreview title="Hero-Vorschau">
-              <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950">
+              <div className="p-6 bg-background">
                 <div className="text-center">
-                  <h1 className="font-bold text-xl md:text-2xl mb-3 text-amber-400">
+                  <h1 className="font-bold text-xl md:text-2xl mb-3 text-primary">
                     {form.heroTitle || 'Hero Titel'}
                   </h1>
-                  <p className="text-sm text-slate-400 mb-4 line-clamp-3">
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
                     {form.heroSubtitle || 'Hero Beschreibung...'}
                   </p>
-                  <button className="px-4 py-2 bg-amber-500 text-black rounded-lg text-sm font-medium">
+                  <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
                     {form.heroCta || 'CTA Button'}
                   </button>
                 </div>
                 
                 {form.whyWorkWithMe.length > 0 && (
-                  <div className="mt-6 pt-4 border-t border-slate-800">
-                    <p className="text-xs text-slate-500 mb-2">Warum mit mir arbeiten?</p>
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <p className="text-xs text-muted-foreground mb-2">Warum mit mir arbeiten?</p>
                     <div className="grid grid-cols-2 gap-2">
                       {form.whyWorkWithMe.slice(0, 4).map((item, i) => {
                         const Icon = benefitIcons[i % benefitIcons.length];
                         return (
-                          <div key={i} className="flex items-center gap-2 text-xs text-slate-300">
-                            <Icon className="h-3 w-3 text-amber-500" />
+                          <div key={i} className="flex items-center gap-2 text-xs text-foreground">
+                            <Icon className="h-3 w-3 text-primary" />
                             <span className="truncate">{item}</span>
                           </div>
                         );
@@ -845,68 +845,68 @@ export default function AdminSettings() {
             </Card>
 
             <LivePreview title="Kontakt-Vorschau">
-              <div className="p-6 bg-slate-950 space-y-3">
+              <div className="p-6 bg-background space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <span className="text-amber-500 text-xs">@</span>
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="text-primary text-xs">@</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">E-Mail</p>
-                    <p className="text-sm text-white">{form.contactEmail || 'email@beispiel.ch'}</p>
+                    <p className="text-xs text-muted-foreground">E-Mail</p>
+                    <p className="text-sm text-foreground">{form.contactEmail || 'email@beispiel.ch'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <span className="text-amber-500 text-xs">📞</span>
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="text-primary text-xs">📞</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Telefon</p>
-                    <p className="text-sm text-white">{form.contactPhone || '+41 79 123 45 67'}</p>
+                    <p className="text-xs text-muted-foreground">Telefon</p>
+                    <p className="text-sm text-foreground">{form.contactPhone || '+41 79 123 45 67'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <span className="text-amber-500 text-xs">📍</span>
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="text-primary text-xs">📍</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Standort</p>
-                    <p className="text-sm text-white">{form.contactLocation || 'Standort'}</p>
+                    <p className="text-xs text-muted-foreground">Standort</p>
+                    <p className="text-sm text-foreground">{form.contactLocation || 'Standort'}</p>
                   </div>
                 </div>
                 {(form.socialInstagram || form.socialLinkedin || form.socialTwitter || form.socialYoutube || form.socialTiktok || form.socialFacebook) && (
-                  <div className="mt-4 pt-4 border-t border-slate-800">
-                    <p className="text-xs text-slate-500 mb-2">Social Media</p>
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <p className="text-xs text-muted-foreground mb-2">Social Media</p>
                     <div className="flex flex-wrap gap-2">
                       {form.socialInstagram && (
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                          <Instagram className="h-4 w-4 text-amber-500" />
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Instagram className="h-4 w-4 text-primary" />
                         </div>
                       )}
                       {form.socialLinkedin && (
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                          <Linkedin className="h-4 w-4 text-amber-500" />
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Linkedin className="h-4 w-4 text-primary" />
                         </div>
                       )}
                       {form.socialTwitter && (
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                          <Twitter className="h-4 w-4 text-amber-500" />
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Twitter className="h-4 w-4 text-primary" />
                         </div>
                       )}
                       {form.socialYoutube && (
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                          <Youtube className="h-4 w-4 text-amber-500" />
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Youtube className="h-4 w-4 text-primary" />
                         </div>
                       )}
                       {form.socialTiktok && (
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-amber-500">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-primary">
                             <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
                           </svg>
                         </div>
                       )}
                       {form.socialFacebook && (
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                          <Facebook className="h-4 w-4 text-amber-500" />
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Facebook className="h-4 w-4 text-primary" />
                         </div>
                       )}
                     </div>
@@ -947,17 +947,17 @@ export default function AdminSettings() {
             </Card>
 
             <LivePreview title="Header/Footer Vorschau">
-              <div className="bg-slate-950">
-                <div className="p-3 border-b border-slate-800 flex items-center justify-between">
-                  <span className="font-bold text-amber-400 text-sm">{form.companyName || 'Firmenname'}</span>
-                  <div className="flex gap-2 text-xs text-slate-400">
+              <div className="bg-background">
+                <div className="p-3 border-b border-border flex items-center justify-between">
+                  <span className="font-bold text-primary text-sm">{form.companyName || 'Firmenname'}</span>
+                  <div className="flex gap-2 text-xs text-muted-foreground">
                     <span>Home</span>
                     <span>Leistungen</span>
                     <span>Kontakt</span>
                   </div>
                 </div>
-                <div className="p-3 border-t border-slate-800 text-center">
-                  <p className="text-xs text-slate-500">{form.footerText || '© Footer Text'}</p>
+                <div className="p-3 border-t border-border text-center">
+                  <p className="text-xs text-muted-foreground">{form.footerText || '© Footer Text'}</p>
                 </div>
               </div>
             </LivePreview>
