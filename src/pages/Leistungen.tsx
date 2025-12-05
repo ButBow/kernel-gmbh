@@ -179,7 +179,10 @@ export default function Leistungen() {
     : null;
 
   return (
-    <Layout pageTitle="Leistungen">
+    <Layout 
+      pageTitle="Leistungen" 
+      pageDescription="Von der kreativen Content-Produktion bis zur technischen Automatisierung – hier finden Sie alle Services, die ich anbiete."
+    >
       {/* Hero */}
       <section className="py-16 md:py-24 bg-gradient-dark">
         <div className="container mx-auto px-4">

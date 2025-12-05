@@ -36,7 +36,10 @@ export default function UeberMich() {
   const { settings } = useContent();
 
   return (
-    <Layout pageTitle="Über mich">
+    <Layout 
+      pageTitle="Über mich" 
+      pageDescription={`${settings.ownerName || settings.companyName} - ${settings.aboutTagline}. ${settings.aboutMission}`}
+    >
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         {/* Background decoration */}

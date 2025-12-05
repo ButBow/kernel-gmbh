@@ -23,7 +23,10 @@ export default function Blog() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <Layout pageTitle="Blog">
+    <Layout 
+      pageTitle="Blog" 
+      pageDescription="Gedanken, Einblicke und Learnings aus meiner Arbeit mit KI, Automatisierung und Content-Produktion."
+    >
       {/* Hero */}
       <section className="py-16 md:py-24 bg-gradient-dark">
         <div className="container mx-auto px-4">
