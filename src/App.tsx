@@ -11,6 +11,7 @@ import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CookieConsent } from "@/components/CookieConsent";
 import { CookieSettingsSync } from "@/components/CookieSettingsSync";
+import { ChatBot } from "@/components/chat/ChatBot";
 import { Loader2 } from "lucide-react";
 
 // Eagerly loaded public pages (critical path)
@@ -99,6 +100,7 @@ const App = () => (
                 </Suspense>
                 <CookieConsent />
                 <CookieSettingsSync />
+                <ChatBot />
               </BrowserRouter>
             </TooltipProvider>
           </AnalyticsProvider>
