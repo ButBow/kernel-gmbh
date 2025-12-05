@@ -37,11 +37,11 @@ export function Layout({ children, pageTitle, pageDescription }: LayoutProps) {
   // Show loading state until BOTH content AND theme are loaded to prevent flash
   if (isContentLoading || isThemeLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0a0a0a' }}>
         <main className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Laden...</p>
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#f59e0b' }} />
+            <p style={{ color: '#a1a1aa' }}>Laden...</p>
           </div>
         </main>
       </div>

@@ -164,17 +164,22 @@ function getAuthHeaders(): HeadersInit {
   return headers;
 }
 
-// Fetch content from server
+// Fetch content from server with timeout
 export async function fetchContentFromServer(): Promise<ContentData | null> {
   if (!isServerAvailable()) return null;
   
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+  
   try {
-    const response = await fetch('/api/content');
+    const response = await fetch('/api/content', { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (response.ok) {
       return await response.json();
     }
   } catch (error) {
-    console.warn('Server not available, using localStorage fallback');
+    clearTimeout(timeoutId);
+    console.warn('Server not available or timeout, using localStorage fallback');
   }
   return null;
 }
@@ -203,17 +208,22 @@ export async function saveContentToServer(content: ContentData): Promise<boolean
   }
 }
 
-// Fetch theme from server
+// Fetch theme from server with timeout
 export async function fetchThemeFromServer(): Promise<ThemeData | null> {
   if (!isServerAvailable()) return null;
   
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+  
   try {
-    const response = await fetch('/api/theme');
+    const response = await fetch('/api/theme', { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (response.ok) {
       return await response.json();
     }
   } catch (error) {
-    console.warn('Server not available for theme, using localStorage fallback');
+    clearTimeout(timeoutId);
+    console.warn('Server not available for theme or timeout, using localStorage fallback');
   }
   return null;
 }
