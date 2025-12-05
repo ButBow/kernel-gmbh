@@ -150,6 +150,114 @@ const CORS_HEADERS = {
 };
 
 // ============================================================================
+// OLLAMA / LLM CONFIGURATION
+// ============================================================================
+const OLLAMA_BASE_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:latest';
+
+// Load system prompt for chatbot
+function loadSystemPrompt() {
+  const promptPath = path.join(DATA_DIR, 'chatbot-system-prompt.txt');
+  try {
+    if (fs.existsSync(promptPath)) {
+      return fs.readFileSync(promptPath, 'utf8');
+    }
+  } catch (error) {
+    console.error('Error loading system prompt:', error.message);
+  }
+  return 'Du bist ein hilfreicher Assistent für die KernelFlow-Webseite. Antworte höflich und informativ auf Deutsch.';
+}
+
+// Get live data for chatbot context
+function getLiveDataContext() {
+  const content = readDataFile('content.json', null);
+  if (!content) return '';
+  
+  const liveData = [];
+  
+  // Add products/services info
+  if (content.products && content.products.length > 0) {
+    const productsList = content.products.map(p => 
+      `- ${p.title}: ${p.description || 'Keine Beschreibung'}`
+    ).join('\n');
+    liveData.push(`VERFÜGBARE SERVICES:\n${productsList}`);
+  }
+  
+  // Add categories
+  if (content.categories && content.categories.length > 0) {
+    const categoriesList = content.categories.map(c => `- ${c.name}`).join('\n');
+    liveData.push(`KATEGORIEN:\n${categoriesList}`);
+  }
+  
+  // Add recent blog posts
+  if (content.posts && content.posts.length > 0) {
+    const recentPosts = content.posts.slice(0, 3).map(p => `- ${p.title}`).join('\n');
+    liveData.push(`AKTUELLE BLOG-BEITRÄGE:\n${recentPosts}`);
+  }
+  
+  // Add site settings/contact info
+  if (content.settings) {
+    const s = content.settings;
+    const contactInfo = [];
+    if (s.email) contactInfo.push(`E-Mail: ${s.email}`);
+    if (s.phone) contactInfo.push(`Telefon: ${s.phone}`);
+    if (s.address) contactInfo.push(`Adresse: ${s.address}`);
+    if (contactInfo.length > 0) {
+      liveData.push(`KONTAKTDATEN:\n${contactInfo.join('\n')}`);
+    }
+  }
+  
+  return liveData.length > 0 ? '\n\nLIVE_DATEN:\n' + liveData.join('\n\n') : '';
+}
+
+// Call Ollama API
+async function callOllama(messages) {
+  const systemPrompt = loadSystemPrompt();
+  const liveContext = getLiveDataContext();
+  
+  // Build full system message with live data
+  const fullSystemPrompt = systemPrompt + liveContext;
+  
+  // Prepare messages for Ollama
+  const ollamaMessages = [
+    { role: 'system', content: fullSystemPrompt },
+    ...messages.map(msg => ({
+      role: msg.role,
+      content: sanitizeText(msg.content) // Sanitize all user input
+    }))
+  ];
+  
+  try {
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: OLLAMA_MODEL,
+        messages: ollamaMessages,
+        stream: false,
+        options: {
+          temperature: 0.7,
+          top_p: 0.9,
+          num_predict: 1024, // Max tokens in response
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Ollama API error:', response.status, errorText);
+      throw new Error(`Ollama API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.message?.content || 'Entschuldigung, ich konnte keine Antwort generieren.';
+  } catch (error) {
+    console.error('Ollama connection error:', error);
+    throw error;
+  }
+}
+
+// ============================================================================
 // DATA FILE HELPERS
 // ============================================================================
 
@@ -707,6 +815,97 @@ async function handleAPI(req, res, urlPath) {
     console.log(`[${timestamp}] ✅ CORS preflight handled`);
     res.writeHead(204, CORS_HEADERS);
     res.end();
+    return true;
+  }
+
+  // ============================================================================
+  // CHATBOT API - AI Chat with Ollama
+  // ============================================================================
+  
+  // POST /api/chat - Send message to chatbot
+  if (urlPath === '/api/chat' && req.method === 'POST') {
+    console.log(`[${timestamp}] 🤖 Processing chat message...`);
+    
+    // Rate limiting for chat
+    if (!checkRateLimit(ip)) {
+      sendJSON(res, 429, { error: 'Zu viele Anfragen. Bitte warten Sie eine Minute.' });
+      return true;
+    }
+    
+    try {
+      const body = await parseBody(req);
+      
+      if (!body.message) {
+        sendJSON(res, 400, { error: 'Nachricht erforderlich' });
+        return true;
+      }
+      
+      // Sanitize message and prepare conversation
+      const sanitizedMessage = sanitizeText(body.message);
+      if (sanitizedMessage.length > 2000) {
+        sendJSON(res, 400, { error: 'Nachricht zu lang (max. 2000 Zeichen)' });
+        return true;
+      }
+      
+      // Prepare messages array
+      const messages = [];
+      if (body.history && Array.isArray(body.history)) {
+        // Add sanitized history (last 10 messages max)
+        body.history.slice(-10).forEach(msg => {
+          if (msg.role && msg.content) {
+            messages.push({
+              role: msg.role === 'user' ? 'user' : 'assistant',
+              content: sanitizeText(msg.content).slice(0, 2000)
+            });
+          }
+        });
+      } else {
+        messages.push({ role: 'user', content: sanitizedMessage });
+      }
+      
+      // Call Ollama
+      const response = await callOllama(messages);
+      
+      console.log(`[${timestamp}] ✅ Chat response generated`);
+      sendJSON(res, 200, { response });
+    } catch (error) {
+      console.error(`[${timestamp}] ❌ Chat API error:`, error.message);
+      
+      // Return user-friendly error
+      if (error.message.includes('ECONNREFUSED') || error.message.includes('fetch')) {
+        sendJSON(res, 503, { 
+          error: 'Der Chat-Service ist momentan nicht verfügbar. Bitte versuchen Sie es später erneut.',
+          details: 'Ollama service not reachable'
+        });
+      } else {
+        sendJSON(res, 500, { 
+          error: 'Es gab ein Problem bei der Verarbeitung Ihrer Anfrage.',
+          details: error.message 
+        });
+      }
+    }
+    return true;
+  }
+  
+  // GET /api/chat/status - Check if chat is available
+  if (urlPath === '/api/chat/status' && req.method === 'GET') {
+    console.log(`[${timestamp}] 📊 Checking chat status...`);
+    try {
+      const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
+      if (response.ok) {
+        const data = await response.json();
+        const modelAvailable = data.models?.some(m => m.name.includes(OLLAMA_MODEL.split(':')[0]));
+        sendJSON(res, 200, { 
+          available: true,
+          model: OLLAMA_MODEL,
+          modelLoaded: modelAvailable
+        });
+      } else {
+        sendJSON(res, 200, { available: false, reason: 'Ollama not responding' });
+      }
+    } catch (error) {
+      sendJSON(res, 200, { available: false, reason: 'Ollama not reachable' });
+    }
     return true;
   }
 
