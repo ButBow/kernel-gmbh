@@ -24,15 +24,21 @@ function Write-Err($msg) { Write-Host "✗ $msg" -ForegroundColor Red }
 
 function Get-Config {
     if (Test-Path $ConfigFile) {
-        return Get-Content $ConfigFile -Raw | ConvertFrom-Json
+        try {
+            $content = Get-Content $ConfigFile -Raw
+            return $content | ConvertFrom-Json
+        } catch {
+            Write-Warn "Config-Datei beschädigt, verwende Standardwerte"
+        }
     }
-    return @{
+    $defaultConfig = New-Object PSObject -Property @{
         tunnelName = "kernel-website"
         domain = "kernel.gmbh"
         port = 3000
         autoPull = $false
         lastBuild = $null
     }
+    return $defaultConfig
 }
 
 # ============================================================================
