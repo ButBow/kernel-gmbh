@@ -35,10 +35,10 @@ export default function Index() {
   const { settings, categories, products } = useContent();
   const { trackEvent } = useAnalytics();
 
-  // Scroll reveal refs for each section
-  const servicesReveal = useScrollReveal();
-  const featuredReveal = useScrollReveal();
-  const benefitsReveal = useScrollReveal();
+  // Scroll reveal hooks
+  const servicesReveal = useScrollReveal({ threshold: 0.1 });
+  const featuredReveal = useScrollReveal({ threshold: 0.1 });
+  const benefitsReveal = useScrollReveal({ threshold: 0.1 });
   const ctaReveal = useScrollReveal({ threshold: 0.2 });
 
   // Get first 4 categories for service teasers
@@ -59,7 +59,7 @@ export default function Index() {
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-dark" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(38_92%_50%/0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(38_92%_50%/0.15),transparent_60%)]" />
         
         <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
           <div className="max-w-4xl mx-auto text-center">
@@ -67,12 +67,12 @@ export default function Index() {
               <span className="text-gradient">{settings.heroTitle}</span>
             </h1>
             
-            <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: "0.1s" }}>
+            <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: "0.15s" }}>
               {settings.heroSubtitle}
             </p>
             
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              <Button size="lg" asChild>
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: "0.3s" }}>
+              <Button size="lg" asChild className="glow-pulse">
                 <Link to="/kontakt">
                   {settings.heroCta}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -91,7 +91,7 @@ export default function Index() {
         <div className="container mx-auto px-4">
           <div 
             ref={servicesReveal.ref}
-            className={`text-center mb-12 ${servicesReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+            className={`text-center mb-12 section-reveal ${servicesReveal.isVisible ? 'in-view' : ''}`}
           >
             <h2 className="font-display text-3xl md:text-4xl font-bold">
               Meine Leistungsbereiche
@@ -102,16 +102,12 @@ export default function Index() {
             </p>
           </div>
 
-          <div 
-            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ${servicesReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
-          >
-            {serviceCategories.map((category, index) => {
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 card-grid ${servicesReveal.isVisible ? 'in-view' : ''}`}>
+            {serviceCategories.map((category) => {
               const IconComponent = iconMap[category.icon] || Code;
-              // Find minimum price from products in this category
               const categoryProducts = products.filter(p => p.categoryId === category.id && p.status === 'published');
               const prices = categoryProducts
                 .map(p => {
-                  // Extract number from priceText (e.g., "Ab 500 €" -> 500)
                   const match = p.priceText.match(/[\d.,]+/);
                   return match ? parseFloat(match[0].replace('.', '').replace(',', '.')) : null;
                 })
@@ -119,10 +115,8 @@ export default function Index() {
               const minPrice = prices.length > 0 ? Math.min(...prices) : null;
               
               return (
-                <Link key={category.id} to="/leistungen" className="reveal-item">
-                  <Card 
-                    className="h-full group hover:border-primary/50 transition-all duration-300 hover:shadow-glow cursor-pointer"
-                  >
+                <Link key={category.id} to="/leistungen" className="card-item">
+                  <Card className="h-full group hover:border-primary/50 transition-all duration-300 hover:shadow-glow cursor-pointer">
                     <CardContent className="p-6">
                       <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                         <IconComponent className="h-6 w-6 text-primary" />
@@ -153,7 +147,7 @@ export default function Index() {
           <div className="container mx-auto px-4">
             <div 
               ref={featuredReveal.ref}
-              className={`text-center mb-12 ${featuredReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+              className={`text-center mb-12 section-reveal ${featuredReveal.isVisible ? 'in-view' : ''}`}
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
                 <Star className="h-4 w-4 fill-current" />
@@ -167,8 +161,8 @@ export default function Index() {
               </p>
             </div>
 
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${featuredReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}>
-              {featuredProducts.map((product, index) => {
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid ${featuredReveal.isVisible ? 'in-view' : ''}`}>
+              {featuredProducts.map((product) => {
                 const category = categories.find(c => c.id === product.categoryId);
                 const colors = getCategoryColors(product.categoryId, sortedCategories);
                 return (
@@ -176,13 +170,11 @@ export default function Index() {
                     key={product.id} 
                     to="/leistungen"
                     onClick={() => handleProductClick(product.name)}
-                    className="reveal-item"
+                    className="card-item"
                   >
-                    <Card 
-                      className={`h-full group transition-all duration-300 cursor-pointer border-2 ${colors.border} ${colors.glow}`}
-                    >
+                    <Card className={`h-full group transition-all duration-300 cursor-pointer border-2 ${colors.border} ${colors.glow}`}>
                       <CardHeader>
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <Badge className="bg-primary text-primary-foreground">
                             <Star className="h-3 w-3 mr-1 fill-current" />
                             Beliebt
@@ -213,7 +205,7 @@ export default function Index() {
               })}
             </div>
 
-            <div className={`mt-10 text-center ${featuredReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`} style={{ transitionDelay: '0.3s' }}>
+            <div className={`mt-10 text-center section-reveal ${featuredReveal.isVisible ? 'in-view' : ''}`}>
               <Button size="lg" variant="outline" asChild>
                 <Link to="/leistungen">Alle Leistungen ansehen</Link>
               </Button>
@@ -223,25 +215,22 @@ export default function Index() {
       )}
 
       {/* Benefits Section */}
-      <section className="py-20 md:py-28 bg-card">
+      <section className="py-20 md:py-28">
         <div className="container mx-auto px-4">
           <div 
             ref={benefitsReveal.ref}
-            className={`text-center mb-12 ${benefitsReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+            className={`text-center mb-12 section-reveal ${benefitsReveal.isVisible ? 'in-view' : ''}`}
           >
             <h2 className="font-display text-3xl md:text-4xl font-bold">
               Warum mit mir arbeiten?
             </h2>
           </div>
 
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto ${benefitsReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}>
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto card-grid ${benefitsReveal.isVisible ? 'in-view' : ''}`}>
             {settings.whyWorkWithMe.map((item, index) => {
               const Icon = benefitIcons[index % benefitIcons.length];
               return (
-                <div 
-                  key={index} 
-                  className="flex gap-4 reveal-item"
-                >
+                <div key={index} className="flex gap-4 card-item">
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Icon className="h-5 w-5 text-primary" />
@@ -257,8 +246,8 @@ export default function Index() {
             })}
           </div>
 
-          <div className={`mt-12 text-center ${benefitsReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`} style={{ transitionDelay: '0.4s' }}>
-            <Button size="lg" asChild>
+          <div className={`mt-12 text-center section-reveal ${benefitsReveal.isVisible ? 'in-view' : ''}`}>
+            <Button size="lg" asChild className="glow-pulse">
               <Link to="/kontakt">
                 Jetzt Kontakt aufnehmen
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -276,7 +265,7 @@ export default function Index() {
         <div className="container mx-auto px-4">
           <div 
             ref={ctaReveal.ref}
-            className={`relative rounded-2xl overflow-hidden scroll-reveal-scale ${ctaReveal.isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`}
+            className={`relative rounded-2xl overflow-hidden scale-reveal ${ctaReveal.isVisible ? 'in-view' : ''}`}
           >
             <div className="absolute inset-0 bg-gradient-primary opacity-90" />
             <div className="relative px-8 py-16 md:py-20 text-center">

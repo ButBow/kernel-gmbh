@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface UseScrollRevealOptions {
   threshold?: number;
@@ -9,7 +9,7 @@ interface UseScrollRevealOptions {
 export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
   options: UseScrollRevealOptions = {}
 ) {
-  const { threshold = 0.1, rootMargin = '0px 0px -50px 0px', triggerOnce = true } = options;
+  const { threshold = 0.15, rootMargin = '0px 0px -80px 0px', triggerOnce = true } = options;
   const ref = useRef<T>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -39,15 +39,30 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
   return { ref, isVisible };
 }
 
-// Component wrapper for easy use
-export function useScrollRevealClass(
-  baseClass: string = '',
-  options: UseScrollRevealOptions = {}
-) {
-  const { ref, isVisible } = useScrollReveal(options);
-  
-  return {
-    ref,
-    className: `${baseClass} ${isVisible ? 'scroll-reveal-visible' : 'scroll-reveal-hidden'}`
-  };
+// Multi-element observer for staggered animations
+export function useMultiScrollReveal(count: number, options: UseScrollRevealOptions = {}) {
+  const { threshold = 0.1, rootMargin = '0px 0px -50px 0px' } = options;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visibleItems, setVisibleItems] = useState<boolean[]>(new Array(count).fill(false));
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleItems(new Array(count).fill(true));
+          observer.unobserve(container);
+        }
+      },
+      { threshold, rootMargin }
+    );
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [count, threshold, rootMargin]);
+
+  return { containerRef, visibleItems, allVisible: visibleItems.every(v => v) };
 }

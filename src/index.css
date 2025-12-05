@@ -130,72 +130,92 @@
 }
 
 @layer components {
-  /* Scroll reveal animations */
-  .scroll-reveal-hidden {
-    opacity: 0;
-    transform: translateY(30px);
+  /* Fresh technical scroll animations - always visible, animate on scroll */
+  
+  /* Hero animations */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   
-  .scroll-reveal-visible {
+  .animate-slide-up {
+    animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  /* Section reveal - starts visible, animates smoothly */
+  .section-reveal {
     opacity: 1;
     transform: translateY(0);
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
-                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
-  /* Staggered children animation */
-  .scroll-reveal-visible .reveal-item {
+  .section-reveal.in-view {
+    animation: sectionFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  @keyframes sectionFadeUp {
+    from { opacity: 0.3; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Card stagger animations */
+  .card-grid.in-view .card-item {
+    animation: cardReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .card-grid .card-item {
     opacity: 0;
-    transform: translateY(20px);
-    animation: revealItem 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: translateY(25px) scale(0.98);
   }
   
-  .scroll-reveal-visible .reveal-item:nth-child(1) { animation-delay: 0.05s; }
-  .scroll-reveal-visible .reveal-item:nth-child(2) { animation-delay: 0.1s; }
-  .scroll-reveal-visible .reveal-item:nth-child(3) { animation-delay: 0.15s; }
-  .scroll-reveal-visible .reveal-item:nth-child(4) { animation-delay: 0.2s; }
-  .scroll-reveal-visible .reveal-item:nth-child(5) { animation-delay: 0.25s; }
-  .scroll-reveal-visible .reveal-item:nth-child(6) { animation-delay: 0.3s; }
-  .scroll-reveal-visible .reveal-item:nth-child(7) { animation-delay: 0.35s; }
-  .scroll-reveal-visible .reveal-item:nth-child(8) { animation-delay: 0.4s; }
-  .scroll-reveal-visible .reveal-item:nth-child(9) { animation-delay: 0.45s; }
-  .scroll-reveal-visible .reveal-item:nth-child(10) { animation-delay: 0.5s; }
-  .scroll-reveal-visible .reveal-item:nth-child(11) { animation-delay: 0.55s; }
-  .scroll-reveal-visible .reveal-item:nth-child(12) { animation-delay: 0.6s; }
-  
-  @keyframes revealItem {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  @keyframes cardReveal {
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
   
-  /* Scale reveal variant */
-  .scroll-reveal-scale.scroll-reveal-hidden {
-    opacity: 0;
-    transform: scale(0.95);
-  }
+  /* Fast stagger delays */
+  .card-grid.in-view .card-item:nth-child(1) { animation-delay: 0s; }
+  .card-grid.in-view .card-item:nth-child(2) { animation-delay: 0.06s; }
+  .card-grid.in-view .card-item:nth-child(3) { animation-delay: 0.12s; }
+  .card-grid.in-view .card-item:nth-child(4) { animation-delay: 0.18s; }
+  .card-grid.in-view .card-item:nth-child(5) { animation-delay: 0.24s; }
+  .card-grid.in-view .card-item:nth-child(6) { animation-delay: 0.3s; }
+  .card-grid.in-view .card-item:nth-child(7) { animation-delay: 0.36s; }
+  .card-grid.in-view .card-item:nth-child(8) { animation-delay: 0.42s; }
   
-  .scroll-reveal-scale.scroll-reveal-visible {
+  /* Scale reveal for CTA sections */
+  .scale-reveal {
     opacity: 1;
     transform: scale(1);
   }
   
-  /* Slide from left variant */
-  .scroll-reveal-left.scroll-reveal-hidden {
-    opacity: 0;
-    transform: translateX(-30px);
+  .scale-reveal.in-view {
+    animation: scaleUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   
-  .scroll-reveal-left.scroll-reveal-visible {
-    opacity: 1;
-    transform: translateX(0);
+  @keyframes scaleUp {
+    from { opacity: 0.5; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
   }
   
-  /* Slide from right variant */
-  .scroll-reveal-right.scroll-reveal-hidden {
-    opacity: 0;
-    transform: translateX(30px);
+  /* Glow pulse effect for featured items */
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.2); }
+    50% { box-shadow: 0 0 35px hsl(var(--primary) / 0.35); }
+  }
+  
+  .glow-pulse:hover {
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+  
+  /* Text reveal for headings */
+  .text-reveal.in-view {
+    animation: textReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  @keyframes textReveal {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   
   .scroll-reveal-right.scroll-reveal-visible {
