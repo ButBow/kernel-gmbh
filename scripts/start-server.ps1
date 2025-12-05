@@ -1,7 +1,7 @@
 # ============================================================================
 # Kernel Website - Quick Start Server
 # ============================================================================
-# Schnellstart-Skript für den täglichen Gebrauch
+# Schnellstart-Skript fuer den taeglichen Gebrauch
 # ============================================================================
 
 $ErrorActionPreference = "Continue"
@@ -12,11 +12,29 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectDir = Split-Path -Parent $ScriptDir
 $ConfigFile = Join-Path $ScriptDir "config.json"
 
-# Farben
-function Write-Success($msg) { Write-Host "✓ $msg" -ForegroundColor Green }
-function Write-Info($msg) { Write-Host "→ $msg" -ForegroundColor Cyan }
-function Write-Warn($msg) { Write-Host "⚠ $msg" -ForegroundColor Yellow }
-function Write-Err($msg) { Write-Host "✗ $msg" -ForegroundColor Red }
+# ============================================================================
+# Hilfsfunktionen
+# ============================================================================
+
+function Write-Success {
+    param([string]$msg)
+    Write-Host "[OK] $msg" -ForegroundColor Green
+}
+
+function Write-Info {
+    param([string]$msg)
+    Write-Host "[..] $msg" -ForegroundColor Cyan
+}
+
+function Write-Warn {
+    param([string]$msg)
+    Write-Host "[!!] $msg" -ForegroundColor Yellow
+}
+
+function Write-Err {
+    param([string]$msg)
+    Write-Host "[XX] $msg" -ForegroundColor Red
+}
 
 # ============================================================================
 # Konfiguration
@@ -25,13 +43,15 @@ function Write-Err($msg) { Write-Host "✗ $msg" -ForegroundColor Red }
 function Get-Config {
     if (Test-Path $ConfigFile) {
         try {
-            $content = Get-Content $ConfigFile -Raw
-            return $content | ConvertFrom-Json
+            $content = Get-Content $ConfigFile -Raw -ErrorAction Stop
+            $parsed = $content | ConvertFrom-Json
+            return $parsed
         } catch {
-            Write-Warn "Config-Datei beschädigt, verwende Standardwerte"
+            Write-Warn "Config-Datei beschaedigt, verwende Standardwerte"
         }
     }
-    $defaultConfig = New-Object PSObject -Property @{
+    
+    $defaultConfig = [PSCustomObject]@{
         tunnelName = "kernel-website"
         domain = "kernel.gmbh"
         port = 3000
@@ -45,24 +65,27 @@ function Get-Config {
 # Checks
 # ============================================================================
 
-function Test-Command($cmd) {
-    $null = Get-Command $cmd -ErrorAction SilentlyContinue
-    return $?
+function Test-Command {
+    param([string]$cmd)
+    $result = Get-Command $cmd -ErrorAction SilentlyContinue
+    return ($null -ne $result)
 }
 
-function Test-PortInUse($port) {
+function Test-PortInUse {
+    param([int]$port)
     $connection = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
-    return $null -ne $connection
+    return ($null -ne $connection)
 }
 
-function Stop-ProcessOnPort($port) {
+function Stop-ProcessOnPort {
+    param([int]$port)
     $connection = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
     if ($connection) {
         $process = Get-Process -Id $connection.OwningProcess -ErrorAction SilentlyContinue
         if ($process) {
             Write-Warn "Prozess auf Port ${port}: $($process.ProcessName) (PID: $($process.Id))"
             $kill = Read-Host "Prozess beenden? (j/n)"
-            if ($kill -eq "j" -or $kill -eq "J") {
+            if (($kill -eq "j") -or ($kill -eq "J")) {
                 Stop-Process -Id $process.Id -Force
                 Start-Sleep -Seconds 1
                 return $true
@@ -80,30 +103,29 @@ Set-Location $ProjectDir
 $config = Get-Config
 
 Write-Host ""
-Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║           🚀 KERNEL WEBSITE - QUICK START                      ║" -ForegroundColor Cyan
-Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host "           KERNEL WEBSITE - QUICK START                         " -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Prüfe Dependencies
-Write-Info "Prüfe Abhängigkeiten..."
+# Pruefe Dependencies
+Write-Info "Pruefe Abhaengigkeiten..."
 
 if (-not (Test-Command "node")) {
-    Write-Err "Node.js nicht gefunden! Bitte führe setup.bat aus."
+    Write-Err "Node.js nicht gefunden! Bitte fuehre setup.bat aus."
     Read-Host "Enter zum Beenden"
     exit 1
 }
 
+$noTunnel = $false
 if (-not (Test-Command "cloudflared")) {
     Write-Warn "Cloudflared nicht gefunden! Tunnel wird nicht gestartet."
     $noTunnel = $true
-} else {
-    $noTunnel = $false
 }
 
 Write-Success "Dependencies OK"
 
-# Prüfe Build
+# Pruefe Build
 if (-not (Test-Path "dist")) {
     Write-Warn "Build nicht gefunden!"
     Write-Info "Erstelle Build..."
@@ -111,7 +133,7 @@ if (-not (Test-Path "dist")) {
     npm run build 2>&1 | ForEach-Object { Write-Host $_ }
     
     if (-not (Test-Path "dist")) {
-        Write-Err "Build fehlgeschlagen! Bitte führe setup.bat aus."
+        Write-Err "Build fehlgeschlagen! Bitte fuehre setup.bat aus."
         Read-Host "Enter zum Beenden"
         exit 1
     }
@@ -120,15 +142,14 @@ if (-not (Test-Path "dist")) {
 
 # Optional: Git Pull
 Write-Host ""
-$pull = Read-Host "Git Pull ausführen? (j/n)"
-if ($pull -eq "j" -or $pull -eq "J") {
-    Write-Info "Führe Git Pull aus..."
+$pull = Read-Host "Git Pull ausfuehren? (j/n)"
+if (($pull -eq "j") -or ($pull -eq "J")) {
+    Write-Info "Fuehre Git Pull aus..."
     git pull
     
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Git Pull erfolgreich"
         
-        # Rebuild nach Pull
         Write-Info "Erstelle neuen Build..."
         npm install --silent
         npm run build 2>&1 | ForEach-Object { Write-Host $_ }
@@ -137,10 +158,11 @@ if ($pull -eq "j" -or $pull -eq "J") {
     }
 }
 
-# Prüfe Port
+# Pruefe Port
 if (Test-PortInUse $config.port) {
     Write-Warn "Port $($config.port) ist bereits belegt!"
-    if (-not (Stop-ProcessOnPort $config.port)) {
+    $stopped = Stop-ProcessOnPort $config.port
+    if (-not $stopped) {
         Write-Err "Server kann nicht gestartet werden - Port belegt"
         Read-Host "Enter zum Beenden"
         exit 1
@@ -156,7 +178,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectDir';
 
 Start-Sleep -Seconds 2
 
-# Starte Tunnel (wenn verfügbar)
+# Starte Tunnel (wenn verfuegbar)
 if (-not $noTunnel) {
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "Write-Host 'CLOUDFLARE TUNNEL' -ForegroundColor Cyan; Write-Host '=================' -ForegroundColor Cyan; cloudflared tunnel run $($config.tunnelName)" -WindowStyle Normal
     Start-Sleep -Seconds 2
@@ -164,26 +186,26 @@ if (-not $noTunnel) {
 
 # Status anzeigen
 Write-Host ""
-Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║              🚀 SERVER LÄUFT ERFOLGREICH!                      ║" -ForegroundColor Green
-Write-Host "╠════════════════════════════════════════════════════════════════╣" -ForegroundColor Green
-Write-Host "║  Lokal:      http://localhost:$($config.port)                             ║" -ForegroundColor Green
+Write-Host "================================================================" -ForegroundColor Green
+Write-Host "              SERVER LAEUFT ERFOLGREICH!                        " -ForegroundColor Green
+Write-Host "================================================================" -ForegroundColor Green
+Write-Host "  Lokal:      http://localhost:$($config.port)" -ForegroundColor Green
 
 if (-not $noTunnel) {
-    Write-Host "║  Tunnel:     https://$($config.domain)                               ║" -ForegroundColor Green
-    Write-Host "║  Admin:      https://$($config.domain)/admin/login             ║" -ForegroundColor Green
+    Write-Host "  Tunnel:     https://$($config.domain)" -ForegroundColor Green
+    Write-Host "  Admin:      https://$($config.domain)/admin/login" -ForegroundColor Green
 } else {
-    Write-Host "║  (Tunnel nicht verfügbar - nur lokal erreichbar)               ║" -ForegroundColor Yellow
+    Write-Host "  (Tunnel nicht verfuegbar - nur lokal erreichbar)" -ForegroundColor Yellow
 }
 
-Write-Host "╠════════════════════════════════════════════════════════════════╣" -ForegroundColor Green
-Write-Host "║  Server-Fenster und Tunnel-Fenster offen lassen!               ║" -ForegroundColor Green
-Write-Host "║  Zum Stoppen: Beide Fenster schließen (oder Ctrl+C)            ║" -ForegroundColor Green
-Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host "================================================================" -ForegroundColor Green
+Write-Host "  Server-Fenster und Tunnel-Fenster offen lassen!" -ForegroundColor Green
+Write-Host "  Zum Stoppen: Beide Fenster schliessen (oder Ctrl+C)" -ForegroundColor Green
+Write-Host "================================================================" -ForegroundColor Green
 Write-Host ""
 
 # Halte Fenster offen
 Write-Host "Dieses Fenster kann geschlossen werden." -ForegroundColor Gray
-Write-Host "Server läuft in separaten Fenstern weiter." -ForegroundColor Gray
+Write-Host "Server laeuft in separaten Fenstern weiter." -ForegroundColor Gray
 Write-Host ""
 Read-Host "Enter zum Beenden dieses Fensters"
