@@ -57,8 +57,8 @@ export function CookieConsent() {
                   <div>
                     <p className="font-medium">Erfasste Daten:</p>
                     <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
-                      {cookieConfig.collectedDataItems.map((item, i) => (
-                        <li key={i}>{item}</li>
+                      {cookieConfig.trackingOptions.filter(opt => opt.enabled).map((opt) => (
+                        <li key={opt.id}>{opt.label}</li>
                       ))}
                     </ul>
                   </div>
