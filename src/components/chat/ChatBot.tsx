@@ -20,11 +20,6 @@ export function ChatBot() {
   
   const { messages, isLoading, sendMessage, clearMessages } = useChatBot();
 
-  // Don't render if chatbot is disabled
-  if (!chatbotConfig.enabled) {
-    return null;
-  }
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
@@ -38,6 +33,11 @@ export function ChatBot() {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+
+  // Don't render if chatbot is disabled
+  if (!chatbotConfig.enabled) {
+    return null;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
