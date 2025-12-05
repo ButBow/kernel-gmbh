@@ -57,9 +57,10 @@ function Get-Config {
         }
     }
     
+    # Keine hardcoded Domain - muss vom User konfiguriert werden
     $defaultConfig = [PSCustomObject]@{
-        tunnelName = "kernel-website"
-        domain = "kernel.gmbh"
+        tunnelName = "meine-website"
+        domain = $null  # Wird bei Ersteinrichtung abgefragt
         port = 3000
         autoPull = $false
         lastBuild = $null
@@ -306,9 +307,37 @@ function Setup-CloudflareTunnel {
     
     $config = Get-Config
     
+    # Pruefen ob Domain konfiguriert ist - wenn nicht, abfragen
+    if (-not $config.domain -or $config.domain -eq "") {
+        Write-Warn "Keine Domain konfiguriert!"
+        Write-Host ""
+        Write-Host "Bitte gib deine Domain ein (z.B. meine-seite.ch oder subdomain.meine-seite.ch):" -ForegroundColor Yellow
+        $newDomain = Read-Host "Domain"
+        
+        if (-not $newDomain -or $newDomain -eq "") {
+            Write-Err "Domain ist erforderlich fuer den Tunnel!"
+            return $false
+        }
+        
+        $config.domain = $newDomain
+        
+        # Tunnel-Name aus Domain generieren
+        $tunnelName = $newDomain -replace "\.", "-"
+        $config.tunnelName = $tunnelName
+        
+        Save-Config $config
+        Write-Success "Domain '$newDomain' gespeichert (Tunnel: $tunnelName)"
+    }
+    
     if (-not (Test-TunnelLogin)) {
         Write-Warn "Nicht bei Cloudflare angemeldet"
         Write-Info "Oeffne Browser fuer Login..."
+        Write-Host ""
+        Write-Host "WICHTIG: Der Browser oeffnet sich gleich." -ForegroundColor Yellow
+        Write-Host "         Waehle dort die Zone (Domain), die du nutzen moechtest." -ForegroundColor Yellow
+        Write-Host ""
+        Start-Sleep -Seconds 2
+        
         cloudflared tunnel login
         
         if (-not (Test-TunnelLogin)) {
@@ -332,13 +361,25 @@ function Setup-CloudflareTunnel {
         
         if ($LASTEXITCODE -ne 0) {
             Write-Err "Tunnel-Erstellung fehlgeschlagen!"
+            Write-Host "  Moegliche Ursache: Tunnel mit diesem Namen existiert bereits." -ForegroundColor Yellow
+            Write-Host "  Loesung: cloudflared tunnel delete $($config.tunnelName)" -ForegroundColor Yellow
             return $false
         }
         Write-Success "Tunnel erstellt!"
         
-        Write-Info "Fuege DNS-Route hinzu..."
-        cloudflared tunnel route dns $config.tunnelName $config.domain
-        cloudflared tunnel route dns $config.tunnelName "www.$($config.domain)"
+        Write-Info "Setze DNS-Routen..."
+        Write-Host "  Route: $($config.domain) -> Tunnel" -ForegroundColor Cyan
+        cloudflared tunnel route dns $config.tunnelName $config.domain 2>&1 | Out-Null
+        
+        Write-Host "  Route: www.$($config.domain) -> Tunnel" -ForegroundColor Cyan
+        cloudflared tunnel route dns $config.tunnelName "www.$($config.domain)" 2>&1 | Out-Null
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Success "DNS-Routen gesetzt!"
+        } else {
+            Write-Warn "DNS-Routen konnten nicht vollstaendig gesetzt werden."
+            Write-Host "  Die Domain muss bei Cloudflare verwaltet werden!" -ForegroundColor Yellow
+        }
     } else {
         Write-Success "Tunnel '$($config.tunnelName)' existiert bereits"
     }
@@ -650,15 +691,47 @@ function Edit-Configuration {
                 Start-Sleep -Seconds 1
             }
             "2" {
-                $newDomain = Read-Host "Neue Domain (aktuell: $($config.domain))"
+                Write-Host ""
+                Write-Host "Aktuelle Domain: $($config.domain)" -ForegroundColor Yellow
+                Write-Host "Aktueller Tunnel: $($config.tunnelName)" -ForegroundColor Yellow
+                Write-Host ""
+                $newDomain = Read-Host "Neue Domain (z.B. meine-seite.ch)"
                 if ($newDomain -and $newDomain.Length -gt 0) {
+                    $oldDomain = $config.domain
                     $config.domain = $newDomain
+                    
+                    # Tunnel-Name aus neuer Domain generieren
+                    $suggestedTunnelName = $newDomain -replace "\.", "-"
+                    Write-Host ""
+                    Write-Host "Vorgeschlagener Tunnel-Name: $suggestedTunnelName" -ForegroundColor Cyan
+                    $useSuggested = Read-Host "Tunnel-Namen anpassen? (j/n)"
+                    
+                    if (($useSuggested -eq "j") -or ($useSuggested -eq "J")) {
+                        $config.tunnelName = $suggestedTunnelName
+                        Write-Success "Tunnel-Name geaendert auf $suggestedTunnelName"
+                    }
+                    
                     Save-Config $config
                     Write-Success "Domain geaendert auf $newDomain"
+                    
+                    # Fragen ob neuer Tunnel erstellt werden soll
+                    Write-Host ""
+                    Write-Warn "Bei Domain-Aenderung wird ein neuer Cloudflare-Tunnel benoetigt!"
+                    $createTunnel = Read-Host "Neuen Tunnel jetzt erstellen? (j/n)"
+                    
+                    if (($createTunnel -eq "j") -or ($createTunnel -eq "J")) {
+                        Setup-CloudflareTunnel
+                    } else {
+                        Write-Host ""
+                        Write-Host "Manuelle Schritte:" -ForegroundColor Yellow
+                        Write-Host "  1. cloudflared tunnel create $($config.tunnelName)" -ForegroundColor Yellow
+                        Write-Host "  2. cloudflared tunnel route dns $($config.tunnelName) $newDomain" -ForegroundColor Yellow
+                        Write-Host "  3. Option [5] Einstellungen anwenden" -ForegroundColor Yellow
+                    }
                 } else {
                     Write-Err "Domain darf nicht leer sein!"
                 }
-                Start-Sleep -Seconds 1
+                Read-Host "`nWeiter mit Enter"
             }
             "3" {
                 $newTunnelName = Read-Host "Neuer Tunnel-Name (aktuell: $($config.tunnelName))"

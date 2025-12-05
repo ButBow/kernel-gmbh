@@ -1,7 +1,7 @@
 {
-  "tunnelName": "kernel-website",
+  "tunnelName": "meine-website",
   "tunnelId": null,
-  "domain": "kernel.gmbh",
+  "domain": null,
   "port": 3000,
   "autoPull": false,
   "autoOpenBrowser": true,

@@ -51,9 +51,10 @@ function Get-Config {
         }
     }
     
+    # Keine hardcoded Domain - muss konfiguriert werden
     $defaultConfig = [PSCustomObject]@{
-        tunnelName = "kernel-website"
-        domain = "kernel.gmbh"
+        tunnelName = "meine-website"
+        domain = $null  # Muss in config.json gesetzt werden
         port = 3000
         autoPull = $false
         lastBuild = $null
@@ -191,9 +192,11 @@ Write-Host "              SERVER LAEUFT ERFOLGREICH!                        " -F
 Write-Host "================================================================" -ForegroundColor Green
 Write-Host "  Lokal:      http://localhost:$($config.port)" -ForegroundColor Green
 
-if (-not $noTunnel) {
+if (-not $noTunnel -and $config.domain) {
     Write-Host "  Tunnel:     https://$($config.domain)" -ForegroundColor Green
     Write-Host "  Admin:      https://$($config.domain)/admin/login" -ForegroundColor Green
+} elseif (-not $config.domain) {
+    Write-Host "  (Keine Domain konfiguriert - bitte setup.bat -> Option 7 nutzen)" -ForegroundColor Yellow
 } else {
     Write-Host "  (Tunnel nicht verfuegbar - nur lokal erreichbar)" -ForegroundColor Yellow
 }
