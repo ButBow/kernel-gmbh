@@ -10,7 +10,7 @@ import { defaultChatbotSettings } from '@/data/initialData';
 import { cn } from '@/lib/utils';
 
 export function ChatBot() {
-  const { settings } = useContent();
+  const { settings, isLoading: isContentLoading } = useContent();
   const chatbotConfig = settings.chatbotSettings || defaultChatbotSettings;
   
   const [isOpen, setIsOpen] = useState(false);
@@ -34,8 +34,8 @@ export function ChatBot() {
     }
   }, [isOpen]);
 
-  // Don't render if chatbot is disabled
-  if (!chatbotConfig.enabled) {
+  // Don't render while loading or if chatbot is disabled
+  if (isContentLoading || !chatbotConfig.enabled) {
     return null;
   }
 

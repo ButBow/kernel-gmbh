@@ -10,13 +10,13 @@ import { cn } from '@/lib/utils';
 
 export function CookieConsent() {
   const { consentGiven, setConsent } = useAnalytics();
-  const { settings } = useContent();
+  const { settings, isLoading } = useContent();
   const [showDetails, setShowDetails] = useState(false);
 
   const cookieConfig = settings.cookieSettings || defaultCookieSettings;
 
-  // Don't show if disabled or consent was already given/denied
-  if (!cookieConfig.enabled || consentGiven !== null) return null;
+  // Don't render while loading or if disabled or consent was already given/denied
+  if (isLoading || !cookieConfig.enabled || consentGiven !== null) return null;
 
   const positionClasses = {
     bottom: 'bottom-0 left-0 right-0',
