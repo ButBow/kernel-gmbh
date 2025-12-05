@@ -1630,6 +1630,27 @@ export default function AdminSettings() {
                       </p>
                     </div>
 
+                    <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                      <p className="text-xs font-medium mb-2">📁 Chatbot-Konfigurationsdateien:</p>
+                      <ul className="text-xs space-y-1.5 text-muted-foreground">
+                        <li>
+                          <strong className="text-foreground">System-Prompt:</strong>{' '}
+                          <code className="bg-secondary px-1 rounded">data/chatbot-system-prompt.md</code>
+                          <br/>
+                          <span className="text-[10px]">Enthält Verhaltensregeln, Tonalität und Antwortstruktur</span>
+                        </li>
+                        <li>
+                          <strong className="text-foreground">Wissensbasis:</strong>{' '}
+                          <code className="bg-secondary px-1 rounded">data/chatbot-wissensbasis.md</code>
+                          <br/>
+                          <span className="text-[10px]">Enthält alle Services, Preise, FAQs und Firmendaten</span>
+                        </li>
+                      </ul>
+                      <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t border-border">
+                        💡 Bearbeite diese Dateien direkt, um das Wissen und Verhalten des Chatbots anzupassen.
+                      </p>
+                    </div>
+
                     <div>
                       <Label>Python Chatbot-Server URL</Label>
                       <Input

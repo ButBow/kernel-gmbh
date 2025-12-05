@@ -104,6 +104,20 @@ def load_chatbot_settings():
     return defaults
 
 
+def load_knowledge_base():
+    """Lädt die Wissensbasis für den Chatbot."""
+    knowledge_file = DATA_DIR / 'chatbot-wissensbasis.md'
+    
+    try:
+        if knowledge_file.exists():
+            with open(knowledge_file, 'r', encoding='utf-8') as f:
+                return f.read()
+    except Exception as e:
+        print(f"⚠️  Wissensbasis konnte nicht geladen werden: {e}")
+    
+    return ''
+
+
 def load_system_prompt():
     """Lädt den System-Prompt für den Chatbot."""
     settings = load_chatbot_settings()
@@ -111,22 +125,35 @@ def load_system_prompt():
     # Standard-Prompt
     base_prompt = "Du bist ein hilfreicher Assistent für die KernelFlow-Webseite. Antworte höflich und informativ auf Deutsch."
     
-    # Prüfe auf hochgeladenes Markdown
+    # Prüfe auf hochgeladenes Markdown in den Einstellungen
     if settings.get('systemPromptMarkdown', '').strip():
         base_prompt = settings['systemPromptMarkdown']
     else:
-        # Versuche Datei-basierten Prompt zu laden
-        prompt_file = DATA_DIR / 'chatbot-system-prompt.txt'
+        # Versuche neue Markdown-Datei zu laden (bevorzugt)
+        prompt_file_md = DATA_DIR / 'chatbot-system-prompt.md'
+        prompt_file_txt = DATA_DIR / 'chatbot-system-prompt.txt'
+        
         try:
-            if prompt_file.exists():
-                with open(prompt_file, 'r', encoding='utf-8') as f:
+            if prompt_file_md.exists():
+                with open(prompt_file_md, 'r', encoding='utf-8') as f:
                     base_prompt = f.read()
+                print("✅ System-Prompt aus chatbot-system-prompt.md geladen")
+            elif prompt_file_txt.exists():
+                with open(prompt_file_txt, 'r', encoding='utf-8') as f:
+                    base_prompt = f.read()
+                print("✅ System-Prompt aus chatbot-system-prompt.txt geladen")
         except Exception as e:
             print(f"⚠️  System-Prompt Datei konnte nicht geladen werden: {e}")
     
-    # Füge zusätzliche Anweisungen hinzu
+    # Wissensbasis hinzufügen
+    knowledge_base = load_knowledge_base()
+    if knowledge_base:
+        base_prompt += '\n\n---\n\n# WISSENSBASIS\n\n' + knowledge_base
+        print("✅ Wissensbasis geladen und angehängt")
+    
+    # Füge zusätzliche Anweisungen aus Admin-Settings hinzu
     if settings.get('systemPromptAddition', '').strip():
-        base_prompt += '\n\n' + settings['systemPromptAddition']
+        base_prompt += '\n\n---\n\n# ZUSÄTZLICHE ANWEISUNGEN\n\n' + settings['systemPromptAddition']
     
     return base_prompt
 
@@ -474,6 +501,24 @@ def main():
     except Exception as e:
         print(f"   ❌ Ollama nicht erreichbar: {e}")
         print(f"   💡 Starte Ollama mit: ollama serve")
+    
+    # Prüfe Prompt-Dateien
+    print(f"\n📄 Prompt-Dateien:")
+    prompt_md = DATA_DIR / 'chatbot-system-prompt.md'
+    prompt_txt = DATA_DIR / 'chatbot-system-prompt.txt'
+    knowledge_file = DATA_DIR / 'chatbot-wissensbasis.md'
+    
+    if prompt_md.exists():
+        print(f"   ✅ System-Prompt: chatbot-system-prompt.md")
+    elif prompt_txt.exists():
+        print(f"   ✅ System-Prompt: chatbot-system-prompt.txt")
+    else:
+        print(f"   ⚠️  Kein System-Prompt gefunden (Standard wird verwendet)")
+    
+    if knowledge_file.exists():
+        print(f"   ✅ Wissensbasis: chatbot-wissensbasis.md")
+    else:
+        print(f"   ⚠️  Keine Wissensbasis gefunden")
     
     # Server starten
     print(f"\n🚀 Starte Server auf Port {CHATBOT_PORT}...")
