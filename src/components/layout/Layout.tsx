@@ -5,6 +5,7 @@ import { PromoBanner } from "@/components/PromoBanner";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useContent } from "@/contexts/ContentContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Loader2 } from "lucide-react";
 
 interface LayoutProps {
@@ -18,14 +19,14 @@ export function Layout({ children, pageTitle }: LayoutProps) {
   // Set document title based on company name
   useDocumentTitle(pageTitle);
   
-  const { isLoading } = useContent();
+  const { isLoading: isContentLoading } = useContent();
+  const { isLoading: isThemeLoading } = useTheme();
   
-  // Show loading state until data is loaded to prevent flash
-  if (isLoading) {
+  // Show loading state until BOTH content AND theme are loaded to prevent flash
+  if (isContentLoading || isThemeLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 pt-16 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-muted-foreground">Laden...</p>
