@@ -58,14 +58,12 @@ export default defineConfig(({ mode }) => ({
         entryFileNames: "assets/js/[name]-[hash].js",
       },
     },
-    // Minification settings
-    minify: "terser",
-    terserOptions: {
-      compress: {
-        drop_console: mode === "production",
-        drop_debugger: mode === "production",
-      },
-    },
+    // Use esbuild for minification (Vite default, no extra dependency)
+    minify: mode === "production" ? "esbuild" : false,
+    // Remove console.log in production
+    esbuild: mode === "production" ? {
+      drop: ["console", "debugger"],
+    } : undefined,
   },
   // Optimize dependencies
   optimizeDeps: {
