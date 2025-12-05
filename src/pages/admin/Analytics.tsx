@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   BarChart3, Eye, MousePointer, Clock, ArrowDown, 
   Users, Trash2, TrendingUp, Layers, Search, Download,
-  ExternalLink, FormInput, Play, Phone, Settings, Info
+  ExternalLink, FormInput, Play, Phone, Settings, Info, MessageCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -68,6 +68,10 @@ export default function AdminAnalytics() {
     .slice(0, 10);
 
   const topVideoPlays = Object.entries(summary.videoPlays)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 10);
+
+  const topChatMessages = Object.entries(summary.chatMessages)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 10);
 
@@ -421,6 +425,55 @@ export default function AdminAnalytics() {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Chat Messages */}
+        {isEnabled('chat_message') && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MessageCircle className="h-4 w-4" />
+                Häufigste Chat-Fragen
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {topChatMessages.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Keine Chat-Daten vorhanden</p>
+              ) : (
+                <div className="space-y-2">
+                  {topChatMessages.map(([message, count]) => (
+                    <div key={message} className="flex items-center justify-between">
+                      <span className="text-sm truncate max-w-[180px]" title={message}>{message}</span>
+                      <Badge variant="secondary">{count}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Chat Sessions */}
+        {isEnabled('chat_session') && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MessageCircle className="h-4 w-4" />
+                Chat-Sitzungen
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{summary.chatSessions}</p>
+                  <p className="text-xs text-muted-foreground">Gesamt-Sitzungen</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}

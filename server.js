@@ -179,16 +179,24 @@ function loadSystemPrompt() {
   const promptPath = path.join(DATA_DIR, 'chatbot-system-prompt.txt');
   let basePrompt = 'Du bist ein hilfreicher Assistent für die KernelFlow-Webseite. Antworte höflich und informativ auf Deutsch.';
   
-  try {
-    if (fs.existsSync(promptPath)) {
-      basePrompt = fs.readFileSync(promptPath, 'utf8');
+  // Get settings first to check for uploaded markdown prompt
+  const settings = getChatbotSettings();
+  
+  // Prefer uploaded markdown system prompt if available
+  if (settings.systemPromptMarkdown && settings.systemPromptMarkdown.trim()) {
+    basePrompt = settings.systemPromptMarkdown;
+  } else {
+    // Fall back to file-based prompt
+    try {
+      if (fs.existsSync(promptPath)) {
+        basePrompt = fs.readFileSync(promptPath, 'utf8');
+      }
+    } catch (error) {
+      console.error('Error loading system prompt:', error.message);
     }
-  } catch (error) {
-    console.error('Error loading system prompt:', error.message);
   }
   
   // Add custom additions from settings
-  const settings = getChatbotSettings();
   if (settings.systemPromptAddition) {
     basePrompt += '\n\n' + settings.systemPromptAddition;
   }

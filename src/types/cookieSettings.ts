@@ -11,7 +11,9 @@ export type TrackingType =
   | 'download'
   | 'outbound_link'
   | 'form_interaction'
-  | 'video_play';
+  | 'video_play'
+  | 'chat_message'
+  | 'chat_session';
 
 // Configuration for each tracking type
 export interface TrackingConfig {
@@ -95,6 +97,18 @@ export const ALL_TRACKING_OPTIONS: TrackingConfig[] = [
     description: 'Erfasst gestartete Videos',
     enabled: false 
   },
+  { 
+    id: 'chat_message', 
+    label: 'Chat-Nachrichten', 
+    description: 'Erfasst Chatbot-Nachrichten und häufige Fragen',
+    enabled: false 
+  },
+  { 
+    id: 'chat_session', 
+    label: 'Chat-Sitzungen', 
+    description: 'Erfasst Chatbot-Nutzung und Verlauf',
+    enabled: false 
+  },
 ];
 
 export interface CookieSettings {
@@ -115,7 +129,7 @@ export interface CookieSettings {
 export const defaultCookieSettings: CookieSettings = {
   enabled: true,
   title: 'Cookie-Einstellungen',
-  description: 'Wir verwenden Cookies und ähnliche Technologien, um Ihre Nutzungserfahrung zu analysieren und unsere Website zu verbessern. Die Daten werden lokal in Ihrem Browser gespeichert und nicht an Dritte weitergegeben.',
+  description: 'Wir verwenden Cookies und ähnliche Technologien, um Ihre Nutzungserfahrung zu analysieren und unsere Website zu verbessern. Bei Zustimmung zu allen Cookies werden auch Chatbot-Interaktionen und Verläufe erfasst. Alle Daten werden lokal in Ihrem Browser gespeichert und nicht an Dritte weitergegeben.',
   acceptAllText: 'Alle akzeptieren',
   rejectText: 'Nur notwendige',
   moreInfoText: 'Mehr erfahren',

@@ -1649,8 +1649,80 @@ export default function AdminSettings() {
 
                   {/* System Prompt Addition */}
                   <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Zusätzliche Anweisungen</h4>
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">System-Prompt Konfiguration</h4>
                     
+                    {/* Markdown File Upload */}
+                    <div className="space-y-2">
+                      <Label>System-Prompt aus Markdown-Datei</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="file"
+                          accept=".md,.txt,.markdown"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                const content = event.target?.result as string;
+                                setForm({
+                                  ...form,
+                                  chatbotSettings: { 
+                                    ...defaultChatbotSettings, 
+                                    ...form.chatbotSettings, 
+                                    systemPromptMarkdown: content,
+                                    systemPromptFileName: file.name
+                                  }
+                                });
+                                toast.success(`Datei "${file.name}" geladen`);
+                              };
+                              reader.readAsText(file);
+                            }
+                          }}
+                          className="flex-1"
+                        />
+                        {form.chatbotSettings?.systemPromptFileName && (
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => setForm({
+                              ...form,
+                              chatbotSettings: { 
+                                ...defaultChatbotSettings, 
+                                ...form.chatbotSettings, 
+                                systemPromptMarkdown: '',
+                                systemPromptFileName: ''
+                              }
+                            })}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {form.chatbotSettings?.systemPromptFileName && (
+                        <div className="flex items-center gap-2 p-2 bg-secondary/50 rounded-lg">
+                          <FileText className="h-4 w-4 text-primary" />
+                          <span className="text-sm">{form.chatbotSettings.systemPromptFileName}</span>
+                          <Badge variant="secondary" className="ml-auto">
+                            {form.chatbotSettings?.systemPromptMarkdown?.length || 0} Zeichen
+                          </Badge>
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Lade eine .md oder .txt Datei hoch, die als vollständiger System-Prompt verwendet wird. Dies ersetzt den Standard-Prompt vollständig.
+                      </p>
+                    </div>
+
+                    {/* Preview of uploaded markdown */}
+                    {form.chatbotSettings?.systemPromptMarkdown && (
+                      <div className="space-y-2">
+                        <Label>Vorschau des geladenen Prompts</Label>
+                        <div className="max-h-40 overflow-y-auto p-3 bg-secondary/30 rounded-lg border text-xs font-mono whitespace-pre-wrap">
+                          {form.chatbotSettings.systemPromptMarkdown.substring(0, 500)}
+                          {(form.chatbotSettings.systemPromptMarkdown.length || 0) > 500 && '...'}
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <Label>Zusätzlicher System-Prompt</Label>
                       <Textarea
@@ -1663,7 +1735,10 @@ export default function AdminSettings() {
                         placeholder="Zusätzliche Anweisungen für den Chatbot, z.B. spezielle Verhaltensregeln oder Informationen..."
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Diese Anweisungen werden zum Standard-Prompt hinzugefügt
+                        {form.chatbotSettings?.systemPromptMarkdown 
+                          ? 'Diese Anweisungen werden am Ende des hochgeladenen Prompts hinzugefügt'
+                          : 'Diese Anweisungen werden zum Standard-Prompt hinzugefügt'
+                        }
                       </p>
                     </div>
                   </div>

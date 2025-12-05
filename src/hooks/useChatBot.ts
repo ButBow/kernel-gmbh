@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Message } from '@/components/chat/ChatMessage';
+import { useAnalytics } from '@/contexts/AnalyticsContext';
 
 interface ChatResponse {
   response: string;
@@ -9,6 +10,20 @@ interface ChatResponse {
 export function useChatBot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { trackEvent, isTrackingTypeEnabled } = useAnalytics();
+  const sessionTracked = useRef(false);
+
+  // Track chat session when first message is sent
+  useEffect(() => {
+    if (messages.length > 0 && !sessionTracked.current) {
+      if (isTrackingTypeEnabled('chat_session')) {
+        trackEvent('chat_session', window.location.pathname, {
+          startTime: new Date().toISOString()
+        });
+        sessionTracked.current = true;
+      }
+    }
+  }, [messages.length, trackEvent, isTrackingTypeEnabled]);
 
   const sendMessage = useCallback(async (content: string) => {
     // Add user message
@@ -21,6 +36,16 @@ export function useChatBot() {
 
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
+
+    // Track chat message if consent given
+    if (isTrackingTypeEnabled('chat_message')) {
+      // Store first 100 chars of message for analytics (privacy)
+      const truncatedMessage = content.length > 100 ? content.substring(0, 100) + '...' : content;
+      trackEvent('chat_message', window.location.pathname, {
+        message: truncatedMessage,
+        messageLength: content.length
+      });
+    }
 
     try {
       // Prepare conversation history for context
@@ -79,10 +104,11 @@ export function useChatBot() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages]);
+  }, [messages, trackEvent, isTrackingTypeEnabled]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
+    sessionTracked.current = false;
   }, []);
 
   return {

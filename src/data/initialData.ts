@@ -113,6 +113,9 @@ export interface ChatbotSettings {
   maxTokens: number;
   temperature: number;
   systemPromptAddition: string;
+  // System prompt from uploaded markdown file
+  systemPromptMarkdown?: string;
+  systemPromptFileName?: string;
 }
 
 export const defaultChatbotSettings: ChatbotSettings = {
@@ -125,6 +128,8 @@ export const defaultChatbotSettings: ChatbotSettings = {
   maxTokens: 1024,
   temperature: 0.7,
   systemPromptAddition: '',
+  systemPromptMarkdown: '',
+  systemPromptFileName: '',
 };
 
 export interface SiteSettings {
