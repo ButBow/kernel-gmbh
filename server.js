@@ -152,20 +152,48 @@ const CORS_HEADERS = {
 // ============================================================================
 // OLLAMA / LLM CONFIGURATION
 // ============================================================================
-const OLLAMA_BASE_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:latest';
+
+// Get chatbot settings from stored content or defaults
+function getChatbotSettings() {
+  const content = readDataFile('content.json', null);
+  const defaults = {
+    enabled: true,
+    welcomeMessage: 'Willkommen! Ich bin der KernelFlow Assistent. Wie kann ich Ihnen helfen?',
+    placeholderText: 'Schreiben Sie eine Nachricht...',
+    suggestedQuestions: ['Was bietet KernelFlow?', 'Preise & Pakete', 'Kontakt'],
+    ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
+    ollamaModel: process.env.OLLAMA_MODEL || 'llama3.2:latest',
+    maxTokens: 1024,
+    temperature: 0.7,
+    systemPromptAddition: '',
+  };
+  
+  if (content?.settings?.chatbotSettings) {
+    return { ...defaults, ...content.settings.chatbotSettings };
+  }
+  return defaults;
+}
 
 // Load system prompt for chatbot
 function loadSystemPrompt() {
   const promptPath = path.join(DATA_DIR, 'chatbot-system-prompt.txt');
+  let basePrompt = 'Du bist ein hilfreicher Assistent für die KernelFlow-Webseite. Antworte höflich und informativ auf Deutsch.';
+  
   try {
     if (fs.existsSync(promptPath)) {
-      return fs.readFileSync(promptPath, 'utf8');
+      basePrompt = fs.readFileSync(promptPath, 'utf8');
     }
   } catch (error) {
     console.error('Error loading system prompt:', error.message);
   }
-  return 'Du bist ein hilfreicher Assistent für die KernelFlow-Webseite. Antworte höflich und informativ auf Deutsch.';
+  
+  // Add custom additions from settings
+  const settings = getChatbotSettings();
+  if (settings.systemPromptAddition) {
+    basePrompt += '\n\n' + settings.systemPromptAddition;
+  }
+  
+  return basePrompt;
 }
 
 // Get live data for chatbot context
@@ -175,33 +203,47 @@ function getLiveDataContext() {
   
   const liveData = [];
   
+  // Add company info
+  if (content.settings?.companyName) {
+    liveData.push(`FIRMENNAME: ${content.settings.companyName}`);
+  }
+  
   // Add products/services info
   if (content.products && content.products.length > 0) {
-    const productsList = content.products.map(p => 
-      `- ${p.title}: ${p.description || 'Keine Beschreibung'}`
-    ).join('\n');
-    liveData.push(`VERFÜGBARE SERVICES:\n${productsList}`);
+    const productsList = content.products
+      .filter(p => p.status === 'published')
+      .map(p => `- ${p.name}: ${p.shortDescription || p.description || 'Keine Beschreibung'} (${p.priceText || 'Preis auf Anfrage'})`)
+      .join('\n');
+    if (productsList) {
+      liveData.push(`VERFÜGBARE SERVICES:\n${productsList}`);
+    }
   }
   
   // Add categories
   if (content.categories && content.categories.length > 0) {
-    const categoriesList = content.categories.map(c => `- ${c.name}`).join('\n');
+    const categoriesList = content.categories.map(c => `- ${c.name}: ${c.description || ''}`).join('\n');
     liveData.push(`KATEGORIEN:\n${categoriesList}`);
   }
   
   // Add recent blog posts
   if (content.posts && content.posts.length > 0) {
-    const recentPosts = content.posts.slice(0, 3).map(p => `- ${p.title}`).join('\n');
-    liveData.push(`AKTUELLE BLOG-BEITRÄGE:\n${recentPosts}`);
+    const recentPosts = content.posts
+      .filter(p => p.status === 'published')
+      .slice(0, 3)
+      .map(p => `- ${p.title}`)
+      .join('\n');
+    if (recentPosts) {
+      liveData.push(`AKTUELLE BLOG-BEITRÄGE:\n${recentPosts}`);
+    }
   }
   
   // Add site settings/contact info
   if (content.settings) {
     const s = content.settings;
     const contactInfo = [];
-    if (s.email) contactInfo.push(`E-Mail: ${s.email}`);
-    if (s.phone) contactInfo.push(`Telefon: ${s.phone}`);
-    if (s.address) contactInfo.push(`Adresse: ${s.address}`);
+    if (s.contactEmail) contactInfo.push(`E-Mail: ${s.contactEmail}`);
+    if (s.contactPhone) contactInfo.push(`Telefon: ${s.contactPhone}`);
+    if (s.contactLocation) contactInfo.push(`Standort: ${s.contactLocation}`);
     if (contactInfo.length > 0) {
       liveData.push(`KONTAKTDATEN:\n${contactInfo.join('\n')}`);
     }
@@ -212,6 +254,7 @@ function getLiveDataContext() {
 
 // Call Ollama API
 async function callOllama(messages) {
+  const settings = getChatbotSettings();
   const systemPrompt = loadSystemPrompt();
   const liveContext = getLiveDataContext();
   
@@ -228,17 +271,17 @@ async function callOllama(messages) {
   ];
   
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+    const response = await fetch(`${settings.ollamaUrl}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: OLLAMA_MODEL,
+        model: settings.ollamaModel,
         messages: ollamaMessages,
         stream: false,
         options: {
-          temperature: 0.7,
+          temperature: settings.temperature,
           top_p: 0.9,
-          num_predict: 1024, // Max tokens in response
+          num_predict: settings.maxTokens,
         }
       })
     });
@@ -826,6 +869,13 @@ async function handleAPI(req, res, urlPath) {
   if (urlPath === '/api/chat' && req.method === 'POST') {
     console.log(`[${timestamp}] 🤖 Processing chat message...`);
     
+    // Check if chatbot is enabled
+    const chatSettings = getChatbotSettings();
+    if (!chatSettings.enabled) {
+      sendJSON(res, 403, { error: 'Der Chatbot ist momentan deaktiviert.' });
+      return true;
+    }
+    
     // Rate limiting for chat
     if (!checkRateLimit(ip)) {
       sendJSON(res, 429, { error: 'Zu viele Anfragen. Bitte warten Sie eine Minute.' });
@@ -890,21 +940,33 @@ async function handleAPI(req, res, urlPath) {
   // GET /api/chat/status - Check if chat is available
   if (urlPath === '/api/chat/status' && req.method === 'GET') {
     console.log(`[${timestamp}] 📊 Checking chat status...`);
+    const chatSettings = getChatbotSettings();
+    
+    if (!chatSettings.enabled) {
+      sendJSON(res, 200, { 
+        available: false, 
+        enabled: false,
+        reason: 'Chatbot is disabled in settings'
+      });
+      return true;
+    }
+    
     try {
-      const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
+      const response = await fetch(`${chatSettings.ollamaUrl}/api/tags`);
       if (response.ok) {
         const data = await response.json();
-        const modelAvailable = data.models?.some(m => m.name.includes(OLLAMA_MODEL.split(':')[0]));
+        const modelAvailable = data.models?.some(m => m.name.includes(chatSettings.ollamaModel.split(':')[0]));
         sendJSON(res, 200, { 
           available: true,
-          model: OLLAMA_MODEL,
+          enabled: true,
+          model: chatSettings.ollamaModel,
           modelLoaded: modelAvailable
         });
       } else {
-        sendJSON(res, 200, { available: false, reason: 'Ollama not responding' });
+        sendJSON(res, 200, { available: false, enabled: true, reason: 'Ollama not responding' });
       }
     } catch (error) {
-      sendJSON(res, 200, { available: false, reason: 'Ollama not reachable' });
+      sendJSON(res, 200, { available: false, enabled: true, reason: 'Ollama not reachable' });
     }
     return true;
   }
