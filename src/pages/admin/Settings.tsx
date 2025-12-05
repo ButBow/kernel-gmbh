@@ -19,7 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import type { SiteSettings, Milestone, CoreValue, StatItem, Testimonial, Partner, Executive } from '@/data/initialData';
-import { defaultCookieSettings, CookieSettings } from '@/types/cookieSettings';
+import { defaultCookieSettings, CookieSettings, ALL_TRACKING_OPTIONS, TrackingConfig } from '@/types/cookieSettings';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { Label } from '@/components/ui/label';
 
@@ -1684,64 +1684,51 @@ export default function AdminSettings() {
                   />
                 </div>
 
-                {/* Collected Data Items */}
+                {/* Tracking Options - Linked to Analytics */}
                 <div>
-                  <Label className="mb-2 block">Erfasste Daten (werden in Details angezeigt)</Label>
-                  <div className="space-y-2">
-                    {(form.cookieSettings?.collectedDataItems ?? defaultCookieSettings.collectedDataItems).map((item, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Input
-                          value={item}
-                          onChange={(e) => {
-                            const newItems = [...(form.cookieSettings?.collectedDataItems ?? defaultCookieSettings.collectedDataItems)];
-                            newItems[index] = e.target.value;
-                            setForm({
-                              ...form,
-                              cookieSettings: {
-                                ...defaultCookieSettings,
-                                ...form.cookieSettings,
-                                collectedDataItems: newItems
+                  <Label className="mb-2 block">Tracking-Optionen (direkt mit Analytics verknüpft)</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Aktivierte Optionen werden getrackt und in Analytics angezeigt. Deaktivierte werden weder erfasst noch angezeigt.
+                  </p>
+                  <div className="space-y-3">
+                    {ALL_TRACKING_OPTIONS.map((option) => {
+                      const currentOptions = form.cookieSettings?.trackingOptions ?? defaultCookieSettings.trackingOptions;
+                      const isEnabled = currentOptions.find(opt => opt.id === option.id)?.enabled ?? option.enabled;
+                      
+                      return (
+                        <div key={option.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{option.label}</p>
+                            <p className="text-xs text-muted-foreground">{option.description}</p>
+                          </div>
+                          <Switch
+                            checked={isEnabled}
+                            onCheckedChange={(checked) => {
+                              const existingOptions = form.cookieSettings?.trackingOptions ?? defaultCookieSettings.trackingOptions;
+                              const existingOption = existingOptions.find(opt => opt.id === option.id);
+                              
+                              let newOptions: TrackingConfig[];
+                              if (existingOption) {
+                                newOptions = existingOptions.map(opt =>
+                                  opt.id === option.id ? { ...opt, enabled: checked } : opt
+                                );
+                              } else {
+                                newOptions = [...existingOptions, { ...option, enabled: checked }];
                               }
-                            });
-                          }}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            const newItems = (form.cookieSettings?.collectedDataItems ?? defaultCookieSettings.collectedDataItems).filter((_, i) => i !== index);
-                            setForm({
-                              ...form,
-                              cookieSettings: {
-                                ...defaultCookieSettings,
-                                ...form.cookieSettings,
-                                collectedDataItems: newItems
-                              }
-                            });
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setForm({
-                        ...form,
-                        cookieSettings: {
-                          ...defaultCookieSettings,
-                          ...form.cookieSettings,
-                          collectedDataItems: [
-                            ...(form.cookieSettings?.collectedDataItems ?? defaultCookieSettings.collectedDataItems),
-                            'Neuer Datenpunkt'
-                          ]
-                        }
-                      })}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Datenpunkt hinzufügen
-                    </Button>
+                              
+                              setForm({
+                                ...form,
+                                cookieSettings: {
+                                  ...defaultCookieSettings,
+                                  ...form.cookieSettings,
+                                  trackingOptions: newOptions
+                                }
+                              });
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </CardContent>

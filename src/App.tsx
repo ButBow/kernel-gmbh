@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CookieConsent } from "@/components/CookieConsent";
+import { CookieSettingsSync } from "@/components/CookieSettingsSync";
 import { Loader2 } from "lucide-react";
 
 // Eagerly loaded public pages (critical path)
@@ -97,6 +98,7 @@ const App = () => (
                   </Routes>
                 </Suspense>
                 <CookieConsent />
+                <CookieSettingsSync />
               </BrowserRouter>
             </TooltipProvider>
           </AnalyticsProvider>

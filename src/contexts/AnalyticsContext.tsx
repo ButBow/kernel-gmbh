@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
+import { TrackingType, defaultCookieSettings, isTrackingEnabled, CookieSettings } from '@/types/cookieSettings';
 
 const ANALYTICS_KEY = 'cms_analytics';
 const CONSENT_KEY = 'cookie_consent';
 
 export interface AnalyticsEvent {
   id: string;
-  type: 'page_view' | 'product_click' | 'category_click' | 'contact_click' | 'scroll_depth' | 'time_on_page' | 'product_inquiry';
+  type: TrackingType;
   page: string;
   data?: Record<string, string | number>;
   timestamp: string;
@@ -18,6 +19,13 @@ export interface AnalyticsSummary {
   pageViews: Record<string, number>;
   productClicks: Record<string, number>;
   categoryClicks: Record<string, number>;
+  contactClicks: number;
+  productInquiries: number;
+  searches: Record<string, number>;
+  downloads: Record<string, number>;
+  outboundLinks: Record<string, number>;
+  formInteractions: Record<string, number>;
+  videoPlays: Record<string, number>;
   avgScrollDepth: number;
   avgTimeOnPage: number;
   sessions: number;
@@ -28,9 +36,12 @@ interface AnalyticsContextType {
   summary: AnalyticsSummary;
   consentGiven: boolean | null;
   setConsent: (consent: boolean) => void;
-  trackEvent: (type: AnalyticsEvent['type'], page: string, data?: Record<string, string | number>) => void;
+  trackEvent: (type: TrackingType, page: string, data?: Record<string, string | number>) => void;
   clearAnalytics: () => void;
   importAnalytics: (newEvents: AnalyticsEvent[], mode: 'replace' | 'merge') => void;
+  isTrackingTypeEnabled: (type: TrackingType) => boolean;
+  cookieSettings: CookieSettings;
+  updateCookieSettings: (settings: CookieSettings) => void;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType | null>(null);
@@ -43,12 +54,19 @@ function generateSessionId(): string {
   return newId;
 }
 
-function calculateSummary(events: AnalyticsEvent[]): AnalyticsSummary {
+function calculateSummary(events: AnalyticsEvent[], cookieSettings: CookieSettings): AnalyticsSummary {
   const summary: AnalyticsSummary = {
     totalPageViews: 0,
     pageViews: {},
     productClicks: {},
     categoryClicks: {},
+    contactClicks: 0,
+    productInquiries: 0,
+    searches: {},
+    downloads: {},
+    outboundLinks: {},
+    formInteractions: {},
+    videoPlays: {},
     avgScrollDepth: 0,
     avgTimeOnPage: 0,
     sessions: 0
@@ -59,6 +77,9 @@ function calculateSummary(events: AnalyticsEvent[]): AnalyticsSummary {
   const sessionIds = new Set<string>();
 
   events.forEach(event => {
+    // Only process events that are currently enabled in settings
+    if (!isTrackingEnabled(cookieSettings, event.type)) return;
+
     sessionIds.add(event.sessionId);
 
     switch (event.type) {
@@ -73,6 +94,32 @@ function calculateSummary(events: AnalyticsEvent[]): AnalyticsSummary {
       case 'category_click':
         const categoryName = event.data?.categoryName as string || 'unknown';
         summary.categoryClicks[categoryName] = (summary.categoryClicks[categoryName] || 0) + 1;
+        break;
+      case 'contact_click':
+        summary.contactClicks++;
+        break;
+      case 'product_inquiry':
+        summary.productInquiries++;
+        break;
+      case 'search':
+        const searchTerm = event.data?.term as string || 'unknown';
+        summary.searches[searchTerm] = (summary.searches[searchTerm] || 0) + 1;
+        break;
+      case 'download':
+        const fileName = event.data?.fileName as string || 'unknown';
+        summary.downloads[fileName] = (summary.downloads[fileName] || 0) + 1;
+        break;
+      case 'outbound_link':
+        const linkUrl = event.data?.url as string || 'unknown';
+        summary.outboundLinks[linkUrl] = (summary.outboundLinks[linkUrl] || 0) + 1;
+        break;
+      case 'form_interaction':
+        const formName = event.data?.formName as string || 'unknown';
+        summary.formInteractions[formName] = (summary.formInteractions[formName] || 0) + 1;
+        break;
+      case 'video_play':
+        const videoTitle = event.data?.videoTitle as string || 'unknown';
+        summary.videoPlays[videoTitle] = (summary.videoPlays[videoTitle] || 0) + 1;
         break;
       case 'scroll_depth':
         if (event.data?.depth) scrollDepths.push(event.data.depth as number);
@@ -97,7 +144,8 @@ function calculateSummary(events: AnalyticsEvent[]): AnalyticsSummary {
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<AnalyticsEvent[]>([]);
   const [consentGiven, setConsentGiven] = useState<boolean | null>(null);
-  const [summary, setSummary] = useState<AnalyticsSummary>(calculateSummary([]));
+  const [cookieSettings, setCookieSettings] = useState<CookieSettings>(defaultCookieSettings);
+  const [summary, setSummary] = useState<AnalyticsSummary>(calculateSummary([], defaultCookieSettings));
 
   useEffect(() => {
     const consent = localStorage.getItem(CONSENT_KEY);
@@ -107,20 +155,36 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     
     const storedEvents = getStorageItem<AnalyticsEvent[]>(ANALYTICS_KEY, []);
     setEvents(storedEvents);
-    setSummary(calculateSummary(storedEvents));
+    setSummary(calculateSummary(storedEvents, cookieSettings));
   }, []);
+
+  // Recalculate summary when cookie settings change
+  useEffect(() => {
+    setSummary(calculateSummary(events, cookieSettings));
+  }, [cookieSettings, events]);
 
   const setConsent = useCallback((consent: boolean) => {
     localStorage.setItem(CONSENT_KEY, String(consent));
     setConsentGiven(consent);
   }, []);
 
+  const updateCookieSettings = useCallback((settings: CookieSettings) => {
+    setCookieSettings(settings);
+  }, []);
+
+  const isTrackingTypeEnabled = useCallback((type: TrackingType): boolean => {
+    if (!consentGiven) return false;
+    return isTrackingEnabled(cookieSettings, type);
+  }, [consentGiven, cookieSettings]);
+
   const trackEvent = useCallback((
-    type: AnalyticsEvent['type'], 
+    type: TrackingType, 
     page: string, 
     data?: Record<string, string | number>
   ) => {
+    // Check consent and if this specific tracking type is enabled
     if (!consentGiven) return;
+    if (!isTrackingEnabled(cookieSettings, type)) return;
 
     const newEvent: AnalyticsEvent = {
       id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -134,16 +198,16 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     setEvents(prev => {
       const updated = [...prev, newEvent].slice(-1000); // Keep last 1000 events
       setStorageItem(ANALYTICS_KEY, updated);
-      setSummary(calculateSummary(updated));
+      setSummary(calculateSummary(updated, cookieSettings));
       return updated;
     });
-  }, [consentGiven]);
+  }, [consentGiven, cookieSettings]);
 
   const clearAnalytics = useCallback(() => {
     setEvents([]);
     setStorageItem(ANALYTICS_KEY, []);
-    setSummary(calculateSummary([]));
-  }, []);
+    setSummary(calculateSummary([], cookieSettings));
+  }, [cookieSettings]);
 
   const importAnalytics = useCallback((newEvents: AnalyticsEvent[], mode: 'replace' | 'merge') => {
     let updated: AnalyticsEvent[];
@@ -157,8 +221,8 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     }
     setEvents(updated);
     setStorageItem(ANALYTICS_KEY, updated);
-    setSummary(calculateSummary(updated));
-  }, [events]);
+    setSummary(calculateSummary(updated, cookieSettings));
+  }, [events, cookieSettings]);
 
   return (
     <AnalyticsContext.Provider value={{
@@ -168,7 +232,10 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       setConsent,
       trackEvent,
       clearAnalytics,
-      importAnalytics
+      importAnalytics,
+      isTrackingTypeEnabled,
+      cookieSettings,
+      updateCookieSettings
     }}>
       {children}
     </AnalyticsContext.Provider>
