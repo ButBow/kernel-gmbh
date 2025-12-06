@@ -161,8 +161,56 @@ function Check-Dependencies {
 }
 
 # ============================================================================
-# Git Operations
+# Git Operations - Robuste Version mit Konflikt-Handling
 # ============================================================================
+
+function Test-GitConflicts {
+    # Prüft auf unmerged files (Merge-Konflikte)
+    $unmerged = git ls-files -u 2>&1
+    return ($unmerged -and $unmerged.Length -gt 0)
+}
+
+function Resolve-GitConflicts {
+    Write-Warn "Merge-Konflikte gefunden!"
+    Write-Host ""
+    Write-Host "Konflikt-Dateien:" -ForegroundColor Yellow
+    git diff --name-only --diff-filter=U 2>&1 | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+    Write-Host ""
+    Write-Host "Optionen:" -ForegroundColor Yellow
+    Write-Host "[1] Remote-Version uebernehmen (deine lokalen Aenderungen in diesen Dateien verwerfen)"
+    Write-Host "[2] Lokale Version behalten (Remote-Aenderungen in diesen Dateien ignorieren)"
+    Write-Host "[3] Alles zuruecksetzen auf Remote (ALLE lokalen Aenderungen verwerfen)"
+    Write-Host "[4] Abbrechen"
+    
+    $choice = Read-Host "Auswahl (1/2/3/4)"
+    
+    switch ($choice) {
+        "1" {
+            Write-Info "Uebernehme Remote-Versionen..."
+            git checkout --theirs . 2>&1 | Out-Null
+            git add -A 2>&1 | Out-Null
+            return $true
+        }
+        "2" {
+            Write-Info "Behalte lokale Versionen..."
+            git checkout --ours . 2>&1 | Out-Null
+            git add -A 2>&1 | Out-Null
+            return $true
+        }
+        "3" {
+            Write-Info "Setze auf Remote-Stand zurueck..."
+            git fetch origin 2>&1 | Out-Null
+            git reset --hard origin/main 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                git reset --hard origin/master 2>&1 | Out-Null
+            }
+            return $true
+        }
+        default {
+            return $false
+        }
+    }
+}
 
 function Do-GitPull {
     Write-Step "Git Pull..."
@@ -174,14 +222,26 @@ function Do-GitPull {
         return $false
     }
     
-    $status = git status --porcelain
-    if ($status) {
+    # Prüfe zuerst auf bestehende Merge-Konflikte
+    if (Test-GitConflicts) {
+        $resolved = Resolve-GitConflicts
+        if (-not $resolved) {
+            Write-Warn "Pull abgebrochen"
+            return $false
+        }
+    }
+    
+    # Prüfe auf lokale Änderungen
+    $status = git status --porcelain 2>&1
+    $hasChanges = ($status -and $status.Length -gt 0)
+    
+    if ($hasChanges) {
         Write-Warn "Lokale Aenderungen gefunden:"
         git status --short
         Write-Host ""
         Write-Host "Was moechtest du tun?" -ForegroundColor Yellow
         Write-Host "[1] Stash - Aenderungen temporaer speichern, Pull, dann wiederherstellen"
-        Write-Host "[2] Reset - Alle lokalen Aenderungen verwerfen (DATENVERLUST!)"
+        Write-Host "[2] Reset - Auf Remote-Stand zuruecksetzen (lokale Aenderungen verwerfen)"
         Write-Host "[3] Abbrechen - Pull ueberspringen"
         
         $choice = Read-Host "Auswahl (1/2/3)"
@@ -189,16 +249,61 @@ function Do-GitPull {
         switch ($choice) {
             "1" {
                 Write-Info "Stashe Aenderungen..."
-                git stash
-                git pull
-                Write-Info "Stelle Aenderungen wieder her..."
-                git stash pop
+                git stash push -m "auto-stash-$(Get-Date -Format 'yyyyMMdd-HHmmss')" 2>&1 | Out-Null
+                
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Err "Stash fehlgeschlagen - versuche Hard Reset"
+                    $resetChoice = Read-Host "Hard Reset auf Remote? (j/n)"
+                    if ($resetChoice -eq "j") {
+                        git fetch origin 2>&1 | Out-Null
+                        git reset --hard origin/main 2>&1 | Out-Null
+                        if ($LASTEXITCODE -ne 0) {
+                            git reset --hard origin/master 2>&1 | Out-Null
+                        }
+                        Write-Success "Reset erfolgreich"
+                        return $true
+                    }
+                    return $false
+                }
+                
+                Write-Success "Aenderungen gesichert"
+                
+                # Pull ausführen
+                Write-Info "Fuehre Pull aus..."
+                git pull 2>&1 | ForEach-Object { Write-Host $_ }
+                $pullSuccess = ($LASTEXITCODE -eq 0)
+                
+                if ($pullSuccess) {
+                    Write-Success "Pull erfolgreich"
+                    
+                    # Stash wiederherstellen
+                    Write-Info "Stelle gesicherte Aenderungen wieder her..."
+                    $stashResult = git stash pop 2>&1
+                    
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Warn "Automatische Wiederherstellung fehlgeschlagen (Konflikt)"
+                        Write-Host "Deine Aenderungen sind gespeichert. Zeige mit: git stash list" -ForegroundColor Yellow
+                        Write-Host "Wiederherstellen mit: git stash pop" -ForegroundColor Yellow
+                    } else {
+                        Write-Success "Aenderungen wiederhergestellt"
+                    }
+                } else {
+                    Write-Err "Pull fehlgeschlagen"
+                    Write-Info "Stelle Aenderungen wieder her..."
+                    git stash pop 2>&1 | Out-Null
+                    return $false
+                }
             }
             "2" {
-                Write-Warn "Verwerfe alle lokalen Aenderungen..."
-                git checkout .
-                git clean -fd
-                git pull
+                Write-Warn "Setze auf Remote-Stand zurueck..."
+                git fetch origin 2>&1 | Out-Null
+                git reset --hard origin/main 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    # Fallback auf master branch
+                    git reset --hard origin/master 2>&1 | Out-Null
+                }
+                git clean -fd 2>&1 | Out-Null
+                Write-Success "Reset erfolgreich"
             }
             "3" {
                 Write-Info "Pull uebersprungen"
@@ -210,13 +315,21 @@ function Do-GitPull {
             }
         }
     } else {
-        git pull
+        # Keine lokalen Änderungen - einfacher Pull
+        Write-Info "Keine lokalen Aenderungen, fuehre Pull aus..."
+        git pull 2>&1 | ForEach-Object { Write-Host $_ }
     }
     
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Git Pull erfolgreich!"
         return $true
     } else {
+        # Nochmal prüfen ob es Konflikte gibt
+        if (Test-GitConflicts) {
+            Write-Warn "Konflikte nach Pull erkannt"
+            $resolved = Resolve-GitConflicts
+            return $resolved
+        }
         Write-Err "Git Pull fehlgeschlagen!"
         return $false
     }
