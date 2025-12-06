@@ -70,6 +70,7 @@ export function useChatBot() {
 
     try {
       const chatApiUrl = getChatApiUrl();
+      console.log('[ChatBot] Sending message to:', chatApiUrl);
       
       // Headers mit Session-ID für Kontext-Beibehaltung
       const headers: Record<string, string> = {
@@ -88,6 +89,8 @@ export function useChatBot() {
           session_id: sessionIdRef.current,
         }),
       });
+      
+      console.log('[ChatBot] Response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

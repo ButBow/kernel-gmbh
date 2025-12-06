@@ -137,7 +137,7 @@ const SECURITY_HEADERS = {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self'",
+    "connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*",
     "frame-ancestors 'self'",
   ].join('; '),
 };
