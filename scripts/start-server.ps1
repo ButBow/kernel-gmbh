@@ -145,9 +145,14 @@ if (-not (Test-Command "cloudflared")) {
 }
 
 $noChatbot = $false
+$pythonCmd = "python"
 if (-not (Test-Command "python")) {
-    Write-Warn "Python nicht gefunden! Chatbot wird nicht gestartet."
-    $noChatbot = $true
+    if (Test-Command "python3") {
+        $pythonCmd = "python3"
+    } else {
+        Write-Warn "Python nicht gefunden! Chatbot wird nicht gestartet."
+        $noChatbot = $true
+    }
 }
 
 Write-Success "Dependencies OK"
@@ -211,7 +216,7 @@ if (-not $noChatbot) {
     Write-Info "Starte Python Chatbot Server..."
     $chatbotScript = Join-Path $ScriptDir "chatbot_server.py"
     if (Test-Path $chatbotScript) {
-        Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectDir'; Write-Host 'CHATBOT SERVER (Port $($config.chatbotPort))' -ForegroundColor Magenta; Write-Host '===================' -ForegroundColor Magenta; python '$chatbotScript'" -WindowStyle Normal
+        Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectDir'; Write-Host 'CHATBOT SERVER (Port $($config.chatbotPort))' -ForegroundColor Magenta; Write-Host '===================' -ForegroundColor Magenta; $pythonCmd '$chatbotScript'" -WindowStyle Normal
         Start-Sleep -Seconds 2
     } else {
         Write-Warn "Chatbot-Skript nicht gefunden: $chatbotScript"
