@@ -41,24 +41,40 @@ function Write-Err {
 # ============================================================================
 
 function Get-Config {
+    # Standardwerte
+    $defaultConfig = [PSCustomObject]@{
+        tunnelName = "meine-website"
+        domain = $null
+        port = 3000
+        autoPull = $false
+        lastBuild = $null
+    }
+    
     if (Test-Path $ConfigFile) {
         try {
             $content = Get-Content $ConfigFile -Raw -ErrorAction Stop
             $parsed = $content | ConvertFrom-Json
-            return $parsed
+            
+            # Extrahiere Werte aus verschachtelter Struktur
+            if ($parsed.server -and $parsed.server.port) {
+                $defaultConfig.port = $parsed.server.port
+            }
+            if ($parsed.tunnel -and $parsed.tunnel.name) {
+                $defaultConfig.tunnelName = $parsed.tunnel.name
+            }
+            if ($parsed.tunnel -and $parsed.tunnel.domain) {
+                $defaultConfig.domain = $parsed.tunnel.domain
+            }
+            if ($parsed.autoPull) {
+                $defaultConfig.autoPull = $parsed.autoPull
+            }
+            
+            return $defaultConfig
         } catch {
             Write-Warn "Config-Datei beschaedigt, verwende Standardwerte"
         }
     }
     
-    # Keine hardcoded Domain - muss konfiguriert werden
-    $defaultConfig = [PSCustomObject]@{
-        tunnelName = "meine-website"
-        domain = $null  # Muss in config.json gesetzt werden
-        port = 3000
-        autoPull = $false
-        lastBuild = $null
-    }
     return $defaultConfig
 }
 
