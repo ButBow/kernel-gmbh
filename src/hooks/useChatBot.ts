@@ -39,12 +39,11 @@ export function useChatBot() {
     }
   }, [messages.length, trackEvent, isTrackingTypeEnabled]);
 
-  // Generiere API-URL - immer über den Node.js Proxy
+  // Generiere API-URL - immer relative URL für same-origin Anfragen
   const getChatApiUrl = useCallback(() => {
-    // Immer den Proxy verwenden, da localhost auf dem Client nicht funktioniert
-    const baseUrl = settings.apiBaseUrl?.replace(/\/$/, '') || '';
-    return `${baseUrl}/api/python-chat`;
-  }, [settings.apiBaseUrl]);
+    // Relative URL verwenden - funktioniert immer für same-origin
+    return '/api/python-chat';
+  }, []);
 
   const sendMessage = useCallback(async (content: string) => {
     // Add user message
