@@ -39,17 +39,12 @@ export function useChatBot() {
     }
   }, [messages.length, trackEvent, isTrackingTypeEnabled]);
 
-  // Generiere API-URL basierend auf Einstellungen
+  // Generiere API-URL - immer über den Node.js Proxy
   const getChatApiUrl = useCallback(() => {
-    const pythonServerUrl = settings.chatbotSettings?.pythonServerUrl;
-    if (pythonServerUrl) {
-      return `${pythonServerUrl.replace(/\/$/, '')}/chat`;
-    }
-    // Fallback: verwende Proxy über Node.js Server
-    return settings.apiBaseUrl 
-      ? `${settings.apiBaseUrl.replace(/\/$/, '')}/api/python-chat`
-      : '/api/python-chat';
-  }, [settings.apiBaseUrl, settings.chatbotSettings?.pythonServerUrl]);
+    // Immer den Proxy verwenden, da localhost auf dem Client nicht funktioniert
+    const baseUrl = settings.apiBaseUrl?.replace(/\/$/, '') || '';
+    return `${baseUrl}/api/python-chat`;
+  }, [settings.apiBaseUrl]);
 
   const sendMessage = useCallback(async (content: string) => {
     // Add user message
