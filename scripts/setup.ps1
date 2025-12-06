@@ -599,6 +599,8 @@ function Start-Server {
     $port = $config.server.port
     $domain = $config.tunnel.domain
     $tunnelName = $config.tunnel.name
+    $chatbotPort = $config.chatbot.port
+    $ollamaUrl = $config.chatbot.ollama_url
     
     if (-not (Test-Path "dist")) {
         Write-Warn "Build nicht gefunden!"
@@ -608,6 +610,7 @@ function Start-Server {
         }
     }
     
+    # Ports prüfen und freigeben
     if (Test-PortInUse $port) {
         Write-Warn "Port $port ist bereits belegt!"
         $stopped = Stop-ProcessOnPort $port
@@ -617,26 +620,113 @@ function Start-Server {
         }
     }
     
-    Write-Info "Starte Node.js Server..."
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectDir'; node server.js" -WindowStyle Normal
+    if (Test-PortInUse $chatbotPort) {
+        Write-Info "Raeume Chatbot-Port $chatbotPort frei..."
+        Stop-ProcessOnPort $chatbotPort | Out-Null
+    }
     
+    # --- Ollama starten (falls nicht läuft) ---
+    $ollamaRunning = $false
+    try {
+        $ollamaTest = Invoke-RestMethod -Uri "$ollamaUrl/api/tags" -TimeoutSec 2 -ErrorAction SilentlyContinue
+        $ollamaRunning = $true
+    } catch { }
+    
+    if (-not $ollamaRunning) {
+        if (Test-Command "ollama") {
+            Write-Info "Starte Ollama..."
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
+`$Host.UI.RawUI.WindowTitle = 'Ollama Server'
+Write-Host '═══════════════════════════════════════' -ForegroundColor Blue
+Write-Host '  OLLAMA SERVER' -ForegroundColor Blue
+Write-Host '═══════════════════════════════════════' -ForegroundColor Blue
+Write-Host ''
+ollama serve
+"@ -WindowStyle Normal
+            Start-Sleep -Seconds 3
+        } else {
+            Write-Warn "Ollama nicht installiert - Chatbot funktioniert ohne KI"
+        }
+    } else {
+        Write-Success "Ollama laeuft bereits"
+    }
+    
+    # --- Node.js Server ---
+    Write-Info "Starte Node.js Server..."
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
+`$Host.UI.RawUI.WindowTitle = 'Node.js Server'
+cd '$ProjectDir'
+Write-Host '═══════════════════════════════════════' -ForegroundColor Green
+Write-Host '  NODE.JS SERVER - Port $port' -ForegroundColor Green
+Write-Host '═══════════════════════════════════════' -ForegroundColor Green
+Write-Host ''
+node server.js
+"@ -WindowStyle Normal
     Start-Sleep -Seconds 2
     
-    Write-Info "Starte Cloudflare Tunnel..."
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cloudflared tunnel run $tunnelName" -WindowStyle Normal
+    # --- Python Chatbot ---
+    $pythonCmd = if (Test-Command "python") { "python" } elseif (Test-Command "python3") { "python3" } else { $null }
+    $chatbotScript = Join-Path $ScriptDir "chatbot_server.py"
     
-    Start-Sleep -Seconds 3
+    if ($pythonCmd -and (Test-Path $chatbotScript)) {
+        Write-Info "Starte Python Chatbot Server..."
+        Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
+`$Host.UI.RawUI.WindowTitle = 'Chatbot Server'
+cd '$ProjectDir'
+Write-Host '═══════════════════════════════════════' -ForegroundColor Magenta
+Write-Host '  CHATBOT SERVER - Port $chatbotPort' -ForegroundColor Magenta
+Write-Host '═══════════════════════════════════════' -ForegroundColor Magenta
+Write-Host ''
+$pythonCmd '$chatbotScript'
+"@ -WindowStyle Normal
+        Start-Sleep -Seconds 2
+    } else {
+        if (-not $pythonCmd) {
+            Write-Warn "Python nicht gefunden - Chatbot wird nicht gestartet"
+        } elseif (-not (Test-Path $chatbotScript)) {
+            Write-Warn "Chatbot-Skript nicht gefunden: $chatbotScript"
+        }
+    }
     
+    # --- Cloudflare Tunnel ---
+    if (Test-Command "cloudflared") {
+        Write-Info "Starte Cloudflare Tunnel..."
+        Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
+`$Host.UI.RawUI.WindowTitle = 'Cloudflare Tunnel'
+Write-Host '═══════════════════════════════════════' -ForegroundColor Cyan
+Write-Host '  CLOUDFLARE TUNNEL' -ForegroundColor Cyan
+Write-Host '═══════════════════════════════════════' -ForegroundColor Cyan
+Write-Host ''
+cloudflared tunnel run $tunnelName
+"@ -WindowStyle Normal
+        Start-Sleep -Seconds 2
+    } else {
+        Write-Warn "Cloudflared nicht installiert - kein Tunnel"
+    }
+    
+    # --- Status anzeigen ---
     Write-Host ""
     Write-Host "================================================================" -ForegroundColor Green
-    Write-Host "              SERVER LAEUFT ERFOLGREICH!                        " -ForegroundColor Green
+    Write-Host "              ALLE DIENSTE GESTARTET!                           " -ForegroundColor Green
     Write-Host "================================================================" -ForegroundColor Green
-    Write-Host "  Lokal:      http://localhost:$port" -ForegroundColor Green
-    Write-Host "  Tunnel:     https://$domain" -ForegroundColor Green
-    Write-Host "  Admin:      https://$domain/admin/login" -ForegroundColor Green
+    Write-Host "  Website:    http://localhost:$port" -ForegroundColor White
+    
+    if ($domain) {
+        Write-Host "  Public:     https://$domain" -ForegroundColor White
+        Write-Host "  Admin:      https://$domain/admin/login" -ForegroundColor White
+    }
+    
+    if ($pythonCmd -and (Test-Path $chatbotScript)) {
+        Write-Host "  Chatbot:    http://localhost:$chatbotPort" -ForegroundColor White
+    }
+    
+    if ($ollamaRunning -or (Test-Command "ollama")) {
+        Write-Host "  Ollama:     $ollamaUrl" -ForegroundColor White
+    }
+    
     Write-Host "================================================================" -ForegroundColor Green
-    Write-Host "  Server-Fenster und Tunnel-Fenster offen lassen!" -ForegroundColor Green
-    Write-Host "  Zum Stoppen: Beide Fenster schliessen (oder Ctrl+C)" -ForegroundColor Green
+    Write-Host "  Alle Fenster offen lassen!" -ForegroundColor Yellow
+    Write-Host "  Zum Stoppen: Fenster schliessen oder Ctrl+C" -ForegroundColor Yellow
     Write-Host "================================================================" -ForegroundColor Green
     Write-Host ""
     
@@ -648,8 +738,12 @@ function Start-Server {
             Write-Success "Browser geoeffnet (lokal)"
         }
         "p" { 
-            Start-Process "https://$domain"
-            Write-Success "Browser geoeffnet (public)"
+            if ($domain) {
+                Start-Process "https://$domain"
+                Write-Success "Browser geoeffnet (public)"
+            } else {
+                Write-Warn "Keine Domain konfiguriert"
+            }
         }
     }
     
