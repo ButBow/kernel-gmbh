@@ -8,5 +8,10 @@
   },
   "server": {
     "port": 3000
-  }
+  },
+  "tunnel": {
+    "name": "meine-website",
+    "domain": null
+  },
+  "autoPull": false
 }
