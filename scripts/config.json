@@ -11,7 +11,7 @@
   },
   "tunnel": {
     "name": "meine-website",
-    "domain": null
+    "domain": "kernelflow.floriskern.ch"
   },
   "autoPull": false
 }
