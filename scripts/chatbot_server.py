@@ -62,7 +62,7 @@ def load_config():
     
     if CONFIG_FILE.exists():
         try:
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            with open(CONFIG_FILE, 'r', encoding='utf-8-sig') as f:
                 file_config = json.load(f)
                 # Chatbot-spezifische Config
                 chatbot_config = file_config.get('chatbot', {})
