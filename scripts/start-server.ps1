@@ -46,6 +46,7 @@ function Get-Config {
         tunnelName = "meine-website"
         domain = $null
         port = 3000
+        chatbotPort = 8001
         autoPull = $false
         lastBuild = $null
     }
@@ -64,6 +65,9 @@ function Get-Config {
             }
             if ($parsed.tunnel -and $parsed.tunnel.domain) {
                 $defaultConfig.domain = $parsed.tunnel.domain
+            }
+            if ($parsed.chatbot -and $parsed.chatbot.port) {
+                $defaultConfig.chatbotPort = $parsed.chatbot.port
             }
             if ($parsed.autoPull) {
                 $defaultConfig.autoPull = $parsed.autoPull
@@ -140,6 +144,12 @@ if (-not (Test-Command "cloudflared")) {
     $noTunnel = $true
 }
 
+$noChatbot = $false
+if (-not (Test-Command "python")) {
+    Write-Warn "Python nicht gefunden! Chatbot wird nicht gestartet."
+    $noChatbot = $true
+}
+
 Write-Success "Dependencies OK"
 
 # Pruefe Build
@@ -190,13 +200,27 @@ Write-Host ""
 Write-Info "Starte Server und Tunnel..."
 Write-Host ""
 
-# Starte Server in neuem Fenster
+# Starte Node.js Server in neuem Fenster
+Write-Info "Starte Node.js Server..."
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectDir'; Write-Host 'NODE SERVER' -ForegroundColor Green; Write-Host '==========' -ForegroundColor Green; node server.js" -WindowStyle Normal
 
 Start-Sleep -Seconds 2
 
+# Starte Python Chatbot (wenn verfuegbar)
+if (-not $noChatbot) {
+    Write-Info "Starte Python Chatbot Server..."
+    $chatbotScript = Join-Path $ScriptDir "chatbot_server.py"
+    if (Test-Path $chatbotScript) {
+        Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectDir'; Write-Host 'CHATBOT SERVER (Port $($config.chatbotPort))' -ForegroundColor Magenta; Write-Host '===================' -ForegroundColor Magenta; python '$chatbotScript'" -WindowStyle Normal
+        Start-Sleep -Seconds 2
+    } else {
+        Write-Warn "Chatbot-Skript nicht gefunden: $chatbotScript"
+    }
+}
+
 # Starte Tunnel (wenn verfuegbar)
 if (-not $noTunnel) {
+    Write-Info "Starte Cloudflare Tunnel..."
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "Write-Host 'CLOUDFLARE TUNNEL' -ForegroundColor Cyan; Write-Host '=================' -ForegroundColor Cyan; cloudflared tunnel run $($config.tunnelName)" -WindowStyle Normal
     Start-Sleep -Seconds 2
 }
@@ -217,9 +241,13 @@ if (-not $noTunnel -and $config.domain) {
     Write-Host "  (Tunnel nicht verfuegbar - nur lokal erreichbar)" -ForegroundColor Yellow
 }
 
+if (-not $noChatbot) {
+    Write-Host "  Chatbot:    http://localhost:$($config.chatbotPort)" -ForegroundColor Green
+}
+
 Write-Host "================================================================" -ForegroundColor Green
-Write-Host "  Server-Fenster und Tunnel-Fenster offen lassen!" -ForegroundColor Green
-Write-Host "  Zum Stoppen: Beide Fenster schliessen (oder Ctrl+C)" -ForegroundColor Green
+Write-Host "  Alle Fenster offen lassen!" -ForegroundColor Green
+Write-Host "  Zum Stoppen: Alle Fenster schliessen (oder Ctrl+C)" -ForegroundColor Green
 Write-Host "================================================================" -ForegroundColor Green
 Write-Host ""
 
