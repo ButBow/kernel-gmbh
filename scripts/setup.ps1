@@ -47,25 +47,57 @@ function Write-Step {
 # ============================================================================
 
 function Get-Config {
+    # Standardwerte als verschachtelte Struktur (wie config.json)
+    $defaultConfig = [PSCustomObject]@{
+        chatbot = [PSCustomObject]@{
+            port = 8001
+            ollama_url = "http://localhost:11434"
+            ollama_model = "llama3.2:latest"
+            max_tokens = 1024
+            temperature = 0.7
+        }
+        server = [PSCustomObject]@{
+            port = 3000
+        }
+        tunnel = [PSCustomObject]@{
+            name = "meine-website"
+            domain = $null
+        }
+        autoPull = $false
+        lastBuild = $null
+    }
+    
     if (Test-Path $ConfigFile) {
         try {
             $content = Get-Content $ConfigFile -Raw -ErrorAction Stop
             $parsed = $content | ConvertFrom-Json
-            return $parsed
+            
+            # Merge mit Defaults (fehlende Eigenschaften ergänzen)
+            if ($parsed.chatbot) { $defaultConfig.chatbot = $parsed.chatbot }
+            if ($parsed.server) { $defaultConfig.server = $parsed.server }
+            if ($parsed.tunnel) { $defaultConfig.tunnel = $parsed.tunnel }
+            if ($null -ne $parsed.autoPull) { $defaultConfig.autoPull = $parsed.autoPull }
+            if ($parsed.lastBuild) { $defaultConfig.lastBuild = $parsed.lastBuild }
+            
+            return $defaultConfig
         } catch {
             Write-Warn "Config-Datei beschaedigt, verwende Standardwerte"
         }
     }
     
-    # Keine hardcoded Domain - muss vom User konfiguriert werden
-    $defaultConfig = [PSCustomObject]@{
-        tunnelName = "meine-website"
-        domain = $null  # Wird bei Ersteinrichtung abgefragt
-        port = 3000
-        autoPull = $false
-        lastBuild = $null
-    }
     return $defaultConfig
+}
+
+# Hilfsfunktion für einfachen Zugriff auf Config-Werte
+function Get-ConfigValue {
+    param($config, [string]$path)
+    switch ($path) {
+        "port" { return $config.server.port }
+        "domain" { return $config.tunnel.domain }
+        "tunnelName" { return $config.tunnel.name }
+        "chatbotPort" { return $config.chatbot.port }
+        default { return $null }
+    }
 }
 
 function Save-Config {
@@ -419,9 +451,13 @@ function Setup-CloudflareTunnel {
     Write-Step "Cloudflare Tunnel konfigurieren..."
     
     $config = Get-Config
+    # Shortcuts für einfacheren Zugriff
+    $domain = $config.tunnel.domain
+    $tunnelName = $config.tunnel.name
+    $port = $config.server.port
     
     # Pruefen ob Domain konfiguriert ist - wenn nicht, abfragen
-    if (-not $config.domain -or $config.domain -eq "") {
+    if (-not $domain -or $domain -eq "") {
         Write-Warn "Keine Domain konfiguriert!"
         Write-Host ""
         Write-Host "Bitte gib deine Domain ein (z.B. meine-seite.ch oder subdomain.meine-seite.ch):" -ForegroundColor Yellow
@@ -432,11 +468,12 @@ function Setup-CloudflareTunnel {
             return $false
         }
         
-        $config.domain = $newDomain
+        $domain = $newDomain
+        $config.tunnel.domain = $newDomain
         
         # Tunnel-Name aus Domain generieren
         $tunnelName = $newDomain -replace "\.", "-"
-        $config.tunnelName = $tunnelName
+        $config.tunnel.name = $tunnelName
         
         Save-Config $config
         Write-Success "Domain '$newDomain' gespeichert (Tunnel: $tunnelName)"
@@ -465,27 +502,27 @@ function Setup-CloudflareTunnel {
     $tunnels = Get-TunnelList
     $tunnelExists = $false
     if ($tunnels) {
-        $tunnelExists = $tunnels -match $config.tunnelName
+        $tunnelExists = $tunnels -match $tunnelName
     }
     
     if (-not $tunnelExists) {
-        Write-Info "Erstelle Tunnel '$($config.tunnelName)'..."
-        cloudflared tunnel create $config.tunnelName
+        Write-Info "Erstelle Tunnel '$tunnelName'..."
+        cloudflared tunnel create $tunnelName
         
         if ($LASTEXITCODE -ne 0) {
             Write-Err "Tunnel-Erstellung fehlgeschlagen!"
             Write-Host "  Moegliche Ursache: Tunnel mit diesem Namen existiert bereits." -ForegroundColor Yellow
-            Write-Host "  Loesung: cloudflared tunnel delete $($config.tunnelName)" -ForegroundColor Yellow
+            Write-Host "  Loesung: cloudflared tunnel delete $tunnelName" -ForegroundColor Yellow
             return $false
         }
         Write-Success "Tunnel erstellt!"
         
         Write-Info "Setze DNS-Routen..."
-        Write-Host "  Route: $($config.domain) -> Tunnel" -ForegroundColor Cyan
-        cloudflared tunnel route dns $config.tunnelName $config.domain 2>&1 | Out-Null
+        Write-Host "  Route: $domain -> Tunnel" -ForegroundColor Cyan
+        cloudflared tunnel route dns $tunnelName $domain 2>&1 | Out-Null
         
-        Write-Host "  Route: www.$($config.domain) -> Tunnel" -ForegroundColor Cyan
-        cloudflared tunnel route dns $config.tunnelName "www.$($config.domain)" 2>&1 | Out-Null
+        Write-Host "  Route: www.$domain -> Tunnel" -ForegroundColor Cyan
+        cloudflared tunnel route dns $tunnelName "www.$domain" 2>&1 | Out-Null
         
         if ($LASTEXITCODE -eq 0) {
             Write-Success "DNS-Routen gesetzt!"
@@ -494,7 +531,7 @@ function Setup-CloudflareTunnel {
             Write-Host "  Die Domain muss bei Cloudflare verwaltet werden!" -ForegroundColor Yellow
         }
     } else {
-        Write-Success "Tunnel '$($config.tunnelName)' existiert bereits"
+        Write-Success "Tunnel '$tunnelName' existiert bereits"
     }
     
     $cfDir = Join-Path $env:USERPROFILE ".cloudflared"
@@ -503,7 +540,6 @@ function Setup-CloudflareTunnel {
     $credFile = Get-ChildItem $cfDir -Filter "*.json" -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "^[a-f0-9-]+\.json$" } | Select-Object -First 1
     
     if ($credFile) {
-        # UUID aus Dateiname extrahieren (statt tunnelName verwenden!)
         $tunnelId = $credFile.BaseName
         
         $configLines = @(
@@ -511,10 +547,10 @@ function Setup-CloudflareTunnel {
             "credentials-file: $($credFile.FullName)",
             "",
             "ingress:",
-            "  - hostname: $($config.domain)",
-            "    service: http://localhost:$($config.port)",
-            "  - hostname: www.$($config.domain)",
-            "    service: http://localhost:$($config.port)",
+            "  - hostname: $domain",
+            "    service: http://localhost:$port",
+            "  - hostname: www.$domain",
+            "    service: http://localhost:$port",
             "  - service: http_status:404"
         )
         $configLines -join "`n" | Set-Content $cfConfig -Encoding UTF8
@@ -559,6 +595,10 @@ function Start-Server {
     
     Set-Location $ProjectDir
     $config = Get-Config
+    # Shortcuts
+    $port = $config.server.port
+    $domain = $config.tunnel.domain
+    $tunnelName = $config.tunnel.name
     
     if (-not (Test-Path "dist")) {
         Write-Warn "Build nicht gefunden!"
@@ -568,9 +608,9 @@ function Start-Server {
         }
     }
     
-    if (Test-PortInUse $config.port) {
-        Write-Warn "Port $($config.port) ist bereits belegt!"
-        $stopped = Stop-ProcessOnPort $config.port
+    if (Test-PortInUse $port) {
+        Write-Warn "Port $port ist bereits belegt!"
+        $stopped = Stop-ProcessOnPort $port
         if (-not $stopped) {
             Write-Err "Server kann nicht gestartet werden - Port belegt"
             return $false
@@ -583,7 +623,7 @@ function Start-Server {
     Start-Sleep -Seconds 2
     
     Write-Info "Starte Cloudflare Tunnel..."
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cloudflared tunnel run $($config.tunnelName)" -WindowStyle Normal
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cloudflared tunnel run $tunnelName" -WindowStyle Normal
     
     Start-Sleep -Seconds 3
     
@@ -591,9 +631,9 @@ function Start-Server {
     Write-Host "================================================================" -ForegroundColor Green
     Write-Host "              SERVER LAEUFT ERFOLGREICH!                        " -ForegroundColor Green
     Write-Host "================================================================" -ForegroundColor Green
-    Write-Host "  Lokal:      http://localhost:$($config.port)" -ForegroundColor Green
-    Write-Host "  Tunnel:     https://$($config.domain)" -ForegroundColor Green
-    Write-Host "  Admin:      https://$($config.domain)/admin/login" -ForegroundColor Green
+    Write-Host "  Lokal:      http://localhost:$port" -ForegroundColor Green
+    Write-Host "  Tunnel:     https://$domain" -ForegroundColor Green
+    Write-Host "  Admin:      https://$domain/admin/login" -ForegroundColor Green
     Write-Host "================================================================" -ForegroundColor Green
     Write-Host "  Server-Fenster und Tunnel-Fenster offen lassen!" -ForegroundColor Green
     Write-Host "  Zum Stoppen: Beide Fenster schliessen (oder Ctrl+C)" -ForegroundColor Green
@@ -604,11 +644,11 @@ function Start-Server {
     $openBrowser = Read-Host "Browser oeffnen? (j=lokal, p=public, n=nein)"
     switch ($openBrowser.ToLower()) {
         "j" { 
-            Start-Process "http://localhost:$($config.port)"
+            Start-Process "http://localhost:$port"
             Write-Success "Browser geoeffnet (lokal)"
         }
         "p" { 
-            Start-Process "https://$($config.domain)"
+            Start-Process "https://$domain"
             Write-Success "Browser geoeffnet (public)"
         }
     }
@@ -666,6 +706,11 @@ function Apply-ConfigChanges {
     
     Write-Step "Konfigurationsaenderungen anwenden..."
     
+    # Shortcuts
+    $port = $config.server.port
+    $domain = $config.tunnel.domain
+    $tunnelName = $config.tunnel.name
+    
     # 1. config.json speichern
     Save-Config $config
     Write-Success "config.json aktualisiert"
@@ -695,10 +740,10 @@ tunnel: $tunnelId
 credentials-file: $credFile
 
 ingress:
-  - hostname: $($config.domain)
-    service: http://localhost:$($config.port)
-  - hostname: www.$($config.domain)
-    service: http://localhost:$($config.port)
+  - hostname: $domain
+    service: http://localhost:$port
+  - hostname: www.$domain
+    service: http://localhost:$port
   - service: http_status:404
 "@
             $newConfig | Set-Content $cfConfig -Encoding UTF8
@@ -708,7 +753,6 @@ ingress:
             Write-Warn "Bei Domain-Aenderung muessen DNS-Routen neu gesetzt werden."
             $setDns = Read-Host "DNS-Routen automatisch setzen? (j/n)"
             if (($setDns -eq "j") -or ($setDns -eq "J")) {
-                # Cloudflare-Login pruefen
                 if (-not (Test-TunnelLogin)) {
                     Write-Warn "Nicht bei Cloudflare angemeldet!"
                     $login = Read-Host "Jetzt anmelden? (j/n)"
@@ -720,21 +764,21 @@ ingress:
                     }
                 }
                 
-                Write-Info "Setze DNS-Route fuer $($config.domain)..."
-                cloudflared tunnel route dns $tunnelId $($config.domain) 2>&1 | Out-Null
+                Write-Info "Setze DNS-Route fuer $domain..."
+                cloudflared tunnel route dns $tunnelId $domain 2>&1 | Out-Null
                 
-                Write-Info "Setze DNS-Route fuer www.$($config.domain)..."
-                cloudflared tunnel route dns $tunnelId "www.$($config.domain)" 2>&1 | Out-Null
+                Write-Info "Setze DNS-Route fuer www.$domain..."
+                cloudflared tunnel route dns $tunnelId "www.$domain" 2>&1 | Out-Null
                 
                 if ($LASTEXITCODE -eq 0) {
                     Write-Success "DNS-Routen erfolgreich gesetzt!"
                 } else {
                     Write-Warn "DNS-Routen konnten nicht vollstaendig gesetzt werden."
-                    Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId $($config.domain)" -ForegroundColor Yellow
+                    Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId $domain" -ForegroundColor Yellow
                 }
             } else {
-                Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId $($config.domain)" -ForegroundColor Yellow
-                Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId www.$($config.domain)" -ForegroundColor Yellow
+                Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId $domain" -ForegroundColor Yellow
+                Write-Host "  Manuell: cloudflared tunnel route dns $tunnelId www.$domain" -ForegroundColor Yellow
             }
         } else {
             Write-Warn "Konnte Tunnel-ID nicht aus config.yml lesen"
@@ -748,7 +792,7 @@ ingress:
     if (Test-Path $envPath) {
         $envContent = Get-Content $envPath -Raw
         if ($envContent -match "PORT=\d+") {
-            $envContent = $envContent -replace "PORT=\d+", "PORT=$($config.port)"
+            $envContent = $envContent -replace "PORT=\d+", "PORT=$port"
             $envContent | Set-Content $envPath -Encoding UTF8
             Write-Success ".env PORT aktualisiert"
         }
@@ -758,19 +802,24 @@ ingress:
     Write-Success "Alle Konfigurationen aktualisiert!"
     Write-Host ""
     Write-Host "Zusammenfassung:" -ForegroundColor Cyan
-    Write-Host "  Port:         $($config.port)" -ForegroundColor White
-    Write-Host "  Domain:       $($config.domain)" -ForegroundColor White
-    Write-Host "  Tunnel-Name:  $($config.tunnelName)" -ForegroundColor White
+    Write-Host "  Port:         $port" -ForegroundColor White
+    Write-Host "  Domain:       $domain" -ForegroundColor White
+    Write-Host "  Tunnel-Name:  $tunnelName" -ForegroundColor White
     Write-Host "  Auto-Pull:    $($config.autoPull)" -ForegroundColor White
     Write-Host ""
-    Write-Host "  Lokaler Zugriff:       http://localhost:$($config.port)" -ForegroundColor Green
-    Write-Host "  Oeffentlicher Zugriff: https://$($config.domain)" -ForegroundColor Green
+    Write-Host "  Lokaler Zugriff:       http://localhost:$port" -ForegroundColor Green
+    Write-Host "  Oeffentlicher Zugriff: https://$domain" -ForegroundColor Green
 }
 
 function Edit-Configuration {
     $config = Get-Config
     
     while ($true) {
+        # Shortcuts für Anzeige
+        $port = $config.server.port
+        $domain = $config.tunnel.domain
+        $tunnelName = $config.tunnel.name
+        
         Clear-Host
         Write-Host ""
         Write-Host "================================================================" -ForegroundColor Cyan
@@ -779,9 +828,9 @@ function Edit-Configuration {
         Write-Host ""
         Write-Host "  Aktuelle Konfiguration:" -ForegroundColor Yellow
         Write-Host ""
-        Write-Host "  [1] Port:         $($config.port)" -ForegroundColor White
-        Write-Host "  [2] Domain:       $($config.domain)" -ForegroundColor White
-        Write-Host "  [3] Tunnel-Name:  $($config.tunnelName)" -ForegroundColor White
+        Write-Host "  [1] Port:         $port" -ForegroundColor White
+        Write-Host "  [2] Domain:       $domain" -ForegroundColor White
+        Write-Host "  [3] Tunnel-Name:  $tunnelName" -ForegroundColor White
         Write-Host "  [4] Auto-Pull:    $($config.autoPull)" -ForegroundColor White
         Write-Host ""
         Write-Host "  [5] Alle Einstellungen anwenden" -ForegroundColor Green
@@ -793,9 +842,9 @@ function Edit-Configuration {
         
         switch ($choice) {
             "1" {
-                $newPort = Read-Host "Neuer Port (aktuell: $($config.port))"
+                $newPort = Read-Host "Neuer Port (aktuell: $port)"
                 if ($newPort -match '^\d+$') {
-                    $config.port = [int]$newPort
+                    $config.server.port = [int]$newPort
                     Save-Config $config
                     Write-Success "Port geaendert auf $newPort"
                 } else {
@@ -805,13 +854,12 @@ function Edit-Configuration {
             }
             "2" {
                 Write-Host ""
-                Write-Host "Aktuelle Domain: $($config.domain)" -ForegroundColor Yellow
-                Write-Host "Aktueller Tunnel: $($config.tunnelName)" -ForegroundColor Yellow
+                Write-Host "Aktuelle Domain: $domain" -ForegroundColor Yellow
+                Write-Host "Aktueller Tunnel: $tunnelName" -ForegroundColor Yellow
                 Write-Host ""
                 $newDomain = Read-Host "Neue Domain (z.B. meine-seite.ch)"
                 if ($newDomain -and $newDomain.Length -gt 0) {
-                    $oldDomain = $config.domain
-                    $config.domain = $newDomain
+                    $config.tunnel.domain = $newDomain
                     
                     # Tunnel-Name aus neuer Domain generieren
                     $suggestedTunnelName = $newDomain -replace "\.", "-"
@@ -820,7 +868,7 @@ function Edit-Configuration {
                     $useSuggested = Read-Host "Tunnel-Namen anpassen? (j/n)"
                     
                     if (($useSuggested -eq "j") -or ($useSuggested -eq "J")) {
-                        $config.tunnelName = $suggestedTunnelName
+                        $config.tunnel.name = $suggestedTunnelName
                         Write-Success "Tunnel-Name geaendert auf $suggestedTunnelName"
                     }
                     
@@ -837,8 +885,8 @@ function Edit-Configuration {
                     } else {
                         Write-Host ""
                         Write-Host "Manuelle Schritte:" -ForegroundColor Yellow
-                        Write-Host "  1. cloudflared tunnel create $($config.tunnelName)" -ForegroundColor Yellow
-                        Write-Host "  2. cloudflared tunnel route dns $($config.tunnelName) $newDomain" -ForegroundColor Yellow
+                        Write-Host "  1. cloudflared tunnel create $($config.tunnel.name)" -ForegroundColor Yellow
+                        Write-Host "  2. cloudflared tunnel route dns $($config.tunnel.name) $newDomain" -ForegroundColor Yellow
                         Write-Host "  3. Option [5] Einstellungen anwenden" -ForegroundColor Yellow
                     }
                 } else {
@@ -847,9 +895,9 @@ function Edit-Configuration {
                 Read-Host "`nWeiter mit Enter"
             }
             "3" {
-                $newTunnelName = Read-Host "Neuer Tunnel-Name (aktuell: $($config.tunnelName))"
+                $newTunnelName = Read-Host "Neuer Tunnel-Name (aktuell: $tunnelName)"
                 if ($newTunnelName -and $newTunnelName.Length -gt 0) {
-                    $config.tunnelName = $newTunnelName
+                    $config.tunnel.name = $newTunnelName
                     Save-Config $config
                     Write-Success "Tunnel-Name geaendert auf $newTunnelName"
                     Write-Warn "HINWEIS: Ein neuer Tunnel muss erstellt werden!"
