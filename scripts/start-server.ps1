@@ -77,68 +77,96 @@ function Get-Config {
 # Git Pull mit Stash-Handling
 # ============================================================================
 
+function Test-GitConflicts {
+    $unmerged = git ls-files -u 2>&1
+    return ($unmerged -and $unmerged.Length -gt 0)
+}
+
 function Invoke-GitPull {
     if (-not (Test-Command "git")) {
         Write-Warn "Git nicht installiert"
         return $false
     }
     
-    # Prüfe ob Git-Repo
     if (-not (Test-Path ".git")) {
         Write-Warn "Kein Git-Repository gefunden"
         return $false
     }
     
-    Write-Info "Prüfe auf lokale Änderungen..."
+    # Prüfe zuerst auf bestehende Merge-Konflikte
+    if (Test-GitConflicts) {
+        Write-Warn "Bestehende Merge-Konflikte gefunden - setze zurück..."
+        git fetch origin 2>&1 | Out-Null
+        git reset --hard origin/main 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            git reset --hard origin/master 2>&1 | Out-Null
+        }
+        git clean -fd 2>&1 | Out-Null
+        Write-Success "Konflikte behoben"
+        return $true
+    }
     
-    # Prüfe auf uncommitted changes
+    Write-Info "Prüfe auf lokale Änderungen..."
     $status = git status --porcelain 2>&1
     $hasChanges = ($status -and $status.Length -gt 0)
     
     if ($hasChanges) {
         Write-Warn "Lokale Änderungen gefunden"
-        Write-Info "Sichere lokale Änderungen (git stash)..."
+        Write-Info "Sichere Änderungen (git stash)..."
         
-        git stash push -m "auto-stash-before-pull" 2>&1 | Out-Null
+        git stash push -m "auto-stash-$(Get-Date -Format 'yyyyMMdd-HHmmss')" 2>&1 | Out-Null
         
         if ($LASTEXITCODE -ne 0) {
-            Write-Err "Stash fehlgeschlagen"
-            return $false
+            Write-Warn "Stash fehlgeschlagen - führe Hard Reset durch..."
+            git fetch origin 2>&1 | Out-Null
+            git reset --hard origin/main 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                git reset --hard origin/master 2>&1 | Out-Null
+            }
+            git clean -fd 2>&1 | Out-Null
+            Write-Success "Reset erfolgreich"
+            return $true
         }
         Write-Success "Änderungen gesichert"
     }
     
     # Pull ausführen
     Write-Info "Lade neueste Version (git pull)..."
-    $pullResult = git pull 2>&1
+    git pull 2>&1 | ForEach-Object { Write-Host $_ }
     $pullSuccess = ($LASTEXITCODE -eq 0)
     
     if ($pullSuccess) {
         Write-Success "Git Pull erfolgreich"
         
-        # Stash wieder anwenden falls vorhanden
         if ($hasChanges) {
-            Write-Info "Stelle lokale Änderungen wieder her..."
-            $stashResult = git stash pop 2>&1
+            Write-Info "Stelle Änderungen wieder her..."
+            git stash pop 2>&1 | Out-Null
             
             if ($LASTEXITCODE -ne 0) {
-                Write-Warn "Automatisches Wiederherstellen fehlgeschlagen"
-                Write-Warn "Deine Änderungen sind gesichert in: git stash list"
-                Write-Warn "Manuell wiederherstellen mit: git stash pop"
+                Write-Warn "Wiederherstellung fehlgeschlagen (Konflikt)"
+                Write-Host "  Deine Änderungen: git stash list" -ForegroundColor Yellow
             } else {
-                Write-Success "Lokale Änderungen wiederhergestellt"
+                Write-Success "Änderungen wiederhergestellt"
             }
         }
         return $true
     } else {
-        Write-Err "Git Pull fehlgeschlagen: $pullResult"
+        # Bei Fehler: Hard Reset als Fallback
+        Write-Warn "Pull fehlgeschlagen - führe Hard Reset durch..."
+        git fetch origin 2>&1 | Out-Null
+        git reset --hard origin/main 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            git reset --hard origin/master 2>&1 | Out-Null
+        }
+        git clean -fd 2>&1 | Out-Null
         
-        # Stash wiederherstellen bei Fehler
         if ($hasChanges) {
-            Write-Info "Stelle lokale Änderungen wieder her..."
+            Write-Info "Stelle Änderungen wieder her..."
             git stash pop 2>&1 | Out-Null
         }
-        return $false
+        
+        Write-Success "Reset erfolgreich"
+        return $true
     }
 }
 
