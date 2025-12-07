@@ -285,6 +285,39 @@ export const presetThemes: Theme[] = [
       ring: "240 100% 50%",
     },
   },
+  {
+    id: "kernelflow-v1-dark",
+    name: "KernelFlow V1 Dark",
+    description: "Dunkles Blau-Lila Theme mit tiefem Hintergrund",
+    isPreset: true,
+    colors: {
+      // Dark Background: #0A0A12
+      background: "240 25% 5%",
+      foreground: "201 58% 85%",
+      // Cards slightly lighter than background
+      card: "240 25% 8%",
+      cardForeground: "201 58% 90%",
+      popover: "240 25% 7%",
+      popoverForeground: "201 58% 90%",
+      // Primary: #0000FF -> HSL: 240 100% 50%
+      primary: "240 100% 55%",
+      primaryForeground: "0 0% 100%",
+      // Secondary: #8000FF -> HSL: 270 100% 50%
+      secondary: "270 100% 55%",
+      secondaryForeground: "0 0% 100%",
+      // Muted tones
+      muted: "240 20% 15%",
+      mutedForeground: "203 18% 60%",
+      accent: "270 100% 55%",
+      accentForeground: "0 0% 100%",
+      destructive: "0 84% 55%",
+      destructiveForeground: "0 0% 100%",
+      // Border using grey tone
+      border: "240 20% 18%",
+      input: "240 20% 15%",
+      ring: "240 100% 55%",
+    },
+  },
 ];
 
 export interface ThemeConfig {
