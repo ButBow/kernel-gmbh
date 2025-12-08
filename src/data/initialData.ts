@@ -1,11 +1,30 @@
 // Initial demo data for the CMS
 
+export interface CategoryPageSettings {
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImage?: string;
+  showFeaturedFirst?: boolean;
+  layout?: 'grid' | 'list' | 'cards';
+  columnsDesktop?: 2 | 3 | 4;
+  showPrices?: boolean;
+  showPackages?: boolean;
+  ctaText?: string;
+  ctaLink?: string;
+  customCss?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  faqItems?: { question: string; answer: string }[];
+}
+
 export interface Category {
   id: string;
   name: string;
+  slug: string;
   description: string;
   icon: string;
   order: number;
+  pageSettings?: CategoryPageSettings;
 }
 
 export interface Showcase {
@@ -187,13 +206,13 @@ export interface SiteSettings {
 export { DEFAULT_PROMOTIONS, defaultCookieSettings };
 
 export const initialCategories: Category[] = [
-  { id: "video", name: "Video & Social Media Editing", description: "Professionelle Videoproduktion für Social Media und Events.", icon: "Video", order: 1 },
-  { id: "ai", name: "AI-Systeme & Automation", description: "Intelligente Automatisierungen und KI-gestützte Workflows.", icon: "Cpu", order: 2 },
-  { id: "support", name: "IT-Support & Beratung", description: "Technische Unterstützung und strategische Beratung.", icon: "Wrench", order: 3 },
-  { id: "tools", name: "Programmierung & Tools", description: "Massgeschneiderte Software und Micro-SaaS Lösungen.", icon: "Code", order: 4 },
-  { id: "design", name: "Bild & Design", description: "Visuelles Design für Social Media und Marketing.", icon: "Image", order: 5 },
-  { id: "text", name: "Texterstellung & Konzeption", description: "Professionelle Texte und Content-Strategien.", icon: "FileText", order: 6 },
-  { id: "management", name: "Management & Account-Betreuung", description: "Vollständige Betreuung Ihrer digitalen Präsenz.", icon: "Users", order: 7 },
+  { id: "video", slug: "video-social-media", name: "Video & Social Media Editing", description: "Professionelle Videoproduktion für Social Media und Events.", icon: "Video", order: 1 },
+  { id: "ai", slug: "ai-automation", name: "AI-Systeme & Automation", description: "Intelligente Automatisierungen und KI-gestützte Workflows.", icon: "Cpu", order: 2 },
+  { id: "support", slug: "it-support-beratung", name: "IT-Support & Beratung", description: "Technische Unterstützung und strategische Beratung.", icon: "Wrench", order: 3 },
+  { id: "tools", slug: "programmierung-tools", name: "Programmierung & Tools", description: "Massgeschneiderte Software und Micro-SaaS Lösungen.", icon: "Code", order: 4 },
+  { id: "design", slug: "bild-design", name: "Bild & Design", description: "Visuelles Design für Social Media und Marketing.", icon: "Image", order: 5 },
+  { id: "text", slug: "texterstellung-konzeption", name: "Texterstellung & Konzeption", description: "Professionelle Texte und Content-Strategien.", icon: "FileText", order: 6 },
+  { id: "management", slug: "management-betreuung", name: "Management & Account-Betreuung", description: "Vollständige Betreuung Ihrer digitalen Präsenz.", icon: "Users", order: 7 },
 ];
 
 export const initialProducts: Product[] = [

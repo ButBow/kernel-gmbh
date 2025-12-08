@@ -132,6 +132,7 @@ export function ImportExport() {
         validCategories.push({
           id: cat.id || `cat_${Date.now()}_${index}`,
           name: cat.name,
+          slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
           description: cat.description,
           icon: cat.icon,
           order: cat.order || index + 1

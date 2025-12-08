@@ -120,9 +120,11 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   // Categories
   const addCategory = (category: Omit<Category, 'id' | 'order'>) => {
+    const slug = category.slug || category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const newCategory: Category = {
       ...category,
       id: `cat_${Date.now()}`,
+      slug,
       order: categories.length + 1
     };
     const updated = [...categories, newCategory];
