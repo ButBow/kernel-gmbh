@@ -42,7 +42,19 @@ function generateAutoDescription(category: Category, products: Product[]): strin
 export default function Leistungen() {
   const { categories, products } = useContent();
 
-  const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
+  // Filter categories: only show those with active products OR explicitly not hidden
+  const activeCategories = categories.filter(category => {
+    // Check if category is explicitly hidden
+    if (category.hidden) return false;
+    
+    // Auto-hide if no active products
+    const hasActiveProducts = products.some(
+      p => p.categoryId === category.id && p.status === 'published'
+    );
+    return hasActiveProducts;
+  });
+
+  const sortedCategories = [...activeCategories].sort((a, b) => a.order - b.order);
 
   // Get featured products across all categories
   const featuredProducts = products

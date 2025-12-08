@@ -24,6 +24,7 @@ export interface Category {
   description: string;
   icon: string;
   order: number;
+  hidden?: boolean;
   pageSettings?: CategoryPageSettings;
 }
 
