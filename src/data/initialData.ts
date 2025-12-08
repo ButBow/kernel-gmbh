@@ -206,13 +206,174 @@ export interface SiteSettings {
 export { DEFAULT_PROMOTIONS, defaultCookieSettings };
 
 export const initialCategories: Category[] = [
-  { id: "video", slug: "video-social-media", name: "Video & Social Media Editing", description: "Professionelle Videoproduktion für Social Media und Events.", icon: "Video", order: 1 },
-  { id: "ai", slug: "ai-automation", name: "AI-Systeme & Automation", description: "Intelligente Automatisierungen und KI-gestützte Workflows.", icon: "Cpu", order: 2 },
-  { id: "support", slug: "it-support-beratung", name: "IT-Support & Beratung", description: "Technische Unterstützung und strategische Beratung.", icon: "Wrench", order: 3 },
-  { id: "tools", slug: "programmierung-tools", name: "Programmierung & Tools", description: "Massgeschneiderte Software und Micro-SaaS Lösungen.", icon: "Code", order: 4 },
-  { id: "design", slug: "bild-design", name: "Bild & Design", description: "Visuelles Design für Social Media und Marketing.", icon: "Image", order: 5 },
-  { id: "text", slug: "texterstellung-konzeption", name: "Texterstellung & Konzeption", description: "Professionelle Texte und Content-Strategien.", icon: "FileText", order: 6 },
-  { id: "management", slug: "management-betreuung", name: "Management & Account-Betreuung", description: "Vollständige Betreuung Ihrer digitalen Präsenz.", icon: "Users", order: 7 },
+  { 
+    id: "video", 
+    slug: "video-social-media", 
+    name: "Video & Social Media Editing", 
+    description: "Professionelle Videoproduktion für Social Media und Events.", 
+    icon: "Video", 
+    order: 1,
+    pageSettings: {
+      heroTitle: "Video & Social Media Editing",
+      heroSubtitle: "Professionelle Videoproduktion für maximales Engagement auf allen Plattformen",
+      layout: "grid",
+      columnsDesktop: 2,
+      showPrices: true,
+      showPackages: true,
+      ctaText: "Video-Projekt starten",
+      ctaLink: "/kontakt",
+      seoTitle: "Video & Social Media Editing | Professionelle Videoproduktion",
+      seoDescription: "Hochwertige Kurzvideos, Event-Coverage und Social Media Content für Instagram, TikTok und LinkedIn. Maximales Engagement garantiert.",
+      faqItems: [
+        { question: "Wie lange dauert die Produktion eines Kurzvideos?", answer: "Je nach Komplexität 2-5 Werktage. Express-Optionen sind gegen Aufpreis möglich." },
+        { question: "Welche Plattformen werden unterstützt?", answer: "Wir optimieren für alle gängigen Plattformen: Instagram, TikTok, YouTube, LinkedIn und mehr." }
+      ]
+    }
+  },
+  { 
+    id: "ai", 
+    slug: "ai-automation", 
+    name: "AI-Systeme & Automation", 
+    description: "Intelligente Automatisierungen und KI-gestützte Workflows.", 
+    icon: "Cpu", 
+    order: 2,
+    pageSettings: {
+      heroTitle: "AI-Systeme & Automation",
+      heroSubtitle: "Intelligente Automatisierungen für maximale Effizienz und Zeitersparnis",
+      layout: "cards",
+      columnsDesktop: 2,
+      showPrices: true,
+      showPackages: true,
+      ctaText: "Automation-Beratung buchen",
+      ctaLink: "/kontakt",
+      seoTitle: "AI-Systeme & Automation | KI-gestützte Workflows",
+      seoDescription: "Von Notion-Dashboards über Python-Automationen bis zu vollständigen AI-Workspaces. Sparen Sie 15+ Stunden pro Woche.",
+      faqItems: [
+        { question: "Brauche ich technisches Vorwissen?", answer: "Nein! Wir richten alles ein und schulen Sie in der Nutzung. Die Systeme sind benutzerfreundlich gestaltet." },
+        { question: "Kann ich bestehende Tools integrieren?", answer: "Ja, wir integrieren Ihre bestehenden Tools wie Slack, Google Workspace, CRM-Systeme und mehr." }
+      ]
+    }
+  },
+  { 
+    id: "support", 
+    slug: "it-support-beratung", 
+    name: "IT-Support & Beratung", 
+    description: "Technische Unterstützung und strategische Beratung.", 
+    icon: "Wrench", 
+    order: 3,
+    pageSettings: {
+      heroTitle: "IT-Support & Beratung",
+      heroSubtitle: "Persönliche technische Unterstützung und strategische Beratung für Ihr Business",
+      layout: "list",
+      columnsDesktop: 2,
+      showPrices: true,
+      showPackages: true,
+      ctaText: "Beratungstermin vereinbaren",
+      ctaLink: "/kontakt",
+      seoTitle: "IT-Support & Beratung | Technische Unterstützung",
+      seoDescription: "Remote Tech-Beratung, Systemchecks und professionelles Tool-Setup für Creators und Einzelunternehmen.",
+      faqItems: [
+        { question: "Bieten Sie auch Vor-Ort-Support an?", answer: "Primär arbeiten wir remote, Vor-Ort-Termine sind nach Absprache in der Schweiz möglich." },
+        { question: "Wie schnell erhalte ich Hilfe?", answer: "Beratungstermine sind in der Regel innerhalb von 48h verfügbar. Für dringende Fälle gibt es Priority-Support." }
+      ]
+    }
+  },
+  { 
+    id: "tools", 
+    slug: "programmierung-tools", 
+    name: "Programmierung & Tools", 
+    description: "Massgeschneiderte Software und Micro-SaaS Lösungen.", 
+    icon: "Code", 
+    order: 4,
+    pageSettings: {
+      heroTitle: "Programmierung & Tools",
+      heroSubtitle: "Massgeschneiderte Micro-SaaS Lösungen und Tools für Ihren spezifischen Use Case",
+      layout: "grid",
+      columnsDesktop: 2,
+      showPrices: true,
+      showPackages: true,
+      ctaText: "Projekt besprechen",
+      ctaLink: "/kontakt",
+      seoTitle: "Programmierung & Tools | Micro-SaaS Entwicklung",
+      seoDescription: "Von der Idee zum funktionierenden Tool. Individuelle Softwareentwicklung für Startups und Unternehmen.",
+      faqItems: [
+        { question: "Wie lange dauert die Entwicklung?", answer: "Ein MVP ist typischerweise in 2-4 Wochen fertig. Komplexere Projekte planen wir gemeinsam." },
+        { question: "Welche Technologien werden verwendet?", answer: "Modern und zukunftssicher: React, Python, Node.js – je nach Projektanforderung." }
+      ]
+    }
+  },
+  { 
+    id: "design", 
+    slug: "bild-design", 
+    name: "Bild & Design", 
+    description: "Visuelles Design für Social Media und Marketing.", 
+    icon: "Image", 
+    order: 5,
+    pageSettings: {
+      heroTitle: "Bild & Design",
+      heroSubtitle: "Eye-catching Designs für maximale Aufmerksamkeit und Klickrate",
+      layout: "grid",
+      columnsDesktop: 3,
+      showPrices: true,
+      showPackages: true,
+      ctaText: "Design anfragen",
+      ctaLink: "/kontakt",
+      seoTitle: "Bild & Design | Social Media Grafiken",
+      seoDescription: "Professionelle Thumbnails, Social Posts und Marketing-Grafiken für maximales Engagement.",
+      faqItems: [
+        { question: "In welchen Formaten erhalte ich die Designs?", answer: "Alle gängigen Formate: PNG, JPG, PDF, und auf Wunsch auch die Quelldateien." },
+        { question: "Kann ich Änderungen anfordern?", answer: "Selbstverständlich! Im Preis ist mindestens eine Korrekturschleife enthalten." }
+      ]
+    }
+  },
+  { 
+    id: "text", 
+    slug: "texterstellung-konzeption", 
+    name: "Texterstellung & Konzeption", 
+    description: "Professionelle Texte und Content-Strategien.", 
+    icon: "FileText", 
+    order: 6,
+    pageSettings: {
+      heroTitle: "Texterstellung & Konzeption",
+      heroSubtitle: "Professionelle Texte und durchdachte Content-Strategien für Ihre Marke",
+      layout: "list",
+      columnsDesktop: 2,
+      showPrices: true,
+      showPackages: true,
+      ctaText: "Content-Strategie planen",
+      ctaLink: "/kontakt",
+      seoTitle: "Texterstellung & Konzeption | Content-Strategien",
+      seoDescription: "Von Blogartikeln über Social Media Captions bis zu kompletten Content-Plänen.",
+      faqItems: [
+        { question: "Schreiben Sie auch für technische Themen?", answer: "Ja! Besonders stark sind wir bei Tech, AI und Business-Themen." },
+        { question: "Wird AI für die Texterstellung genutzt?", answer: "AI unterstützt den Prozess, aber jeder Text wird manuell verfeinert und qualitätsgeprüft." }
+      ]
+    }
+  },
+  { 
+    id: "management", 
+    slug: "management-betreuung", 
+    name: "Management & Account-Betreuung", 
+    description: "Vollständige Betreuung Ihrer digitalen Präsenz.", 
+    icon: "Users", 
+    order: 7,
+    pageSettings: {
+      heroTitle: "Management & Account-Betreuung",
+      heroSubtitle: "Vollständige Betreuung Ihrer digitalen Präsenz – Sie konzentrieren sich auf Ihr Kerngeschäft",
+      layout: "cards",
+      columnsDesktop: 2,
+      showPrices: true,
+      showPackages: true,
+      ctaText: "Betreuung anfragen",
+      ctaLink: "/kontakt",
+      seoTitle: "Management & Account-Betreuung | Digitale Präsenz",
+      seoDescription: "Social Media Management, Community-Betreuung und vollständige Account-Pflege für Creators und Unternehmen.",
+      faqItems: [
+        { question: "Was beinhaltet die Betreuung?", answer: "Posting-Planung, Community-Management, Analytics-Reports und strategische Empfehlungen." },
+        { question: "Wie oft wird gepostet?", answer: "Je nach Paket 3-7x pro Woche, abgestimmt auf Ihre Zielgruppe und Plattform." }
+      ]
+    }
+  },
 ];
 
 export const initialProducts: Product[] = [
