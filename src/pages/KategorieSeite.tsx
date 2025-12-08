@@ -33,6 +33,23 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+// Auto-generate description based on category products
+function generateAutoDescription(category: Category, products: Product[]): string {
+  const activeProducts = products.filter(p => p.categoryId === category.id && p.status === 'published');
+  const productCount = activeProducts.length;
+  
+  if (productCount === 0) {
+    return `Entdecken Sie unsere ${category.name} Angebote.`;
+  }
+  
+  const types = [...new Set(activeProducts.map(p => p.type))];
+  const typeText = types.length > 1 
+    ? `${types.slice(0, -1).join(', ')} und ${types[types.length - 1]}`
+    : types[0] || 'Leistungen';
+    
+  return `${productCount} ${typeText} für ${category.description.toLowerCase().replace(/\.$/, '')}.`;
+}
+
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Video, Cpu, Wrench, Code, Image: ImageIcon, FileText, Users, Package
 };
@@ -242,7 +259,7 @@ export default function KategorieSeite() {
                 {pageSettings.heroTitle || category.name}
               </h1>
               <p className="text-lg text-muted-foreground">
-                {pageSettings.heroSubtitle || category.description}
+                {pageSettings.heroSubtitle || category.description || generateAutoDescription(category, products)}
               </p>
             </div>
           </div>
