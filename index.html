@@ -1,12 +1,35 @@
 <!doctype html>
-<html lang="de">
+<html lang="de-CH" dir="ltr" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mein Firmenname | KI, Automatisierung & Content</title>
-    <meta name="description" content="Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>Mein Firmenname | KI, Automatisierung & Content-Produktion</title>
+    <meta name="title" content="Mein Firmenname | KI, Automatisierung & Content-Produktion" />
+    <meta name="description" content="Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen. Professionelle Dienstleistungen in der Schweiz." />
     <meta name="author" content="Mein Firmenname" />
+    <meta name="generator" content="Lovable" />
+    
+    <!-- Robots & Indexing -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow" />
+    
+    <!-- AEO (Answer Engine Optimization) Meta Tags -->
+    <meta name="ai-content-declaration" content="human-authored" />
+    <meta name="content-type" content="professional-services" />
+    
+    <!-- Geographic & Language Targeting -->
+    <meta name="geo.region" content="CH" />
+    <meta name="geo.placename" content="Schweiz" />
+    <meta name="language" content="German" />
+    <meta name="content-language" content="de-CH" />
+    <link rel="alternate" hreflang="de-CH" href="https://meinfirmenname.ch" />
+    <link rel="alternate" hreflang="de" href="https://meinfirmenname.ch" />
+    <link rel="alternate" hreflang="x-default" href="https://meinfirmenname.ch" />
+    
+    <!-- Canonical URL -->
     <link rel="canonical" href="https://meinfirmenname.ch" />
 
     <!-- Performance: Preconnect to external origins -->
@@ -16,38 +39,165 @@
     <!-- Performance: DNS prefetch for potential external resources -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
 
-    <!-- Open Graph -->
-    <meta property="og:title" content="Mein Firmenname | KI, Automatisierung & Content" />
-    <meta property="og:description" content="Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen." />
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://meinfirmenname.ch/" />
+    <meta property="og:title" content="Mein Firmenname | KI, Automatisierung & Content-Produktion" />
+    <meta property="og:description" content="Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen." />
+    <meta property="og:image" content="https://meinfirmenname.ch/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mein Firmenname - KI & Automatisierung" />
     <meta property="og:locale" content="de_CH" />
     <meta property="og:site_name" content="Mein Firmenname" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Mein Firmenname | KI, Automatisierung & Content" />
-    <meta name="twitter:description" content="KI, Automatisierung & Content-Produktion für Unternehmen, Creators und Einzelunternehmer." />
+    <meta name="twitter:url" content="https://meinfirmenname.ch/" />
+    <meta name="twitter:title" content="Mein Firmenname | KI, Automatisierung & Content-Produktion" />
+    <meta name="twitter:description" content="KI, Automatisierung & Content-Produktion für Unternehmen, Creators und Einzelunternehmer in der Schweiz." />
+    <meta name="twitter:image" content="https://meinfirmenname.ch/og-image.jpg" />
+    <meta name="twitter:image:alt" content="Mein Firmenname - KI & Automatisierung" />
 
     <!-- Performance: Theme color for browser UI -->
-    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a12" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#A3CEE9" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
 
     <!-- Performance: Mobile optimization -->
     <meta name="format-detection" content="telephone=no" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Mein Firmenname" />
+    <meta name="application-name" content="Mein Firmenname" />
+    <meta name="msapplication-TileColor" content="#0000FF" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Structured Data: Organization (preloaded for fast LCP) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://meinfirmenname.ch/#organization",
+      "name": "Mein Firmenname",
+      "url": "https://meinfirmenname.ch",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://meinfirmenname.ch/logo.png",
+        "width": 512,
+        "height": 512
+      },
+      "description": "KI, Automatisierung & Content-Produktion für Unternehmen, Creators und Einzelunternehmer",
+      "foundingDate": "2024",
+      "areaServed": {
+        "@type": "Country",
+        "name": "Schweiz"
+      },
+      "knowsLanguage": ["de", "en"],
+      "slogan": "Schneller, sauberer, kreativer mit KI"
+    }
+    </script>
+
+    <!-- Structured Data: WebSite with SearchAction for AEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://meinfirmenname.ch/#website",
+      "name": "Mein Firmenname",
+      "url": "https://meinfirmenname.ch",
+      "description": "KI, Automatisierung & Content-Produktion",
+      "inLanguage": "de-CH",
+      "publisher": {
+        "@id": "https://meinfirmenname.ch/#organization"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://meinfirmenname.ch/leistungen?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- Structured Data: LocalBusiness for local SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "@id": "https://meinfirmenname.ch/#localbusiness",
+      "name": "Mein Firmenname",
+      "url": "https://meinfirmenname.ch",
+      "image": "https://meinfirmenname.ch/logo.png",
+      "description": "Professionelle KI-Beratung, Automatisierung und Content-Produktion",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "CH"
+      },
+      "priceRange": "€€",
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "09:00",
+        "closes": "18:00"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Schweiz"
+      },
+      "serviceType": ["KI-Beratung", "Automatisierung", "Content-Produktion", "Webentwicklung"]
+    }
+    </script>
+
+    <!-- Speakable Schema for Voice Search / AEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": "https://meinfirmenname.ch/#webpage",
+      "url": "https://meinfirmenname.ch",
+      "name": "Mein Firmenname - KI, Automatisierung & Content",
+      "isPartOf": {
+        "@id": "https://meinfirmenname.ch/#website"
+      },
+      "about": {
+        "@id": "https://meinfirmenname.ch/#organization"
+      },
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": ["h1", ".hero-description", "article"]
+      },
+      "mainContentOfPage": {
+        "@type": "WebPageElement",
+        "cssSelector": "main"
+      }
+    }
+    </script>
   </head>
 
   <body>
-    <!-- Noscript fallback -->
+    <!-- Noscript fallback with SEO-friendly content -->
     <noscript>
       <div style="padding: 20px; text-align: center; font-family: system-ui, sans-serif;">
-        <h1>JavaScript erforderlich</h1>
-        <p>Diese Website benötigt JavaScript. Bitte aktivieren Sie JavaScript in Ihrem Browser.</p>
+        <h1>Mein Firmenname - KI, Automatisierung & Content</h1>
+        <p>Ich helfe Firmen, Creators und Einzelunternehmern, ihre Arbeit mit KI und Automatisierung schneller, sauberer und kreativer zu machen.</p>
+        <p>JavaScript wird für die volle Funktionalität benötigt. Bitte aktivieren Sie JavaScript in Ihrem Browser.</p>
+        <nav>
+          <a href="/leistungen">Leistungen</a> |
+          <a href="/portfolio">Portfolio</a> |
+          <a href="/blog">Blog</a> |
+          <a href="/kontakt">Kontakt</a>
+        </nav>
       </div>
     </noscript>
     
