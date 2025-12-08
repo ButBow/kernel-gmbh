@@ -17,6 +17,7 @@ import { Loader2 } from "lucide-react";
 // Eagerly loaded public pages (critical path)
 import Index from "./pages/Index";
 import Leistungen from "./pages/Leistungen";
+import KategorieSeite from "./pages/KategorieSeite";
 import Kontakt from "./pages/Kontakt";
 
 // Lazy loaded public pages (less critical)
@@ -74,6 +75,7 @@ const App = () => (
                     {/* Critical public routes - eagerly loaded */}
                     <Route path="/" element={<Index />} />
                     <Route path="/leistungen" element={<Leistungen />} />
+                    <Route path="/leistungen/:slug" element={<KategorieSeite />} />
                     <Route path="/kontakt" element={<Kontakt />} />
                     
                     {/* Less critical public routes - lazy loaded */}

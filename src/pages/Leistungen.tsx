@@ -20,7 +20,7 @@ import {
   Star,
   Send
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import type { Product, Showcase } from "@/data/initialData";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -245,7 +245,7 @@ export default function Leistungen() {
         </section>
       )}
 
-      {/* Categories Filter */}
+      {/* Categories Filter & Navigation */}
       <section className="py-8 sm:py-12 border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -259,7 +259,7 @@ export default function Leistungen() {
             >
               Alle
             </button>
-            {sortedCategories.map((category, index) => {
+            {sortedCategories.map((category) => {
               const colors = getCategoryColors(category.id, sortedCategories);
               return (
                 <button
@@ -275,6 +275,26 @@ export default function Leistungen() {
                 </button>
               );
             })}
+          </div>
+          
+          {/* Category Links to dedicated pages */}
+          <div className="mt-6 pt-6 border-t border-border">
+            <p className="text-sm text-muted-foreground mb-3">Oder besuchen Sie die Kategorie-Seiten für mehr Details:</p>
+            <div className="flex flex-wrap gap-2">
+              {sortedCategories.map((category) => {
+                const colors = getCategoryColors(category.id, sortedCategories);
+                return (
+                  <Link
+                    key={category.id}
+                    to={`/leistungen/${category.slug}`}
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium ${colors.bg} ${colors.text} hover:opacity-80 transition-opacity`}
+                  >
+                    {category.name}
+                    <ChevronRight className="h-3 w-3" />
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>

@@ -32,7 +32,8 @@ export default function AdminProducts() {
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     description: '',
-    icon: 'Package'
+    icon: 'Package',
+    slug: ''
   });
 
   const [productForm, setProductForm] = useState<Omit<Product, 'id'> & { image?: string }>({
@@ -58,7 +59,7 @@ export default function AdminProducts() {
   const [audienceInput, setAudienceInput] = useState('');
 
   const resetCategoryForm = () => {
-    setCategoryForm({ name: '', description: '', icon: 'Package' });
+    setCategoryForm({ name: '', description: '', icon: 'Package', slug: '' });
     setEditingCategory(null);
   };
 
@@ -95,7 +96,8 @@ export default function AdminProducts() {
     setCategoryForm({
       name: category.name,
       description: category.description,
-      icon: category.icon
+      icon: category.icon,
+      slug: category.slug || ''
     });
     setCategoryDialogOpen(true);
   };
