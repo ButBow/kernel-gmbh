@@ -1,8 +1,14 @@
+# Robots.txt for SEO & AEO optimization
+# Last updated: 2025
+
+# Allow all major search engines
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Twitterbot
 Allow: /
@@ -10,5 +16,38 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# AI Crawlers (AEO - Answer Engine Optimization)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+# Allow all other bots
 User-agent: *
 Allow: /
+
+# Disallow admin areas
+Disallow: /admin
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://meinfirmenname.ch/sitemap.xml

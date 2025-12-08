@@ -49,48 +49,48 @@ export default function Index() {
 
   return (
     <Layout pageTitle="Startseite" pageDescription={settings.heroSubtitle}>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-dark" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(38_92%_50%/0.15),transparent_60%)]" />
+      {/* Hero Section - Semantic HTML for SEO/AEO */}
+      <section className="relative overflow-hidden" aria-labelledby="hero-title">
+        <div className="absolute inset-0 bg-gradient-dark" aria-hidden="true" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(38_92%_50%/0.15),transparent_60%)]" aria-hidden="true" />
         
         <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+            <h1 id="hero-title" className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
               <span className="text-gradient">{settings.heroTitle}</span>
             </h1>
             
-            <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="hero-description mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               {settings.heroSubtitle}
             </p>
             
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <nav className="mt-10 flex flex-col sm:flex-row gap-4 justify-center" aria-label="Primäre Aktionen">
               <Button size="lg" asChild>
-                <Link to="/kontakt">
+                <Link to="/kontakt" aria-label={`${settings.heroCta} - Kontaktformular öffnen`}>
                   {settings.heroCta}
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/leistungen">Leistungen entdecken</Link>
+                <Link to="/leistungen" aria-label="Alle verfügbaren Leistungen ansehen">Leistungen entdecken</Link>
               </Button>
-            </div>
+            </nav>
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-20 md:py-28">
+      {/* Services Section - Semantic HTML for SEO/AEO */}
+      <section className="py-20 md:py-28" aria-labelledby="services-title">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold">
+          <header className="text-center mb-12">
+            <h2 id="services-title" className="font-display text-3xl md:text-4xl font-bold">
               Meine Leistungsbereiche
             </h2>
             <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
               Von der Content-Produktion bis zur vollständigen Automatisierung – 
               alles aus einer Hand.
             </p>
-          </div>
+          </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {serviceCategories.map((category) => {
@@ -131,22 +131,22 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Featured Products Section */}
+      {/* Featured Products Section - Semantic HTML for SEO/AEO */}
       {featuredProducts.length > 0 && (
-        <section className="py-20 md:py-28 bg-card">
+        <section className="py-20 md:py-28 bg-card" aria-labelledby="featured-title">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+            <header className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4" aria-hidden="true">
                 <Star className="h-4 w-4 fill-current" />
                 <span className="text-sm font-medium">Meist gebucht</span>
               </div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold">
+              <h2 id="featured-title" className="font-display text-3xl md:text-4xl font-bold">
                 Beliebte Leistungen
               </h2>
               <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
                 Diese Services werden von meinen Kunden am häufigsten gebucht.
               </p>
-            </div>
+            </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredProducts.map((product) => {
@@ -200,21 +200,21 @@ export default function Index() {
         </section>
       )}
 
-      {/* Benefits Section */}
-      <section className="py-20 md:py-28">
+      {/* Benefits Section - Semantic HTML for SEO/AEO */}
+      <section className="py-20 md:py-28" aria-labelledby="benefits-title">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold">
+          <header className="text-center mb-12">
+            <h2 id="benefits-title" className="font-display text-3xl md:text-4xl font-bold">
               Warum mit mir arbeiten?
             </h2>
-          </div>
+          </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto list-none" role="list" aria-label="Vorteile der Zusammenarbeit">
             {settings.whyWorkWithMe.map((item, index) => {
               const Icon = benefitIcons[index % benefitIcons.length];
               return (
-                <div key={index} className="flex gap-4">
-                  <div className="flex-shrink-0">
+                <li key={index} className="flex gap-4">
+                  <div className="flex-shrink-0" aria-hidden="true">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Icon className="h-5 w-5 text-primary" />
                     </div>
@@ -224,10 +224,10 @@ export default function Index() {
                       {item}
                     </h3>
                   </div>
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
 
           <div className="mt-12 text-center">
             <Button size="lg" asChild>
@@ -243,13 +243,13 @@ export default function Index() {
       {/* Partners Section */}
       <PartnersSection />
 
-      {/* CTA Section */}
-      <section className="py-20 md:py-28">
+      {/* CTA Section - Semantic HTML for SEO/AEO */}
+      <aside className="py-20 md:py-28" aria-labelledby="cta-title">
         <div className="container mx-auto px-4">
-          <div className="relative rounded-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-primary opacity-90" />
+          <article className="relative rounded-2xl overflow-hidden" role="region" aria-label="Handlungsaufforderung">
+            <div className="absolute inset-0 bg-gradient-primary opacity-90" aria-hidden="true" />
             <div className="relative px-8 py-16 md:py-20 text-center">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground">
+              <h2 id="cta-title" className="font-display text-3xl md:text-4xl font-bold text-primary-foreground">
                 Bereit, Ihr Projekt zu starten?
               </h2>
               <p className="mt-4 text-primary-foreground/80 max-w-2xl mx-auto">
@@ -258,13 +258,13 @@ export default function Index() {
               </p>
               <div className="mt-8">
                 <Button size="lg" variant="secondary" asChild>
-                  <Link to="/kontakt">{settings.heroCta}</Link>
+                  <Link to="/kontakt" aria-label={`${settings.heroCta} - Jetzt Projekt starten`}>{settings.heroCta}</Link>
                 </Button>
               </div>
             </div>
-          </div>
+          </article>
         </div>
-      </section>
+      </aside>
     </Layout>
   );
 }

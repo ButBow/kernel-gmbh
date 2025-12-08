@@ -1,0 +1,30 @@
+{
+  "name": "Mein Firmenname",
+  "short_name": "Firmenname",
+  "description": "KI, Automatisierung & Content-Produktion für Unternehmen",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a12",
+  "theme_color": "#0000FF",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "de-CH",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
