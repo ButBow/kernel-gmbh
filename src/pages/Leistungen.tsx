@@ -81,10 +81,11 @@ export default function Leistungen() {
               {featuredProducts.map((product) => {
                 const colors = getCategoryColors(product.categoryId, sortedCategories);
                 const category = categories.find(c => c.id === product.categoryId);
+                const categorySlug = category?.slug || category?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'unknown';
                 return (
                   <Link 
                     key={product.id}
-                    to={`/leistungen/${category?.slug}`}
+                    to={`/leistungen/${categorySlug}`}
                     className="block"
                   >
                     <Card className={`group h-full transition-all duration-300 border-2 ${colors.border} ${colors.glow} ring-2 ring-primary/20 hover:scale-[1.02]`}>
