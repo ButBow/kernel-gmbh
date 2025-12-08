@@ -81,6 +81,13 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Helper to ensure category has a slug
+  const ensureCategorySlug = (category: Category): Category => {
+    if (category.slug) return category;
+    const slug = category.name.toLowerCase().replace(/[^a-z0-9äöü]+/g, '-').replace(/(^-|-$)/g, '');
+    return { ...category, slug };
+  };
+
   // Load data from server first, fallback to localStorage
   useEffect(() => {
     const loadContent = async () => {
@@ -91,25 +98,37 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       
       if (serverContent) {
         // Server data available - use it
-        setCategories(serverContent.categories as Category[] || initialCategories);
+        // Ensure all categories have slugs (migration for existing data)
+        const categoriesWithSlugs = (serverContent.categories as Category[] || initialCategories).map(ensureCategorySlug);
+        
+        setCategories(categoriesWithSlugs);
         setProducts(serverContent.products as Product[] || initialProducts);
         setProjects(serverContent.projects as Project[] || initialProjects);
         setPosts(serverContent.posts as Post[] || initialPosts);
         setSettings(serverContent.settings as SiteSettings || initialSettings);
         
         // Also update localStorage as cache
-        setStorageItem(STORAGE_KEYS.CATEGORIES, serverContent.categories);
+        setStorageItem(STORAGE_KEYS.CATEGORIES, categoriesWithSlugs);
         setStorageItem(STORAGE_KEYS.PRODUCTS, serverContent.products);
         setStorageItem(STORAGE_KEYS.PROJECTS, serverContent.projects);
         setStorageItem(STORAGE_KEYS.POSTS, serverContent.posts);
         setStorageItem(STORAGE_KEYS.SETTINGS, serverContent.settings);
       } else {
         // Fallback to localStorage (for Lovable preview)
-        setCategories(getStorageItem(STORAGE_KEYS.CATEGORIES, initialCategories));
+        // Ensure all categories have slugs (migration for existing data)
+        const storedCategories = getStorageItem(STORAGE_KEYS.CATEGORIES, initialCategories);
+        const categoriesWithSlugs = storedCategories.map(ensureCategorySlug);
+        
+        setCategories(categoriesWithSlugs);
         setProducts(getStorageItem(STORAGE_KEYS.PRODUCTS, initialProducts));
         setProjects(getStorageItem(STORAGE_KEYS.PROJECTS, initialProjects));
         setPosts(getStorageItem(STORAGE_KEYS.POSTS, initialPosts));
         setSettings(getStorageItem(STORAGE_KEYS.SETTINGS, initialSettings));
+        
+        // Save migrated categories back to localStorage
+        if (storedCategories.some((c: Category) => !c.slug)) {
+          setStorageItem(STORAGE_KEYS.CATEGORIES, categoriesWithSlugs);
+        }
       }
       
       setIsLoading(false);
