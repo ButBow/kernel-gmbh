@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -23,8 +24,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useContent } from '@/contexts/ContentContext';
 import { getStorageItem, setStorageItem } from '@/lib/storage';
 import { Inquiry, INQUIRY_TYPES, BUDGET_RANGES } from '@/types/inquiry';
+import { NotionWorkflowConfig, defaultNotionWorkflowConfig } from '@/types/notionWorkflow';
+import { NotionWorkflowEditor } from '@/components/admin/NotionWorkflowEditor';
 import { exportInquiryToPDF, exportAllInquiriesToPDF } from '@/lib/pdfExport';
 import { 
   downloadAttachment, 
@@ -51,7 +55,8 @@ import {
   FileText,
   Image as ImageIcon,
   Link2,
-  Copy
+  Copy,
+  Settings2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -61,9 +66,19 @@ const STORAGE_KEY = 'cms_inquiries';
 export default function AdminInquiries() {
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { settings, updateSettings } = useContent();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'list');
+
+  // Get Notion workflow config from settings
+  const notionWorkflow: NotionWorkflowConfig = settings.notionWorkflow || defaultNotionWorkflowConfig;
+
+  const handleNotionWorkflowChange = (config: NotionWorkflowConfig) => {
+    updateSettings({ notionWorkflow: config });
+  };
 
   useEffect(() => {
     const stored = getStorageItem<Inquiry[]>(STORAGE_KEY, []);
@@ -202,36 +217,55 @@ export default function AdminInquiries() {
 
   return (
     <AdminLayout title="Anfragen">
-      <div className="space-y-6">
-        {/* Header Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Badge variant={unreadCount > 0 ? "default" : "secondary"}>
-              {unreadCount} ungelesen
-            </Badge>
-            <Badge variant="outline">{inquiries.length} gesamt</Badge>
-            {totalAttachments > 0 && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Paperclip className="h-3 w-3" />
-                {totalAttachments} Anhänge
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {totalAttachments > 0 && (
-              <Button variant="outline" onClick={handleDownloadAllAttachments}>
-                <FileArchive className="h-4 w-4 mr-2" />
-                Alle Anhänge (ZIP)
-              </Button>
-            )}
-            {inquiries.length > 0 && (
-              <Button variant="outline" onClick={handleExportAll}>
-                <FileDown className="h-4 w-4 mr-2" />
-                Alle als PDF
-              </Button>
-            )}
-          </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6">
+          <TabsList className="inline-flex w-max min-w-full sm:w-auto">
+            <TabsTrigger value="list" className="text-xs sm:text-sm flex items-center gap-2">
+              <Inbox className="h-4 w-4" />
+              Anfragen
+              {unreadCount > 0 && (
+                <Badge variant="default" className="ml-1 h-5 px-1.5 text-[10px]">
+                  {unreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="text-xs sm:text-sm flex items-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              Notion-Workflow
+            </TabsTrigger>
+          </TabsList>
         </div>
+
+        <TabsContent value="list" className="space-y-6">
+          {/* Header Actions */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Badge variant={unreadCount > 0 ? "default" : "secondary"}>
+                {unreadCount} ungelesen
+              </Badge>
+              <Badge variant="outline">{inquiries.length} gesamt</Badge>
+              {totalAttachments > 0 && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Paperclip className="h-3 w-3" />
+                  {totalAttachments} Anhänge
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {totalAttachments > 0 && (
+                <Button variant="outline" onClick={handleDownloadAllAttachments}>
+                  <FileArchive className="h-4 w-4 mr-2" />
+                  Alle Anhänge (ZIP)
+                </Button>
+              )}
+              {inquiries.length > 0 && (
+                <Button variant="outline" onClick={handleExportAll}>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Alle als PDF
+                </Button>
+              )}
+            </div>
+          </div>
 
         {/* Inquiries List */}
         {inquiries.length === 0 ? (
@@ -296,7 +330,16 @@ export default function AdminInquiries() {
             ))}
           </div>
         )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <NotionWorkflowEditor
+            config={notionWorkflow}
+            onChange={handleNotionWorkflowChange}
+            apiBaseUrl={settings.apiBaseUrl}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Inquiry Detail Dialog */}
       <Dialog open={!!selectedInquiry} onOpenChange={(open) => !open && closeInquiry()}>

@@ -516,6 +516,101 @@ const REQUIRED_NOTION_PROPERTIES = {
   }
 };
 
+// Helper function to get field value from inquiry data
+function getFieldValue(data, fieldId) {
+  const fieldMap = {
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    company: data.company,
+    inquiryType: data.inquiryType,
+    budget: data.budget,
+    subject: data.subject,
+    message: data.message,
+    selectedPackage: data.selectedPackage,
+    hasAttachments: data.hasAttachments || (data.attachments?.length > 0),
+    inquiryLink: data.inquiryLink,
+    createdAt: new Date().toISOString(),
+    status: 'Neu',
+  };
+  return fieldMap[fieldId];
+}
+
+// Build Notion property based on mapping type
+function buildNotionProperty(mapping, value, data) {
+  const sanitized = typeof value === 'string' ? sanitizeText(value) : value;
+  
+  switch (mapping.notionType) {
+    case 'title':
+      return { title: [{ text: { content: sanitized || 'Unbekannt' } }] };
+    case 'email':
+      return { email: sanitized || null };
+    case 'phone_number':
+      return { phone_number: sanitized || null };
+    case 'rich_text':
+      return { rich_text: [{ text: { content: (sanitized || '').slice(0, 2000) } }] };
+    case 'select':
+      return sanitized ? { select: { name: sanitized } } : null;
+    case 'multi_select':
+      return sanitized ? { multi_select: [{ name: sanitized.slice(0, 100) }] } : null;
+    case 'date':
+      return { date: { start: value } };
+    case 'checkbox':
+      return { checkbox: !!value };
+    case 'url':
+      return value ? { url: value } : null;
+    default:
+      return { rich_text: [{ text: { content: String(sanitized || '') } }] };
+  }
+}
+
+// Ensure properties exist for workflow mappings
+async function ensureNotionPropertiesForMappings(databaseId, apiKey, mappings) {
+  try {
+    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Notion-Version': '2022-06-28'
+      }
+    });
+    if (!response.ok) return;
+    
+    const dbData = await response.json();
+    const existingProps = Object.keys(dbData.properties || {});
+    const propsToCreate = {};
+    
+    for (const mapping of mappings) {
+      if (existingProps.includes(mapping.notionProperty)) continue;
+      
+      switch (mapping.notionType) {
+        case 'email': propsToCreate[mapping.notionProperty] = { email: {} }; break;
+        case 'phone_number': propsToCreate[mapping.notionProperty] = { phone_number: {} }; break;
+        case 'rich_text': propsToCreate[mapping.notionProperty] = { rich_text: {} }; break;
+        case 'select': propsToCreate[mapping.notionProperty] = { select: { options: [] } }; break;
+        case 'multi_select': propsToCreate[mapping.notionProperty] = { multi_select: { options: [] } }; break;
+        case 'date': propsToCreate[mapping.notionProperty] = { date: {} }; break;
+        case 'checkbox': propsToCreate[mapping.notionProperty] = { checkbox: {} }; break;
+        case 'url': propsToCreate[mapping.notionProperty] = { url: {} }; break;
+      }
+    }
+    
+    if (Object.keys(propsToCreate).length > 0) {
+      await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28'
+        },
+        body: JSON.stringify({ properties: propsToCreate })
+      });
+    }
+  } catch (error) {
+    console.error('Error ensuring properties:', error.message);
+  }
+}
+
 /**
  * ============================================================================
  * AI NOTES: AUTO-CREATE MISSING NOTION PROPERTIES
@@ -1062,7 +1157,7 @@ async function handleAPI(req, res, urlPath) {
     return true;
   }
 
-  // POST /api/contact - Create contact inquiry in Notion
+  // POST /api/contact - Create contact inquiry in Notion (supports workflow config)
   if (urlPath === '/api/contact' && req.method === 'POST') {
     console.log(`[${timestamp}] 📧 Processing contact form...`);
     // Rate limiting
@@ -1080,9 +1175,94 @@ async function handleAPI(req, res, urlPath) {
         return true;
       }
 
-      // Get database ID and API key from body or env
-      const databaseId = body.notionDatabaseId || process.env.NOTION_DATABASE_ID;
-      const apiKey = body.notionApiKey || process.env.NOTION_API_TOKEN;
+      // Check if we have workflow config from content.json
+      const content = readDataFile('content.json', null);
+      const workflowConfig = content?.settings?.notionWorkflow;
+      
+      // If workflow is enabled and has databases, use multi-database approach
+      if (workflowConfig?.enabled && workflowConfig?.apiKey && workflowConfig?.databases?.length > 0) {
+        console.log(`[${timestamp}] 🔀 Using workflow config with ${workflowConfig.databases.length} databases`);
+        
+        const results = [];
+        const enabledDatabases = workflowConfig.databases.filter(db => db.enabled);
+        
+        for (const database of enabledDatabases) {
+          try {
+            // Build properties based on field mappings
+            const properties = {};
+            const children = [];
+            
+            for (const mapping of database.fieldMappings) {
+              const fieldValue = getFieldValue(body, mapping.inquiryField);
+              if (fieldValue === undefined || fieldValue === null) continue;
+              
+              // Build the Notion property based on type
+              const notionProp = buildNotionProperty(mapping, fieldValue, body);
+              if (notionProp) {
+                if (mapping.inquiryField === 'message') {
+                  // Message goes into page content
+                  const message = sanitizeText(fieldValue);
+                  const chunks = message.match(/.{1,2000}/gs) || [];
+                  chunks.forEach(chunk => {
+                    children.push({
+                      object: 'block',
+                      type: 'paragraph',
+                      paragraph: {
+                        rich_text: [{ text: { content: chunk } }]
+                      }
+                    });
+                  });
+                } else {
+                  properties[mapping.notionProperty] = notionProp;
+                }
+              }
+            }
+            
+            // Ensure all required properties exist
+            await ensureNotionPropertiesForMappings(database.databaseId, workflowConfig.apiKey, database.fieldMappings);
+            
+            // Create the page
+            const response = await fetch('https://api.notion.com/v1/pages', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${workflowConfig.apiKey}`,
+                'Content-Type': 'application/json',
+                'Notion-Version': '2022-06-28'
+              },
+              body: JSON.stringify({
+                parent: { database_id: database.databaseId },
+                properties,
+                children
+              })
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              results.push({ database: database.name, success: true, pageId: result.id });
+              console.log(`[${timestamp}] ✅ Created page in "${database.name}"`);
+            } else {
+              const error = await response.json().catch(() => ({}));
+              results.push({ database: database.name, success: false, error: error.message });
+              console.log(`[${timestamp}] ❌ Failed to create page in "${database.name}":`, error.message);
+            }
+          } catch (dbError) {
+            results.push({ database: database.name, success: false, error: dbError.message });
+            console.log(`[${timestamp}] ❌ Error for "${database.name}":`, dbError.message);
+          }
+        }
+        
+        const successCount = results.filter(r => r.success).length;
+        sendJSON(res, 200, { 
+          success: successCount > 0, 
+          message: `Anfrage an ${successCount}/${enabledDatabases.length} Datenbank(en) gesendet.`,
+          results
+        });
+        return true;
+      }
+      
+      // Fallback to legacy single-database mode
+      const databaseId = body.notionDatabaseId || content?.settings?.notionDatabaseId || process.env.NOTION_DATABASE_ID;
+      const apiKey = body.notionApiKey || content?.settings?.notionApiKey || process.env.NOTION_API_TOKEN;
       
       if (!databaseId) {
         sendJSON(res, 400, { error: 'Notion Database ID nicht konfiguriert.' });
@@ -1094,7 +1274,7 @@ async function handleAPI(req, res, urlPath) {
         return true;
       }
 
-      // Create Notion page
+      // Create Notion page (legacy mode)
       const result = await createNotionPage(body, databaseId, apiKey);
       
       console.log(`[${timestamp}] ✅ Contact inquiry created in Notion: ${body.email}`);

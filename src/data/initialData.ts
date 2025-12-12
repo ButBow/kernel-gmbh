@@ -119,6 +119,7 @@ export interface Executive {
 
 import { Promotion, DEFAULT_PROMOTIONS } from '@/types/promotion';
 import { CookieSettings, defaultCookieSettings } from '@/types/cookieSettings';
+import { NotionWorkflowConfig, defaultNotionWorkflowConfig } from '@/types/notionWorkflow';
 
 // Chatbot Configuration
 export interface ChatbotSettings {
@@ -201,9 +202,11 @@ export interface SiteSettings {
   cookieSettings?: CookieSettings;
   // Chatbot Settings
   chatbotSettings?: ChatbotSettings;
+  // Notion Workflow Configuration (multi-database)
+  notionWorkflow?: NotionWorkflowConfig;
 }
 
-export { DEFAULT_PROMOTIONS, defaultCookieSettings };
+export { DEFAULT_PROMOTIONS, defaultCookieSettings, defaultNotionWorkflowConfig };
 
 export const initialCategories: Category[] = [
   { 
