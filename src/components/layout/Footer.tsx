@@ -34,9 +34,12 @@ export function Footer() {
 
           {/* About Section */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Über mich</h4>
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
-              {settings.aboutShort || settings.aboutText?.slice(0, 150) || 'Experte für KI, Automatisierung & Content-Produktion.'}
+            <h4 className="font-display font-semibold text-primary mb-4">Über mich</h4>
+            <p className="text-sm font-medium text-foreground mb-2">
+              {settings.companyName}
+            </p>
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+              {settings.aboutShort || 'Experte für KI, Automatisierung & Content-Produktion.'}
             </p>
             <Link 
               to="/ueber-mich" 
@@ -48,7 +51,7 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Kontakt</h4>
+            <h4 className="font-display font-semibold text-primary mb-4">Kontakt</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail size={16} className="text-primary" />
@@ -71,7 +74,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Rechtliches</h4>
+            <h4 className="font-display font-semibold text-primary mb-4">Rechtliches</h4>
             <ul className="space-y-2">
               <li>
                 <Link to="/impressum" className="text-sm text-muted-foreground hover:text-foreground transition-colors">

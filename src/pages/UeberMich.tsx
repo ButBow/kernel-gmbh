@@ -44,7 +44,8 @@ export default function UeberMich() {
       <section className="relative py-20 md:py-32 overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 bg-gradient-dark" />
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent" />
+        <div className="absolute inset-0 glow-bg" aria-hidden="true" />
+        <div className="glow-top-right glow-pulse" aria-hidden="true" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto px-4 relative z-10">
@@ -86,9 +87,13 @@ export default function UeberMich() {
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
       {/* Stats Section */}
       {settings.stats && settings.stats.length > 0 && (
-        <section className="py-12 border-y border-border bg-card/50">
+        <section className="relative py-12 border-y border-border bg-card/50 overflow-hidden">
+          <div className="glow-left glow-pulse" aria-hidden="true" />
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {settings.stats.map((stat, index) => (
@@ -110,9 +115,13 @@ export default function UeberMich() {
         </section>
       )}
 
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
       {/* Mission Section */}
       {settings.aboutMission && (
-        <section className="py-16 md:py-24">
+        <section className="relative py-16 md:py-24 overflow-hidden">
+          <div className="glow-right glow-pulse" aria-hidden="true" />
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <span className="inline-block px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-xs font-medium uppercase tracking-wider mb-6">
@@ -126,9 +135,13 @@ export default function UeberMich() {
         </section>
       )}
 
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
       {/* Core Values */}
       {settings.coreValues && settings.coreValues.length > 0 && (
-        <section className="py-16 md:py-24 bg-gradient-dark">
+        <section className="relative py-16 md:py-24 bg-gradient-dark overflow-hidden">
+          <div className="glow-left glow-pulse" aria-hidden="true" />
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
@@ -163,9 +176,13 @@ export default function UeberMich() {
         </section>
       )}
 
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
       {/* Timeline / Milestones */}
       {settings.milestones && settings.milestones.length > 0 && (
-        <section className="py-16 md:py-24">
+        <section className="relative py-16 md:py-24 overflow-hidden">
+          <div className="glow-right glow-pulse" aria-hidden="true" />
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
