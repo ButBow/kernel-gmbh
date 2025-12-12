@@ -164,6 +164,7 @@ export interface SiteSettings {
   heroCta: string;
   whyWorkWithMe: string[];
   aboutText: string;
+  aboutShort?: string; // Short about text for footer
   aboutImage: string;
   aboutTagline: string;
   aboutMission: string;

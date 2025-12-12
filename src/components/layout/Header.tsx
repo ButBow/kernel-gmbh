@@ -8,9 +8,6 @@ import { useContent } from "@/contexts/ContentContext";
 const navItems = [
   { label: "Home", href: "/" },
   { label: "Leistungen", href: "/leistungen" },
-  { label: "Portfolio", href: "/portfolio" },
-  { label: "Blog", href: "/blog" },
-  { label: "Über mich", href: "/ueber-mich" },
   { label: "Kontakt", href: "/kontakt" },
 ];
 

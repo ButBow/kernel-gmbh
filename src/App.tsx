@@ -21,9 +21,6 @@ import KategorieSeite from "./pages/KategorieSeite";
 import Kontakt from "./pages/Kontakt";
 
 // Lazy loaded public pages (less critical)
-const Portfolio = lazy(() => import("./pages/Portfolio"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
 const UeberMich = lazy(() => import("./pages/UeberMich"));
 const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
@@ -34,8 +31,6 @@ const AdminLogin = lazy(() => import("./pages/admin/Login"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminInquiries = lazy(() => import("./pages/admin/Inquiries"));
 const AdminProducts = lazy(() => import("./pages/admin/Products"));
-const AdminPortfolio = lazy(() => import("./pages/admin/Portfolio"));
-const AdminBlog = lazy(() => import("./pages/admin/Blog"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 
@@ -79,9 +74,6 @@ const App = () => (
                     <Route path="/kontakt" element={<Kontakt />} />
                     
                     {/* Less critical public routes - lazy loaded */}
-                    <Route path="/portfolio" element={<Portfolio />} />
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="/ueber-mich" element={<UeberMich />} />
                     <Route path="/impressum" element={<Impressum />} />
                     <Route path="/datenschutz" element={<Datenschutz />} />
@@ -92,8 +84,6 @@ const App = () => (
                     <Route path="/admin/inquiries" element={<ProtectedRoute><AdminInquiries /></ProtectedRoute>} />
                     <Route path="/admin/inquiries/:id" element={<ProtectedRoute><AdminInquiries /></ProtectedRoute>} />
                     <Route path="/admin/products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
-                    <Route path="/admin/portfolio" element={<ProtectedRoute><AdminPortfolio /></ProtectedRoute>} />
-                    <Route path="/admin/blog" element={<ProtectedRoute><AdminBlog /></ProtectedRoute>} />
                     <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
                     <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
                     
