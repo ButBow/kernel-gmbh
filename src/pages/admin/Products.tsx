@@ -17,7 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown, ChevronUp, ChevronDown, Settings2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown, ChevronUp, ChevronDown, Settings2, Eye, EyeOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { ImportExport } from '@/components/admin/ImportExport';
 import { CategoryPageEditor } from '@/components/admin/CategoryPageEditor';
 import type { Category, Product, Showcase, CategoryPageSettings } from '@/data/initialData';
@@ -600,17 +601,33 @@ export default function AdminProducts() {
           <div className="space-y-2">
             {sortedCategories.map((category) => {
               const productCount = products.filter(p => p.categoryId === category.id).length;
+              const isActive = !category.hidden;
               return (
                 <div
                   key={category.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-card border border-border"
+                  className={`flex items-center justify-between p-4 rounded-lg bg-card border border-border transition-opacity ${category.hidden ? 'opacity-60' : ''}`}
                 >
                   <div className="flex items-center gap-4">
                     <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-                    <div>
-                      <p className="font-medium">{category.name}</p>
-                      <p className="text-sm text-muted-foreground">{category.description}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{productCount} Produkte</p>
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={isActive}
+                        onCheckedChange={(checked) => updateCategory(category.id, { hidden: !checked })}
+                        aria-label={isActive ? 'Kategorie deaktivieren' : 'Kategorie aktivieren'}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{category.name}</p>
+                          {category.hidden && (
+                            <Badge variant="outline" className="text-xs">
+                              <EyeOff className="h-3 w-3 mr-1" />
+                              Ausgeblendet
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{category.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{productCount} Produkte</p>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
