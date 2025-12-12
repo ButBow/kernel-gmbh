@@ -56,9 +56,20 @@ interface NotionWorkflowEditorProps {
   config: NotionWorkflowConfig;
   onChange: (config: NotionWorkflowConfig) => void;
   apiBaseUrl?: string;
+  // Legacy settings for migration
+  legacyApiKey?: string;
+  legacyDatabaseId?: string;
+  legacyEnabled?: boolean;
 }
 
-export function NotionWorkflowEditor({ config, onChange, apiBaseUrl = '' }: NotionWorkflowEditorProps) {
+export function NotionWorkflowEditor({ 
+  config, 
+  onChange, 
+  apiBaseUrl = '',
+  legacyApiKey,
+  legacyDatabaseId,
+  legacyEnabled
+}: NotionWorkflowEditorProps) {
   const [showApiKey, setShowApiKey] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; error?: string; databaseTitle?: string }>>({});
@@ -70,6 +81,36 @@ export function NotionWorkflowEditor({ config, onChange, apiBaseUrl = '' }: Noti
     fieldMappings: [],
     enabled: true,
   });
+
+  // Auto-migrate legacy settings if workflow is empty but legacy is configured
+  useEffect(() => {
+    if (
+      legacyApiKey && 
+      legacyDatabaseId && 
+      !config.apiKey && 
+      config.databases.length === 0
+    ) {
+      const migratedDatabase: NotionDatabase = {
+        id: `db_${Date.now()}`,
+        name: 'Hauptdatenbank',
+        databaseId: legacyDatabaseId,
+        fieldMappings: INQUIRY_FIELDS.map(field => ({
+          inquiryField: field.id,
+          notionProperty: field.label,
+          notionType: field.notionType,
+        })),
+        enabled: true,
+      };
+
+      onChange({
+        apiKey: legacyApiKey,
+        databases: [migratedDatabase],
+        enabled: legacyEnabled ?? true,
+      });
+
+      toast.success('Bestehende Notion-Konfiguration wurde migriert');
+    }
+  }, [legacyApiKey, legacyDatabaseId, legacyEnabled, config.apiKey, config.databases.length, onChange]);
 
   // Initialize with default mappings for new database
   const getDefaultMappings = (): FieldMapping[] => {
