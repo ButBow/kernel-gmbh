@@ -119,83 +119,90 @@
     background: radial-gradient(ellipse at top, hsl(var(--primary) / 0.15), transparent 60%);
   }
 
-  .glow-bg-center {
-    background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.1), transparent 50%);
-  }
-
-  /* Floating glow orbs - soft and diffused */
-  .glow-orb {
+  /* Strategic section glows */
+  .glow-left {
     position: absolute;
-    border-radius: 50%;
-    background: radial-gradient(circle, hsl(var(--primary) / 0.12), transparent 70%);
-    filter: blur(60px);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .glow-orb-1 {
-    width: 500px;
-    height: 500px;
-    top: -10%;
-    left: -5%;
-    animation: glow-float-1 30s ease-in-out infinite;
-  }
-
-  .glow-orb-2 {
+    left: -200px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 400px;
     height: 400px;
-    top: 40%;
-    right: -10%;
-    animation: glow-float-2 35s ease-in-out infinite;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
   }
 
-  .glow-orb-3 {
+  .glow-right {
+    position: absolute;
+    right: -200px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+  }
+
+  .glow-top-right {
+    position: absolute;
+    right: -100px;
+    top: -100px;
     width: 350px;
     height: 350px;
-    top: 70%;
-    left: 20%;
-    animation: glow-float-3 28s ease-in-out infinite;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.1), transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
   }
 
-  .glow-orb-4 {
-    width: 300px;
-    height: 300px;
-    bottom: 10%;
-    right: 25%;
-    animation: glow-float-4 32s ease-in-out infinite;
+  .glow-bottom-left {
+    position: absolute;
+    left: -100px;
+    bottom: -100px;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.1), transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
   }
 
-  .glow-orb-5 {
-    width: 450px;
-    height: 450px;
-    top: 25%;
-    left: 50%;
-    animation: glow-float-5 40s ease-in-out infinite;
+  /* Animated pulse glow */
+  .glow-pulse {
+    animation: glow-pulse 4s ease-in-out infinite;
   }
 
-  @keyframes glow-float-1 {
-    0%, 100% { transform: translate(0, 0); opacity: 0.8; }
-    50% { transform: translate(50px, 30px); opacity: 1; }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
   }
 
-  @keyframes glow-float-2 {
-    0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-    50% { transform: translate(-40px, -20px); opacity: 0.9; }
+  /* Section divider with glow */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent);
+    margin: 0 auto;
+    max-width: 80%;
   }
 
-  @keyframes glow-float-3 {
-    0%, 100% { transform: translate(0, 0); opacity: 0.6; }
-    50% { transform: translate(30px, -40px); opacity: 0.85; }
+  /* Interactive card glow on hover */
+  .card-glow {
+    position: relative;
+    transition: all 0.3s ease;
   }
 
-  @keyframes glow-float-4 {
-    0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-    50% { transform: translate(-35px, 25px); opacity: 0.95; }
+  .card-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--primary) / 0.15), transparent 60%);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
   }
 
-  @keyframes glow-float-5 {
-    0%, 100% { transform: translate(0, 0); opacity: 0.5; }
-    50% { transform: translate(25px, -30px); opacity: 0.75; }
+  .card-glow:hover::before {
+    opacity: 1;
   }
 
   /* Mobile-optimized scrollable tabs */

@@ -44,26 +44,24 @@ export default function Index() {
     trackEvent('product_click', '/', { productName });
   };
 
+  // Interactive card glow effect
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
+  };
+
   return (
     <Layout pageTitle="Startseite" pageDescription={settings.heroSubtitle}>
-      {/* Page wrapper with glow orbs that scroll with content */}
-      <div className="relative">
-        {/* Animated glow orbs - scroll with content, behind text */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="glow-orb glow-orb-1" />
-          <div className="glow-orb glow-orb-2" />
-          <div className="glow-orb glow-orb-3" />
-          <div className="glow-orb glow-orb-4" />
-          <div className="glow-orb glow-orb-5" />
-        </div>
-
-        {/* Hero Section - Semantic HTML for SEO/AEO */}
-        <section className="relative overflow-hidden" aria-labelledby="hero-title">
-          <div className="absolute inset-0 bg-gradient-dark" aria-hidden="true" />
-          {/* Large top glow effect */}
-          <div className="absolute inset-0 glow-bg" aria-hidden="true" />
+      {/* Hero Section */}
+      <section className="relative overflow-hidden" aria-labelledby="hero-title">
+        <div className="absolute inset-0 bg-gradient-dark" aria-hidden="true" />
+        <div className="absolute inset-0 glow-bg" aria-hidden="true" />
+        <div className="glow-top-right glow-pulse" aria-hidden="true" />
         
-          <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
+        <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
           <div className="max-w-4xl mx-auto text-center">
             <h1 id="hero-title" className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight animate-fade-in">
               <span className="text-gradient">{settings.heroTitle}</span>
@@ -88,9 +86,14 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Services Section - Semantic HTML for SEO/AEO */}
-      <section className="relative py-20 md:py-28" aria-labelledby="services-title">
-        <div className="container mx-auto px-4">
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
+      {/* Services Section */}
+      <section className="relative py-20 md:py-28 overflow-hidden" aria-labelledby="services-title">
+        <div className="glow-left glow-pulse" aria-hidden="true" />
+        
+        <div className="container relative mx-auto px-4">
           <header className="text-center mb-12">
             <h2 id="services-title" className="font-display text-3xl md:text-4xl font-bold">
               Meine Leistungsbereiche
@@ -116,7 +119,10 @@ export default function Index() {
               
               return (
                 <Link key={category.id} to={`/leistungen?category=${category.id}`}>
-                  <Card className={`h-full group transition-all duration-300 hover:shadow-lg cursor-pointer border-2 ${colors.border} hover:border-primary/50`}>
+                  <Card 
+                    className={`card-glow h-full group transition-all duration-300 hover:shadow-lg cursor-pointer border-2 ${colors.border} hover:border-primary/50`}
+                    onMouseMove={handleMouseMove}
+                  >
                     <CardContent className="p-6">
                       <div className={`h-12 w-12 rounded-lg ${colors.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                         <IconComponent className={`h-6 w-6 ${colors.text}`} />
@@ -146,10 +152,14 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
 
-      {/* Benefits Section - Semantic HTML for SEO/AEO */}
-      <section className="relative py-20 md:py-28 bg-card/30" aria-labelledby="benefits-title">
-        <div className="container mx-auto px-4">
+      {/* Benefits Section */}
+      <section className="relative py-20 md:py-28 bg-card/30 overflow-hidden" aria-labelledby="benefits-title">
+        <div className="glow-right glow-pulse" aria-hidden="true" />
+        
+        <div className="container relative mx-auto px-4">
           <header className="text-center mb-12">
             <h2 id="benefits-title" className="font-display text-3xl md:text-4xl font-bold">
               Warum mit mir arbeiten?
@@ -164,7 +174,10 @@ export default function Index() {
               const Icon = benefitIcons[index % benefitIcons.length];
               return (
                 <li key={index}>
-                  <Card className="h-full border-2 border-border hover:border-primary/30 transition-all duration-300 group">
+                  <Card 
+                    className="card-glow h-full border-2 border-border hover:border-primary/30 transition-all duration-300 group"
+                    onMouseMove={handleMouseMove}
+                  >
                     <CardContent className="p-6 text-center">
                       <div className="mx-auto mb-4 h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all" aria-hidden="true">
                         <Icon className="h-7 w-7 text-primary" />
@@ -193,9 +206,11 @@ export default function Index() {
       {/* Partners Section */}
       <PartnersSection />
 
-      {/* CTA Section - Semantic HTML for SEO/AEO */}
-      <aside className="relative py-20 md:py-28" aria-labelledby="cta-title">
-        <div className="container mx-auto px-4">
+      {/* CTA Section */}
+      <aside className="relative py-20 md:py-28 overflow-hidden" aria-labelledby="cta-title">
+        <div className="glow-bottom-left glow-pulse" aria-hidden="true" />
+        
+        <div className="container relative mx-auto px-4">
           <article className="relative rounded-2xl overflow-hidden" role="region" aria-label="Handlungsaufforderung">
             <div className="absolute inset-0 bg-gradient-primary opacity-90" aria-hidden="true" />
             <div className="relative px-8 py-16 md:py-20 text-center">
@@ -215,7 +230,6 @@ export default function Index() {
           </article>
         </div>
       </aside>
-      </div>
     </Layout>
   );
 }
