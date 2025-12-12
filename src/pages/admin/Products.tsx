@@ -47,13 +47,15 @@ export default function AdminProducts() {
     showcases: [],
     targetAudience: [],
     status: 'draft',
-    image: ''
+    image: '',
+    projectId: ''
   });
 
   const [showcaseForm, setShowcaseForm] = useState<Showcase>({
     title: '',
     description: '',
-    price: ''
+    price: '',
+    projectId: ''
   });
 
   const [audienceInput, setAudienceInput] = useState('');
@@ -74,7 +76,8 @@ export default function AdminProducts() {
       showcases: [],
       targetAudience: [],
       status: 'draft',
-      image: ''
+      image: '',
+      projectId: ''
     });
     setEditingProduct(null);
   };
@@ -162,7 +165,8 @@ export default function AdminProducts() {
       showcases: [...product.showcases],
       targetAudience: [...product.targetAudience],
       status: product.status,
-      image: (product as Product & { image?: string }).image || ''
+      image: (product as Product & { image?: string }).image || '',
+      projectId: product.projectId || ''
     });
     setProductDialogOpen(true);
   };
@@ -173,7 +177,7 @@ export default function AdminProducts() {
       ...productForm,
       showcases: [...productForm.showcases, { ...showcaseForm }]
     });
-    setShowcaseForm({ title: '', description: '', price: '' });
+    setShowcaseForm({ title: '', description: '', price: '', projectId: '' });
   };
 
   const removeShowcase = (index: number) => {
@@ -300,13 +304,23 @@ export default function AdminProducts() {
                       />
                     </div>
 
-                    <div>
-                      <label className="text-sm font-medium">Preis</label>
-                      <Input
-                        value={productForm.priceText}
-                        onChange={(e) => setProductForm({ ...productForm, priceText: e.target.value })}
-                        placeholder="z.B. CHF 120–350 oder ab CHF 500"
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Preis</label>
+                        <Input
+                          value={productForm.priceText}
+                          onChange={(e) => setProductForm({ ...productForm, priceText: e.target.value })}
+                          placeholder="z.B. CHF 120–350 oder ab CHF 500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Projekt ID (für Notion)</label>
+                        <Input
+                          value={(productForm as any).projectId || ''}
+                          onChange={(e) => setProductForm({ ...productForm, projectId: e.target.value } as any)}
+                          placeholder="z.B. PROD-001"
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -339,7 +353,12 @@ export default function AdminProducts() {
                             <div className="flex-1">
                               <p className="font-medium text-sm">{showcase.title}</p>
                               <p className="text-xs text-muted-foreground">{showcase.description}</p>
-                              <p className="text-xs text-primary">{showcase.price}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs text-primary">{showcase.price}</p>
+                                {showcase.projectId && (
+                                  <span className="text-xs text-muted-foreground">ID: {showcase.projectId}</span>
+                                )}
+                              </div>
                             </div>
                             <Button variant="ghost" size="icon" onClick={() => removeShowcase(i)}>
                               <Trash2 className="h-4 w-4" />
@@ -363,6 +382,12 @@ export default function AdminProducts() {
                             value={showcaseForm.price}
                             onChange={(e) => setShowcaseForm({ ...showcaseForm, price: e.target.value })}
                             placeholder="Preis"
+                          />
+                          <Input
+                            value={showcaseForm.projectId || ''}
+                            onChange={(e) => setShowcaseForm({ ...showcaseForm, projectId: e.target.value })}
+                            placeholder="Projekt ID (optional)"
+                            className="w-40"
                           />
                           <Button type="button" variant="outline" onClick={addShowcase}>
                             <Plus className="h-4 w-4" />
