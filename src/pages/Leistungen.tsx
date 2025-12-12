@@ -26,6 +26,14 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Video, Cpu, Wrench, Code, Image: ImageIcon, FileText, Users, Package
 };
 
+// Smooth spring animation config
+const springTransition = {
+  type: "spring" as const,
+  stiffness: 300,
+  damping: 30,
+  mass: 1
+};
+
 // Auto-generate description based on category products
 function generateAutoDescription(category: Category, products: Product[]): string {
   const activeProducts = products.filter(p => p.categoryId === category.id && p.status === 'published');
@@ -47,10 +55,10 @@ function generateAutoDescription(category: Category, products: Product[]): strin
 function ProductCard({ product, index }: { product: Product; index: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ ...springTransition, delay: index * 0.03 }}
     >
       <Card className="h-full border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-md">
         <CardContent className="p-5">
@@ -98,34 +106,37 @@ function CollapsedCategoryCard({
   category, 
   productCount,
   onClick,
-  index
+  index,
+  sortedCategories
 }: { 
   category: Category; 
   productCount: number;
   onClick: () => void;
   index: number;
+  sortedCategories: Category[];
 }) {
   const IconComponent = iconMap[category.icon] || Package;
+  const colors = getCategoryColors(category.id, sortedCategories);
   
   return (
     <motion.button
       layout
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ ...springTransition, delay: index * 0.03 }}
       onClick={onClick}
-      className="w-full p-3 rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-card/80 transition-all duration-300 text-left group"
+      className={`w-full p-3 rounded-lg border-2 ${colors.border} bg-card hover:bg-card/80 transition-all duration-300 text-left group`}
     >
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-          <IconComponent className="h-5 w-5 text-primary" />
+        <div className={`h-10 w-10 rounded-lg ${colors.bg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
+          <IconComponent className={`h-5 w-5 ${colors.text}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">{category.name}</p>
+          <p className={`font-medium text-sm truncate ${colors.text}`}>{category.name}</p>
           <p className="text-xs text-muted-foreground">{productCount} Leistungen</p>
         </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+        <ChevronRight className={`h-4 w-4 ${colors.text} group-hover:translate-x-1 transition-transform`} />
       </div>
     </motion.button>
   );
@@ -154,26 +165,29 @@ function CategoryGridCard({
 
   return (
     <motion.button
-      layoutId={`category-card-${category.id}`}
+      layout
+      layoutId={`category-${category.id}`}
       onClick={onClick}
       className="block text-left w-full group"
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      transition={springTransition}
     >
       <Card className={`h-full transition-all duration-300 border-2 ${colors.border} hover:border-primary/50 hover:shadow-lg`}>
         <CardContent className="p-6">
           <div className="flex items-start gap-4 mb-4">
             <motion.div 
-              layoutId={`category-icon-${category.id}`}
+              layoutId={`icon-${category.id}`}
               className={`h-14 w-14 rounded-xl ${colors.bg} flex items-center justify-center shrink-0`}
+              transition={springTransition}
             >
               <IconComponent className={`h-7 w-7 ${colors.text}`} />
             </motion.div>
             <div className="flex-1 min-w-0">
               <motion.h3 
-                layoutId={`category-title-${category.id}`}
-                className={`font-display text-xl font-bold mb-1 transition-colors ${colors.hoverText}`}
+                layoutId={`title-${category.id}`}
+                className={`font-display text-xl font-bold mb-1 ${colors.text}`}
+                transition={springTransition}
               >
                 {category.name}
               </motion.h3>
@@ -183,9 +197,13 @@ function CategoryGridCard({
             </div>
           </div>
           
-          <p className="text-muted-foreground mb-4 line-clamp-3">
+          <motion.p 
+            layoutId={`desc-${category.id}`}
+            className="text-muted-foreground mb-4 line-clamp-3"
+            transition={springTransition}
+          >
             {description}
-          </p>
+          </motion.p>
           
           <div className="flex items-center justify-between pt-4 border-t border-border">
             <span className={`text-sm font-medium ${colors.text}`}>
@@ -214,49 +232,47 @@ function ExpandedCategoryHeader({
 
   return (
     <motion.button
-      layoutId={`category-card-${category.id}`}
+      layout
+      layoutId={`category-${category.id}`}
       onClick={onClose}
       className="w-full mb-6 group text-left"
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={{ scale: 1.005 }}
+      whileTap={{ scale: 0.995 }}
+      transition={springTransition}
     >
-      <Card className="border-2 border-primary/50 bg-card/50 backdrop-blur transition-all duration-300 hover:border-primary overflow-hidden">
+      <Card className={`border-2 ${colors.border} bg-card/50 backdrop-blur transition-all duration-300 hover:border-primary/70 overflow-hidden`}>
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
             <motion.div 
-              layoutId={`category-icon-${category.id}`}
+              layoutId={`icon-${category.id}`}
               className={`h-16 w-16 rounded-xl ${colors.bg} flex items-center justify-center shrink-0`}
+              transition={springTransition}
             >
               <IconComponent className={`h-8 w-8 ${colors.text}`} />
             </motion.div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <motion.h2 
-                  layoutId={`category-title-${category.id}`}
-                  className="font-display text-2xl font-bold"
+                  layoutId={`title-${category.id}`}
+                  className={`font-display text-2xl font-bold ${colors.text}`}
+                  transition={springTransition}
                 >
                   {category.name}
                 </motion.h2>
-                <motion.div
-                  initial={{ rotate: 0 }}
-                  animate={{ rotate: 180 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <ChevronDown className="h-5 w-5 text-primary" />
-                </motion.div>
+                <ChevronDown className={`h-5 w-5 ${colors.text}`} />
               </div>
-              <p className="text-muted-foreground">
+              <motion.p 
+                layoutId={`desc-${category.id}`}
+                className="text-muted-foreground"
+                transition={springTransition}
+              >
                 {category.pageSettings?.heroSubtitle || category.description}
-              </p>
+              </motion.p>
             </div>
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               <X className="h-4 w-4" />
               <span>Schliessen</span>
-            </motion.div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -291,8 +307,6 @@ export default function Leistungen() {
       setExpandedCategoryId(null);
     } else {
       setExpandedCategoryId(categoryId);
-      // Scroll to top of section
-      window.scrollTo({ top: 200, behavior: 'smooth' });
     }
   };
 
@@ -320,112 +334,108 @@ export default function Leistungen() {
       <section className="py-8 md:py-12">
         <div className="container mx-auto px-4">
           <LayoutGroup>
-            <AnimatePresence mode="wait">
-              {/* Expanded View */}
-              {expandedCategory ? (
-                <motion.div
-                  key="expanded"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col lg:flex-row gap-6"
-                >
-                  {/* Main Expanded Category */}
-                  <div className="flex-1">
-                    <ExpandedCategoryHeader
-                      category={expandedCategory}
-                      sortedCategories={sortedCategories}
-                      onClose={() => setExpandedCategoryId(null)}
-                    />
-
-                    {/* Products Grid */}
-                    <motion.div 
-                      className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <AnimatePresence>
-                        {expandedProducts.map((product, index) => (
-                          <ProductCard key={product.id} product={product} index={index} />
-                        ))}
+            {/* Expanded View */}
+            {expandedCategory ? (
+              <motion.div
+                layout
+                className="flex flex-col lg:flex-row gap-6"
+                transition={springTransition}
+              >
+                {/* Sidebar with other categories - LEFT SIDE */}
+                {otherCategories.length > 0 && (
+                  <motion.div 
+                    layout
+                    className="lg:w-64 shrink-0 order-2 lg:order-1"
+                    transition={springTransition}
+                  >
+                    <h3 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-4">
+                      Weitere Kategorien
+                    </h3>
+                    <div className="space-y-2">
+                      <AnimatePresence mode="popLayout">
+                        {otherCategories.map((category, index) => {
+                          const productCount = products.filter(
+                            p => p.categoryId === category.id && p.status === 'published'
+                          ).length;
+                          return (
+                            <CollapsedCategoryCard
+                              key={category.id}
+                              category={category}
+                              productCount={productCount}
+                              onClick={() => handleCategoryClick(category.id)}
+                              index={index}
+                              sortedCategories={sortedCategories}
+                            />
+                          );
+                        })}
                       </AnimatePresence>
-                    </motion.div>
+                    </div>
+                  </motion.div>
+                )}
 
-                    {expandedProducts.length === 0 && (
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-center py-12 text-muted-foreground"
-                      >
-                        Keine Leistungen in dieser Kategorie verfügbar.
-                      </motion.div>
-                    )}
+                {/* Main Expanded Category - RIGHT SIDE */}
+                <motion.div 
+                  layout
+                  className="flex-1 order-1 lg:order-2"
+                  transition={springTransition}
+                >
+                  <ExpandedCategoryHeader
+                    category={expandedCategory}
+                    sortedCategories={sortedCategories}
+                    onClose={() => setExpandedCategoryId(null)}
+                  />
 
-                    {/* CTA for expanded category */}
+                  {/* Products Grid */}
+                  <motion.div 
+                    layout
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    transition={springTransition}
+                  >
+                    <AnimatePresence mode="popLayout">
+                      {expandedProducts.map((product, index) => (
+                        <ProductCard key={product.id} product={product} index={index} />
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {expandedProducts.length === 0 && (
                     <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="mt-8 p-6 rounded-xl bg-primary/5 border border-primary/20 text-center"
+                      layout
+                      className="text-center py-12 text-muted-foreground"
                     >
-                      <h3 className="font-display text-lg font-semibold mb-2">
-                        Interesse an {expandedCategory.name}?
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Kontaktieren Sie mich für eine unverbindliche Beratung.
-                      </p>
-                      <Button asChild>
-                        <Link to="/kontakt">
-                          Unverbindliche Anfrage stellen
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </motion.div>
-                  </div>
-
-                  {/* Sidebar with other categories */}
-                  {otherCategories.length > 0 && (
-                    <motion.div 
-                      className="lg:w-72 shrink-0"
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 }}
-                    >
-                      <h3 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-4">
-                        Weitere Kategorien
-                      </h3>
-                      <div className="space-y-2">
-                        <AnimatePresence>
-                          {otherCategories.map((category, index) => {
-                            const productCount = products.filter(
-                              p => p.categoryId === category.id && p.status === 'published'
-                            ).length;
-                            return (
-                              <CollapsedCategoryCard
-                                key={category.id}
-                                category={category}
-                                productCount={productCount}
-                                onClick={() => handleCategoryClick(category.id)}
-                                index={index}
-                              />
-                            );
-                          })}
-                        </AnimatePresence>
-                      </div>
+                      Keine Leistungen in dieser Kategorie verfügbar.
                     </motion.div>
                   )}
+
+                  {/* CTA for expanded category */}
+                  <motion.div 
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-8 p-6 rounded-xl bg-primary/5 border border-primary/20 text-center"
+                  >
+                    <h3 className="font-display text-lg font-semibold mb-2">
+                      Interesse an {expandedCategory.name}?
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Kontaktieren Sie mich für eine unverbindliche Beratung.
+                    </p>
+                    <Button asChild>
+                      <Link to="/kontakt">
+                        Unverbindliche Anfrage stellen
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </motion.div>
                 </motion.div>
-              ) : (
-                /* Grid View (Default) */
-                <motion.div
-                  key="grid"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <h2 className="font-display text-2xl font-bold mb-8">Alle Kategorien</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              </motion.div>
+            ) : (
+              /* Grid View (Default) */
+              <motion.div layout transition={springTransition}>
+                <h2 className="font-display text-2xl font-bold mb-8">Alle Kategorien</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <AnimatePresence mode="popLayout">
                     {sortedCategories.map((category) => (
                       <CategoryGridCard
                         key={category.id}
@@ -435,10 +445,10 @@ export default function Leistungen() {
                         onClick={() => handleCategoryClick(category.id)}
                       />
                     ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
           </LayoutGroup>
         </div>
       </section>
@@ -450,6 +460,7 @@ export default function Leistungen() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="py-12 bg-card/50 border-t border-border"
           >
             <div className="container mx-auto px-4 text-center">
