@@ -12,8 +12,7 @@ import {
   FileText,
   Users,
   ChevronRight,
-  Package,
-  Star
+  Package
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Category, Product } from "@/data/initialData";
@@ -56,11 +55,6 @@ export default function Leistungen() {
 
   const sortedCategories = [...activeCategories].sort((a, b) => a.order - b.order);
 
-  // Get featured products across all categories
-  const featuredProducts = products
-    .filter(p => p.status === 'published' && p.featured)
-    .slice(0, 6);
-
   return (
     <Layout 
       pageTitle="Leistungen" 
@@ -80,54 +74,6 @@ export default function Leistungen() {
           </div>
         </div>
       </section>
-
-      {/* Featured Products */}
-      {featuredProducts.length > 0 && (
-        <section className="py-8 bg-gradient-to-b from-primary/5 to-transparent">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-2 mb-6">
-              <Star className="h-5 w-5 text-primary fill-primary" />
-              <h2 className="font-display text-xl font-semibold">Beliebteste Leistungen</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProducts.map((product) => {
-                const colors = getCategoryColors(product.categoryId, sortedCategories);
-                const category = categories.find(c => c.id === product.categoryId);
-                const categorySlug = category?.slug || category?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'unknown';
-                return (
-                  <Link 
-                    key={product.id}
-                    to={`/leistungen/${categorySlug}`}
-                    className="block"
-                  >
-                    <Card className={`group h-full transition-all duration-300 border-2 ${colors.border} ${colors.glow} ring-2 ring-primary/20 hover:scale-[1.02]`}>
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Badge className="bg-primary text-primary-foreground border-0">
-                            <Star className="h-3 w-3 mr-1 fill-current" />
-                            Beliebt
-                          </Badge>
-                          <Badge className={`${colors.bg} ${colors.text} border-0`}>{product.type}</Badge>
-                        </div>
-                        <h3 className={`font-display text-lg font-semibold mb-2 transition-colors ${colors.hoverText}`}>
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {product.shortDescription}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className={`font-semibold ${colors.text}`}>{product.priceText}</span>
-                          <ChevronRight className={`h-5 w-5 text-muted-foreground transition-colors ${colors.hoverText}`} />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Category Cards */}
       <section className="py-12 md:py-16">

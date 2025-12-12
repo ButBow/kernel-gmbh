@@ -4,7 +4,6 @@ export interface CategoryPageSettings {
   heroTitle?: string;
   heroSubtitle?: string;
   heroImage?: string;
-  showFeaturedFirst?: boolean;
   layout?: 'grid' | 'list' | 'cards';
   columnsDesktop?: 2 | 3 | 4;
   showPrices?: boolean;
@@ -45,7 +44,6 @@ export interface Product {
   showcases: Showcase[];
   targetAudience: string[];
   status: 'draft' | 'published';
-  featured?: boolean;
 }
 
 export interface GalleryItem {
@@ -392,8 +390,7 @@ export const initialProducts: Product[] = [
       { title: "Standard", description: "1–2 Videos (bis 90s), Sounddesign, Color-Grading, Social Media Optimierung", price: "CHF 260–350" }
     ],
     targetAudience: ["Einzelunternehmer", "KMU", "Creators"],
-    status: "published",
-    featured: true  // Featured: Video category
+    status: "published"
   },
   {
     id: 2,
@@ -429,8 +426,7 @@ export const initialProducts: Product[] = [
     priceText: "CHF 1200–3000",
     showcases: [{ title: "Pro Workspace", description: "Python + Notion + API-Integrationen, AI-Agenten, Training & Dokumentation", price: "CHF 1200–3000" }],
     targetAudience: ["KMU", "Agenturen", "Startups"],
-    status: "published",
-    featured: true  // Featured: AI category
+    status: "published"
   },
   {
     id: 5,
@@ -454,8 +450,7 @@ export const initialProducts: Product[] = [
     priceText: "CHF 80–150/h",
     showcases: [{ title: "Beratung", description: "1–2h Analyse + Dokumentation mit Empfehlungen", price: "CHF 80–150/h" }],
     targetAudience: ["Einzelunternehmer", "KMU"],
-    status: "published",
-    featured: true  // Featured: Support category
+    status: "published"
   },
   {
     id: 7,
@@ -479,8 +474,7 @@ export const initialProducts: Product[] = [
     priceText: "Ab CHF 500",
     showcases: [{ title: "Prototyp", description: "Konzeption + MVP-Entwicklung + 1 Iterationsrunde", price: "Ab CHF 500" }],
     targetAudience: ["Startups", "Unternehmen"],
-    status: "published",
-    featured: true  // Featured: Tools category
+    status: "published"
   },
   {
     id: 9,
@@ -495,8 +489,7 @@ export const initialProducts: Product[] = [
       { title: "Paket (5er)", description: "5 Designs im einheitlichen Stil", price: "CHF 120–200" }
     ],
     targetAudience: ["Creators", "KMU", "Influencer"],
-    status: "published",
-    featured: true  // Featured: Design category
+    status: "published"
   }
 ];
 

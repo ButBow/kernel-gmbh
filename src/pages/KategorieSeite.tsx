@@ -19,11 +19,8 @@ import {
   ChevronLeft,
   X,
   Package,
-  Star,
   Send,
-  ArrowLeft,
-  List,
-  Grid3X3
+  ArrowLeft
 } from "lucide-react";
 import type { Product, Showcase, Category } from "@/data/initialData";
 import {
@@ -172,19 +169,7 @@ export default function KategorieSeite() {
   
   // Get products for this category
   const categoryProducts = products
-    .filter(p => p.categoryId === category.id && p.status === 'published')
-    .sort((a, b) => {
-      if (pageSettings.showFeaturedFirst !== false) {
-        if (a.featured && !b.featured) return -1;
-        if (!a.featured && b.featured) return 1;
-      }
-      return 0;
-    });
-
-  const featuredProducts = categoryProducts.filter(p => p.featured);
-  const regularProducts = pageSettings.showFeaturedFirst !== false 
-    ? categoryProducts.filter(p => !p.featured)
-    : categoryProducts;
+    .filter(p => p.categoryId === category.id && p.status === 'published');
 
   // Get other categories for navigation
   const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
@@ -300,61 +285,12 @@ export default function KategorieSeite() {
         </div>
       </section>
 
-      {/* Featured Products */}
-      {pageSettings.showFeaturedFirst !== false && featuredProducts.length > 0 && (
-        <section className="py-8 bg-gradient-to-b from-primary/5 to-transparent">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-2 mb-6">
-              <Star className="h-5 w-5 text-primary fill-primary" />
-              <h2 className="font-display text-xl font-semibold">Empfohlene Leistungen</h2>
-            </div>
-            <div className={`grid grid-cols-1 ${gridClasses[columns]} gap-6`}>
-              {featuredProducts.map((product) => (
-                <Card 
-                  key={product.id}
-                  className={`group cursor-pointer transition-all duration-300 border-2 ${colors.border} ${colors.glow} ring-2 ring-primary/20`}
-                  onClick={() => handleProductClick(product)}
-                >
-                  <CardHeader>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-primary text-primary-foreground border-0">
-                        <Star className="h-3 w-3 mr-1 fill-current" />
-                        Empfohlen
-                      </Badge>
-                      <Badge className={`${colors.bg} ${colors.text} border-0`}>{product.type}</Badge>
-                    </div>
-                    <CardTitle className={`font-display text-lg transition-colors ${colors.hoverText}`}>
-                      {product.name}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {product.shortDescription}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      {pageSettings.showPrices !== false && (
-                        <span className={`font-semibold ${colors.text}`}>{product.priceText}</span>
-                      )}
-                      <ChevronRight className={`h-5 w-5 text-muted-foreground transition-colors ${colors.hoverText}`} />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Products Grid/List */}
       <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
-          {featuredProducts.length > 0 && regularProducts.length > 0 && (
-            <h2 className="font-display text-xl font-semibold mb-6">Weitere Leistungen</h2>
-          )}
-          
           {layout === 'list' ? (
             <div className="space-y-4">
-              {(pageSettings.showFeaturedFirst !== false ? regularProducts : categoryProducts).map((product) => (
+              {categoryProducts.map((product) => (
                 <Card 
                   key={product.id}
                   className={`group cursor-pointer transition-all duration-300 border ${colors.border} hover:border-primary/50`}
@@ -363,11 +299,6 @@ export default function KategorieSeite() {
                   <div className="flex items-center p-4 gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        {product.featured && (
-                          <Badge className="bg-primary/10 text-primary border-0">
-                            <Star className="h-3 w-3 mr-1 fill-current" />
-                          </Badge>
-                        )}
                         <Badge className={`${colors.bg} ${colors.text} border-0`}>{product.type}</Badge>
                       </div>
                       <h3 className={`font-display font-semibold transition-colors ${colors.hoverText}`}>
@@ -387,7 +318,7 @@ export default function KategorieSeite() {
             </div>
           ) : (
             <div className={`grid grid-cols-1 ${gridClasses[columns]} gap-6`}>
-              {(pageSettings.showFeaturedFirst !== false ? regularProducts : categoryProducts).map((product) => (
+              {categoryProducts.map((product) => (
                 <Card 
                   key={product.id}
                   className={`group cursor-pointer transition-all duration-300 border-2 ${colors.border} ${colors.glow}`}
@@ -395,11 +326,6 @@ export default function KategorieSeite() {
                 >
                   <CardHeader>
                     <div className="flex items-center gap-2 mb-2">
-                      {product.featured && (
-                        <Badge className="bg-primary/10 text-primary border-0">
-                          <Star className="h-3 w-3 mr-1 fill-current" />
-                        </Badge>
-                      )}
                       <Badge className={`${colors.bg} ${colors.text} border-0`}>{product.type}</Badge>
                     </div>
                     <CardTitle className={`font-display text-lg transition-colors ${colors.hoverText}`}>
