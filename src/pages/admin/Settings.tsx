@@ -1292,197 +1292,6 @@ export default function AdminSettings() {
           </div>
         </TabsContent>
 
-        <TabsContent value="integrations">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  Notion Integration
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Verbinde dein Kontaktformular mit Notion, um Anfragen automatisch in einer Datenbank zu speichern.
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Server URL (für Self-Hosting)</label>
-                  <Input
-                    value={form.apiBaseUrl || ''}
-                    onChange={(e) => setForm({ ...form, apiBaseUrl: e.target.value })}
-                    placeholder="https://kernel_website.floriskern.ch"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Gib deine Domain ein (z.B. https://kernel_website.floriskern.ch), wenn du die Website selbst hostest. Leer lassen für lokale Entwicklung.
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                  <div className="space-y-1">
-                    <p className="font-medium">Notion aktivieren</p>
-                    <p className="text-sm text-muted-foreground">
-                      Kontaktanfragen werden an Notion gesendet
-                    </p>
-                  </div>
-                  <Switch
-                    checked={form.notionEnabled || false}
-                    onCheckedChange={(checked) => setForm({ ...form, notionEnabled: checked })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Notion API Key</label>
-                  <div className="flex gap-2">
-                    <Input
-                      type={form.notionApiKey && !notionShowApiKey ? 'password' : 'text'}
-                      value={form.notionApiKey || ''}
-                      onChange={(e) => setForm({ ...form, notionApiKey: e.target.value })}
-                      placeholder="secret_xxx..."
-                      disabled={!form.notionEnabled}
-                      className="font-mono"
-                    />
-                    {form.notionApiKey && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setNotionShowApiKey(!notionShowApiKey)}
-                        disabled={!form.notionEnabled}
-                      >
-                        {notionShowApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Den API Key findest du unter <a href="https://www.notion.so/my-integrations" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">notion.so/my-integrations</a> (beginnt mit secret_)
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Notion Database ID</label>
-                  <Input
-                    value={form.notionDatabaseId || ''}
-                    onChange={(e) => setForm({ ...form, notionDatabaseId: e.target.value })}
-                    placeholder="abc123def456..."
-                    disabled={!form.notionEnabled}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Die ID findest du in der URL deiner Notion-Datenbank zwischen dem letzten "/" und dem "?"
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    disabled={!form.notionDatabaseId || !form.notionApiKey || notionTesting}
-                    onClick={async () => {
-                      setNotionTesting(true);
-                      setNotionTestResult(null);
-                      try {
-                        const baseUrl = form.apiBaseUrl?.replace(/\/$/, '') || '';
-                        const response = await fetch(`${baseUrl}/api/notion/test`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            databaseId: form.notionDatabaseId,
-                            apiKey: form.notionApiKey
-                          })
-                        });
-                        const result = await response.json();
-                        setNotionTestResult(result);
-                        if (result.success) {
-                          toast.success('Notion-Verbindung erfolgreich!');
-                        } else {
-                          toast.error(result.error || 'Verbindung fehlgeschlagen');
-                        }
-                      } catch (error) {
-                        setNotionTestResult({ 
-                          success: false, 
-                          error: 'Server nicht erreichbar. Läuft der Server mit node server.js?' 
-                        });
-                        toast.error('Server nicht erreichbar');
-                      }
-                      setNotionTesting(false);
-                    }}
-                  >
-                    {notionTesting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Teste...
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="h-4 w-4 mr-2" />
-                        Verbindung testen
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {notionTestResult && (
-                  <div className={`p-4 rounded-lg border ${
-                    notionTestResult.success 
-                      ? 'bg-green-500/10 border-green-500/30' 
-                      : 'bg-destructive/10 border-destructive/30'
-                  }`}>
-                    <div className="flex items-start gap-3">
-                      {notionTestResult.success ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
-                      ) : (
-                        <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
-                      )}
-                      <div className="space-y-1 flex-1">
-                        <p className={`font-medium ${notionTestResult.success ? 'text-green-500' : 'text-destructive'}`}>
-                          {notionTestResult.success ? 'Verbindung erfolgreich' : 'Verbindung fehlgeschlagen'}
-                        </p>
-                        {notionTestResult.error && (
-                          <p className="text-sm text-muted-foreground">{notionTestResult.error}</p>
-                        )}
-                        {notionTestResult.warning && (
-                          <p className="text-sm text-yellow-500">{notionTestResult.warning}</p>
-                        )}
-                        {notionTestResult.databaseTitle && (
-                          <p className="text-sm text-muted-foreground">
-                            Datenbank: <strong>{notionTestResult.databaseTitle}</strong>
-                          </p>
-                        )}
-                        {notionTestResult.properties && notionTestResult.properties.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-xs text-muted-foreground mb-1">Gefundene Properties:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {notionTestResult.properties.map((prop, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">{prop}</Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-4 border-t border-border">
-                  <h4 className="font-medium mb-2">Einrichtungs-Anleitung</h4>
-                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-                    <li>Erstelle eine Integration unter <a href="https://www.notion.so/my-integrations" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">notion.so/my-integrations</a></li>
-                    <li>Kopiere den "Internal Integration Token" (beginnt mit <code className="bg-muted px-1 rounded">secret_</code>) und trage ihn oben ein</li>
-                    <li>Erstelle eine Notion-Datenbank mit den Properties: Name, E-Mail, Status, Eingegangen</li>
-                    <li>Teile die Datenbank mit deiner Integration</li>
-                    <li>Kopiere die Database ID aus der URL und trage sie oben ein</li>
-                    <li>Klicke auf "Speichern" und teste die Verbindung</li>
-                  </ol>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    Ausführliche Anleitung: Siehe <code className="bg-muted px-1 rounded">HOSTING.md</code> Abschnitt 9
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
         <TabsContent value="promotions">
           <PromotionManager
@@ -2433,46 +2242,26 @@ export default function AdminSettings() {
               </CardContent>
             </Card>
 
-            {/* Notion Integration - Simplified */}
+            {/* Server/API Configuration - for self-hosting */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  Notion Integration
+                  <HardDrive className="h-5 w-5" />
+                  Server-Konfiguration
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Notion aktiviert</Label>
-                    <p className="text-sm text-muted-foreground">Sendet Kontaktanfragen an Notion</p>
-                  </div>
-                  <Switch
-                    checked={form.notionEnabled || false}
-                    onCheckedChange={(checked) => setForm({ ...form, notionEnabled: checked })}
+                <div>
+                  <Label>Server URL (für Self-Hosting)</Label>
+                  <Input
+                    value={form.apiBaseUrl || ''}
+                    onChange={(e) => setForm({ ...form, apiBaseUrl: e.target.value })}
+                    placeholder="https://kernel_website.floriskern.ch"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Gib deine Domain ein, wenn du die Website selbst hostest. Leer lassen für lokale Entwicklung.
+                  </p>
                 </div>
-                {form.notionEnabled && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Notion Database ID</Label>
-                      <Input
-                        value={form.notionDatabaseId || ''}
-                        onChange={(e) => setForm({ ...form, notionDatabaseId: e.target.value })}
-                        placeholder="abc123..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Notion API Key</Label>
-                      <Input
-                        type="password"
-                        value={form.notionApiKey || ''}
-                        onChange={(e) => setForm({ ...form, notionApiKey: e.target.value })}
-                        placeholder="secret_..."
-                      />
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>

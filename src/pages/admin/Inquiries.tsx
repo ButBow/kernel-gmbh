@@ -337,6 +337,9 @@ export default function AdminInquiries() {
             config={notionWorkflow}
             onChange={handleNotionWorkflowChange}
             apiBaseUrl={settings.apiBaseUrl}
+            legacyApiKey={settings.notionApiKey}
+            legacyDatabaseId={settings.notionDatabaseId}
+            legacyEnabled={settings.notionEnabled}
           />
         </TabsContent>
       </Tabs>
