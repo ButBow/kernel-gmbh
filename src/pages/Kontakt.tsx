@@ -366,8 +366,10 @@ export default function Kontakt() {
   return (
     <Layout pageTitle="Kontakt" pageDescription="Kontaktieren Sie uns für eine unverbindliche Beratung zu Ihrem Projekt.">
       {/* Hero */}
-      <section className="py-16 md:py-24 bg-gradient-dark">
-        <div className="container mx-auto px-4">
+      <section className="relative py-16 md:py-24 bg-gradient-dark overflow-hidden">
+        <div className="absolute inset-0 glow-bg" aria-hidden="true" />
+        <div className="glow-top-right glow-pulse" aria-hidden="true" />
+        <div className="container relative mx-auto px-4">
           <div className="max-w-3xl">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
               <span className="text-gradient">Kontakt</span>
@@ -380,9 +382,13 @@ export default function Kontakt() {
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
       {/* Contact Section */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
+      <section className="relative py-12 md:py-16 overflow-hidden">
+        <div className="glow-left glow-pulse" aria-hidden="true" />
+        <div className="container relative mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Contact Info */}
             <div className="lg:col-span-1">

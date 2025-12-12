@@ -7,11 +7,24 @@ export default function Impressum() {
 
   return (
     <Layout pageTitle="Impressum">
-      <section className="py-16 md:py-24">
+      {/* Hero */}
+      <section className="relative py-12 md:py-16 bg-gradient-dark overflow-hidden">
+        <div className="absolute inset-0 glow-bg" aria-hidden="true" />
+        <div className="container relative mx-auto px-4">
+          <div className="max-w-3xl">
+            <h1 className="font-display text-4xl md:text-5xl font-bold">
+              <span className="text-gradient">Impressum</span>
+            </h1>
+          </div>
+        </div>
+      </section>
+
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
+      <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h1 className="font-display text-4xl font-bold mb-8">Impressum</h1>
-            
             <div className="space-y-8">
               {/* Firmensitz */}
               {settings.companyHeadquarters && (

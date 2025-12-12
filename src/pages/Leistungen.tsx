@@ -333,8 +333,10 @@ export default function Leistungen() {
       pageDescription="Von der kreativen Content-Produktion bis zur technischen Automatisierung – hier finden Sie alle Services, die ich anbiete."
     >
       {/* Hero */}
-      <section className="py-12 md:py-20 bg-gradient-dark">
-        <div className="container mx-auto px-4">
+      <section className="relative py-12 md:py-20 bg-gradient-dark overflow-hidden">
+        <div className="absolute inset-0 glow-bg" aria-hidden="true" />
+        <div className="glow-top-right glow-pulse" aria-hidden="true" />
+        <div className="container relative mx-auto px-4">
           <div className="max-w-3xl">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
               Meine <span className="text-gradient">Leistungen</span>
@@ -347,9 +349,13 @@ export default function Leistungen() {
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
       {/* Main Content */}
-      <section className="py-8 md:py-12">
-        <div className="container mx-auto px-4">
+      <section className="relative py-8 md:py-12 overflow-hidden">
+        <div className="glow-right glow-pulse" aria-hidden="true" />
+        <div className="container relative mx-auto px-4">
           <LayoutGroup>
             {/* Expanded View */}
             {expandedCategory ? (

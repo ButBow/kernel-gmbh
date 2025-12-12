@@ -147,8 +147,10 @@ export default function Portfolio() {
   return (
     <Layout pageTitle="Portfolio" pageDescription="Ausgewählte Projekte aus den Bereichen Video, Automatisierung, und Content-Produktion.">
       {/* Hero */}
-      <section className="py-16 md:py-24 bg-gradient-dark">
-        <div className="container mx-auto px-4">
+      <section className="relative py-16 md:py-24 bg-gradient-dark overflow-hidden">
+        <div className="absolute inset-0 glow-bg" aria-hidden="true" />
+        <div className="glow-top-right glow-pulse" aria-hidden="true" />
+        <div className="container relative mx-auto px-4">
           <div className="max-w-3xl">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
               <span className="text-gradient">Portfolio</span>
@@ -160,6 +162,9 @@ export default function Portfolio() {
           </div>
         </div>
       </section>
+
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
 
       {/* Filter */}
       <section className="py-8 border-b border-border">
@@ -182,9 +187,13 @@ export default function Portfolio() {
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="section-divider" aria-hidden="true" />
+
       {/* Projects Grid */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
+      <section className="relative py-12 md:py-16 overflow-hidden">
+        <div className="glow-left glow-pulse" aria-hidden="true" />
+        <div className="container relative mx-auto px-4">
           {filteredProjects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProjects.map((project) => (
