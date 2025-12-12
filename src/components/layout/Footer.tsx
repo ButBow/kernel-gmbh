@@ -36,7 +36,7 @@ export function Footer() {
           <div>
             <h4 className="font-display font-semibold text-primary mb-4">Über mich</h4>
             <p className="text-sm font-medium text-foreground mb-2">
-              {settings.companyName}
+              {settings.ownerName || 'Floris Kern'}
             </p>
             <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
               {settings.aboutShort || 'Experte für KI, Automatisierung & Content-Produktion.'}

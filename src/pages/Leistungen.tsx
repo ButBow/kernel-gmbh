@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +20,6 @@ import {
   Package,
   X
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import type { Category, Product } from "@/data/initialData";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -54,6 +53,9 @@ function generateAutoDescription(category: Category, products: Product[]): strin
 
 // Product Card Component
 function ProductCard({ product, index }: { product: Product; index: number }) {
+  const [showPackages, setShowPackages] = useState(false);
+  const hasPackages = product.showcases && product.showcases.length > 0;
+  
   return (
     <motion.div
       layout
@@ -67,22 +69,49 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             <Badge variant="secondary" className="text-xs shrink-0">
               {product.type}
             </Badge>
+            {hasPackages && (
+              <Badge variant="outline" className="text-xs">
+                {product.showcases.length} Pakete
+              </Badge>
+            )}
           </div>
           <h4 className="font-display font-semibold text-lg mb-2 line-clamp-2">
             {product.name}
           </h4>
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-            {product.shortDescription}
+          <p className="text-sm text-muted-foreground mb-4">
+            {product.description}
           </p>
           
-          {product.showcases.length > 0 && (
-            <div className="space-y-2 mb-4">
-              {product.showcases.slice(0, 2).map((showcase, i) => (
-                <div key={i} className="text-xs p-2 rounded bg-secondary/50">
-                  <span className="font-medium">{showcase.title}</span>
-                  <span className="text-muted-foreground ml-2">{showcase.price}</span>
+          {/* Packages Section */}
+          {hasPackages && (
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={() => setShowPackages(!showPackages)}
+                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mb-2"
+              >
+                <Package className="h-4 w-4" />
+                <span>Pakete anzeigen</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${showPackages ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showPackages && (
+                <div className="space-y-2 mt-3">
+                  {product.showcases.map((showcase, i) => (
+                    <Link
+                      key={i}
+                      to={`/kontakt?product=${encodeURIComponent(product.name)}&productPrice=${encodeURIComponent(product.priceText)}&package=${encodeURIComponent(showcase.title)}&packagePrice=${encodeURIComponent(showcase.price)}&packageDescription=${encodeURIComponent(showcase.description)}`}
+                      className="block p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors border border-transparent hover:border-primary/30"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-sm">{showcase.title}</span>
+                        <span className="text-primary font-semibold text-sm">{showcase.price}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{showcase.description}</p>
+                    </Link>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
           
@@ -92,7 +121,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             </span>
             <Button asChild size="sm" variant="outline">
               <Link to={`/kontakt?product=${encodeURIComponent(product.name)}&productPrice=${encodeURIComponent(product.priceText)}`}>
-                Anfragen
+                {hasPackages ? 'Allgemeine Anfrage' : 'Anfragen'}
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
