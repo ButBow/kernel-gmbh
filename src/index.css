@@ -188,17 +188,18 @@
   .card-glow {
     position: relative;
     transition: all 0.3s ease;
+    overflow: hidden;
   }
 
   .card-glow::before {
     content: '';
     position: absolute;
-    inset: -2px;
-    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--primary) / 0.15), transparent 60%);
+    inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--primary) / 0.12), transparent 50%);
     border-radius: inherit;
     opacity: 0;
     transition: opacity 0.3s ease;
-    z-index: -1;
+    pointer-events: none;
   }
 
   .card-glow:hover::before {
