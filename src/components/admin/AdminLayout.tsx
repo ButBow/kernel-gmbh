@@ -25,9 +25,7 @@ interface AdminLayoutProps {
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/inquiries', icon: MessageSquare, label: 'Anfragen' },
-  { href: '/admin/products', icon: Package, label: 'Produkte & Services' },
-  { href: '/admin/portfolio', icon: FolderKanban, label: 'Portfolio' },
-  { href: '/admin/blog', icon: FileText, label: 'Blog' },
+  { href: '/admin/products', icon: Package, label: 'Leistungen' },
   { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/admin/settings', icon: Settings, label: 'Einstellungen' },
 ];

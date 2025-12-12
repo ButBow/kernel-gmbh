@@ -32,31 +32,18 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Navigation */}
+          {/* About Section */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Navigation</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/leistungen" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Leistungen
-                </Link>
-              </li>
-              <li>
-                <Link to="/portfolio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Portfolio
-                </Link>
-              </li>
-              <li>
-                <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link to="/ueber-mich" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Über mich
-                </Link>
-              </li>
-            </ul>
+            <h4 className="font-display font-semibold text-foreground mb-4">Über mich</h4>
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
+              {settings.aboutShort || settings.aboutText?.slice(0, 150) || 'Experte für KI, Automatisierung & Content-Produktion.'}
+            </p>
+            <Link 
+              to="/ueber-mich" 
+              className="text-sm text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
+            >
+              Mehr erfahren →
+            </Link>
           </div>
 
           {/* Contact */}

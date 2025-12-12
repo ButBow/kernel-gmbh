@@ -54,7 +54,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export function BackupRestore() {
-  const { categories, products, projects, posts, settings, importCategories, importProducts, importProjects, importPosts, updateSettings } = useContent();
+  const { categories, products, settings, importCategories, importProducts, updateSettings } = useContent();
   const { themeConfig, importThemes } = useTheme();
   const { events: analyticsEvents, importAnalytics } = useAnalytics();
 
@@ -67,12 +67,12 @@ export function BackupRestore() {
     setInquiries(stored);
   }, []);
 
-  // Export options
+  // Export options - removed projects and posts (deprecated features)
   const [exportOptions, setExportOptions] = useState<BackupOptions>({
     includeCategories: true,
     includeProducts: true,
-    includeProjects: true,
-    includePosts: true,
+    includeProjects: false, // Deprecated - kept for backward compatibility
+    includePosts: false, // Deprecated - kept for backward compatibility  
     includeSettings: true,
     includeThemes: true,
     includeAnalytics: false,
@@ -94,8 +94,8 @@ export function BackupRestore() {
       const success = await saveContentToServer({
         categories,
         products,
-        projects,
-        posts,
+        projects: [], // Deprecated
+        posts: [], // Deprecated
         settings,
       });
       
@@ -120,8 +120,8 @@ export function BackupRestore() {
       {
         categories,
         products,
-        projects,
-        posts,
+        projects: [], // Deprecated
+        posts: [], // Deprecated
         settings,
         themeConfig,
         analyticsEvents,
@@ -168,18 +168,19 @@ export function BackupRestore() {
     const data = result.data;
     const mode = importMode === 'merge' ? 'add' : 'replace';
 
-    // Import all data
+    // Import all data (skip deprecated projects and posts - they're logged but not imported)
     if (data.categories?.length) {
       importCategories(data.categories, mode);
     }
     if (data.products?.length) {
       importProducts(data.products, mode);
     }
+    // Projects and Posts are deprecated - skip import but log
     if (data.projects?.length) {
-      importProjects(data.projects, mode);
+      console.log(`[Backup] Skipping ${data.projects.length} projects (Portfolio feature removed)`);
     }
     if (data.posts?.length) {
-      importPosts(data.posts, mode);
+      console.log(`[Backup] Skipping ${data.posts.length} posts (Blog feature removed)`);
     }
     if (data.settings && importMode === 'replace') {
       updateSettings(data.settings);
@@ -213,13 +214,11 @@ export function BackupRestore() {
     setShowConfirmDialog(false);
   };
 
-  // Calculate counts
+  // Calculate counts (removed deprecated projects and posts)
   const currentInquiries = getStorageItem<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []);
   const counts = {
     categories: categories.length,
     products: products.length,
-    projects: projects.length,
-    posts: posts.length,
     customThemes: themeConfig.customThemes.length,
     analyticsEvents: analyticsEvents.length,
     inquiries: currentInquiries.length,
@@ -239,7 +238,7 @@ export function BackupRestore() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Data selection */}
+          {/* Data selection - Simplified without Portfolio and Blog */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <label className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
               <Checkbox
@@ -256,25 +255,7 @@ export function BackupRestore() {
                 onCheckedChange={(checked) => setExportOptions({ ...exportOptions, includeProducts: !!checked })}
               />
               <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Produkte ({counts.products})</span>
-            </label>
-
-            <label className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
-              <Checkbox
-                checked={exportOptions.includeProjects}
-                onCheckedChange={(checked) => setExportOptions({ ...exportOptions, includeProjects: !!checked })}
-              />
-              <Package className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Projekte ({counts.projects})</span>
-            </label>
-
-            <label className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
-              <Checkbox
-                checked={exportOptions.includePosts}
-                onCheckedChange={(checked) => setExportOptions({ ...exportOptions, includePosts: !!checked })}
-              />
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Blog-Posts ({counts.posts})</span>
+              <span className="text-sm">Leistungen ({counts.products})</span>
             </label>
 
             <label className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
@@ -420,23 +401,27 @@ export function BackupRestore() {
                     <Info className="h-4 w-4" />
                     Backup-Inhalt:
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     <Badge variant="secondary" className="justify-center">
                       {importValidation.summary.categories} Kategorien
                     </Badge>
                     <Badge variant="secondary" className="justify-center">
-                      {importValidation.summary.products} Produkte
-                    </Badge>
-                    <Badge variant="secondary" className="justify-center">
-                      {importValidation.summary.projects} Projekte
-                    </Badge>
-                    <Badge variant="secondary" className="justify-center">
-                      {importValidation.summary.posts} Posts
+                      {importValidation.summary.products} Leistungen
                     </Badge>
                     <Badge variant="secondary" className="justify-center">
                       {importValidation.summary.inquiries} Anfragen
                     </Badge>
                   </div>
+                  {/* Show deprecated data warning */}
+                  {(importValidation.summary.projects > 0 || importValidation.summary.posts > 0) && (
+                    <Alert className="border-yellow-500/50 bg-yellow-500/10 mt-2">
+                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      <AlertDescription className="text-yellow-700 dark:text-yellow-300 text-xs">
+                        {importValidation.summary.projects > 0 && `${importValidation.summary.projects} Projekte werden übersprungen (Portfolio entfernt). `}
+                        {importValidation.summary.posts > 0 && `${importValidation.summary.posts} Posts werden übersprungen (Blog entfernt).`}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                     {importValidation.summary.hasSettings && <span>✓ Einstellungen</span>}
                     {importValidation.summary.hasThemes && <span>✓ Themes</span>}
@@ -529,7 +514,7 @@ export function BackupRestore() {
           
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              Aktuelle Daten: {counts.categories} Kategorien, {counts.products} Produkte, {counts.projects} Projekte
+              Aktuelle Daten: {counts.categories} Kategorien, {counts.products} Leistungen
             </div>
             <Button 
               onClick={handleSaveAsDefault} 

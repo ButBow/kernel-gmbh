@@ -93,18 +93,12 @@ export default function AdminSettings() {
       <Tabs defaultValue="home">
         <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6">
           <TabsList className="inline-flex w-max min-w-full sm:w-auto">
-            <TabsTrigger value="home" className="text-xs sm:text-sm">Startseite</TabsTrigger>
-            <TabsTrigger value="partners" className="text-xs sm:text-sm">Partner</TabsTrigger>
-            <TabsTrigger value="promotions" className="text-xs sm:text-sm">Aktionen</TabsTrigger>
+            <TabsTrigger value="home" className="text-xs sm:text-sm">Website</TabsTrigger>
             <TabsTrigger value="about" className="text-xs sm:text-sm">Über mich</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs sm:text-sm">Kontakt</TabsTrigger>
-            <TabsTrigger value="integrations" className="text-xs sm:text-sm">Integrationen</TabsTrigger>
-            <TabsTrigger value="chatbot" className="text-xs sm:text-sm">Chatbot</TabsTrigger>
             <TabsTrigger value="theme" className="text-xs sm:text-sm">Design</TabsTrigger>
             <TabsTrigger value="backup" className="text-xs sm:text-sm">Backup</TabsTrigger>
-            <TabsTrigger value="cookies" className="text-xs sm:text-sm">Cookies</TabsTrigger>
-            <TabsTrigger value="general" className="text-xs sm:text-sm">Allgemein</TabsTrigger>
-            <TabsTrigger value="legal" className="text-xs sm:text-sm">Rechtliches</TabsTrigger>
+            <TabsTrigger value="system" className="text-xs sm:text-sm">System</TabsTrigger>
           </TabsList>
         </div>
 
@@ -2174,6 +2168,311 @@ export default function AdminSettings() {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* System Tab - consolidated from: general, legal, integrations, chatbot, cookies, promotions, partners */}
+        <TabsContent value="system">
+          <div className="space-y-6">
+            {/* General Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Allgemeine Einstellungen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Firmenname</label>
+                  <Input
+                    value={form.companyName}
+                    onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                    placeholder="Mein Firmenname"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Wird überall auf der Website angezeigt (Header, Footer, Impressum, etc.)
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Footer-Text</label>
+                  <Input
+                    value={form.footerText}
+                    onChange={(e) => setForm({ ...form, footerText: e.target.value })}
+                    placeholder="© 2024 Mein Firmenname"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Partner Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Handshake className="h-5 w-5" />
+                    Partner & Kooperationen
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm({
+                      ...form,
+                      partners: [...(form.partners || []), {
+                        name: '',
+                        logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=200&q=80',
+                        link: '',
+                        quote: ''
+                      }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Partner hinzufügen
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(form.partners || []).map((partner, i) => (
+                  <div key={i} className="p-3 border border-border rounded-lg flex gap-3 items-center">
+                    <img src={partner.logo} alt={partner.name || 'Partner'} className="w-12 h-12 rounded-lg object-contain bg-secondary" />
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <Input
+                        value={partner.name}
+                        onChange={(e) => {
+                          const newPartners = [...(form.partners || [])];
+                          newPartners[i] = { ...newPartners[i], name: e.target.value };
+                          setForm({ ...form, partners: newPartners });
+                        }}
+                        placeholder="Partner-Name"
+                      />
+                      <Input
+                        value={partner.link || ''}
+                        onChange={(e) => {
+                          const newPartners = [...(form.partners || [])];
+                          newPartners[i] = { ...newPartners[i], link: e.target.value };
+                          setForm({ ...form, partners: newPartners });
+                        }}
+                        placeholder="Website-Link (optional)"
+                      />
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setForm({ ...form, partners: (form.partners || []).filter((_, idx) => idx !== i) })}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                {(!form.partners || form.partners.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Keine Partner vorhanden</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Promotions */}
+            <PromotionManager
+              promotions={form.promotions || []}
+              onChange={(promotions) => setForm({ ...form, promotions })}
+            />
+
+            {/* Legal Section - Simplified */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Rechtliches
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium">Firmensitz</label>
+                    <Input
+                      value={form.companyHeadquarters || ''}
+                      onChange={(e) => setForm({ ...form, companyHeadquarters: e.target.value })}
+                      placeholder="z.B. Zürich, Schweiz"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">UID- / MWSt-Nummer</label>
+                    <Input
+                      value={form.uidNumber || ''}
+                      onChange={(e) => setForm({ ...form, uidNumber: e.target.value })}
+                      placeholder="z.B. CHE-103.167.648"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Impressum-Text (Markdown)</label>
+                  <Textarea
+                    value={form.impressumText}
+                    onChange={(e) => setForm({ ...form, impressumText: e.target.value })}
+                    rows={8}
+                    className="font-mono text-sm"
+                    placeholder="## Haftungsausschluss..."
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Datenschutztext (Markdown)</label>
+                  <Textarea
+                    value={form.datenschutzText}
+                    onChange={(e) => setForm({ ...form, datenschutzText: e.target.value })}
+                    rows={8}
+                    className="font-mono text-sm"
+                    placeholder="## Datenerhebung..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Chatbot Section - Simplified */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  Chatbot
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Chatbot aktiviert</Label>
+                    <p className="text-sm text-muted-foreground">Zeigt den Chat-Assistenten auf der Website</p>
+                  </div>
+                  <Switch
+                    checked={form.chatbotSettings?.enabled ?? defaultChatbotSettings.enabled}
+                    onCheckedChange={(checked) => setForm({
+                      ...form,
+                      chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, enabled: checked }
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label>Willkommensnachricht</Label>
+                  <Input
+                    value={form.chatbotSettings?.welcomeMessage ?? defaultChatbotSettings.welcomeMessage}
+                    onChange={(e) => setForm({
+                      ...form,
+                      chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, welcomeMessage: e.target.value }
+                    })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Python-Server URL</Label>
+                    <Input
+                      value={form.chatbotSettings?.pythonServerUrl ?? defaultChatbotSettings.pythonServerUrl}
+                      onChange={(e) => setForm({
+                        ...form,
+                        chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, pythonServerUrl: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Ollama Modell</Label>
+                    <Input
+                      value={form.chatbotSettings?.ollamaModel ?? defaultChatbotSettings.ollamaModel}
+                      onChange={(e) => setForm({
+                        ...form,
+                        chatbotSettings: { ...defaultChatbotSettings, ...form.chatbotSettings, ollamaModel: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Cookie Settings - Simplified */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cookie className="h-5 w-5" />
+                  Cookie-Banner
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Cookie-Banner aktiviert</Label>
+                    <p className="text-sm text-muted-foreground">Zeigt den Cookie-Consent-Banner für neue Besucher</p>
+                  </div>
+                  <Switch
+                    checked={form.cookieSettings?.enabled ?? defaultCookieSettings.enabled}
+                    onCheckedChange={(checked) => setForm({
+                      ...form,
+                      cookieSettings: { ...defaultCookieSettings, ...form.cookieSettings, enabled: checked }
+                    })}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Titel</Label>
+                    <Input
+                      value={form.cookieSettings?.title ?? defaultCookieSettings.title}
+                      onChange={(e) => setForm({
+                        ...form,
+                        cookieSettings: { ...defaultCookieSettings, ...form.cookieSettings, title: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Position</Label>
+                    <Select
+                      value={form.cookieSettings?.position ?? defaultCookieSettings.position}
+                      onValueChange={(value: 'bottom' | 'top' | 'center') => setForm({
+                        ...form,
+                        cookieSettings: { ...defaultCookieSettings, ...form.cookieSettings, position: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bottom">Unten</SelectItem>
+                        <SelectItem value="top">Oben</SelectItem>
+                        <SelectItem value="center">Mitte</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Notion Integration - Simplified */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Notion Integration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Notion aktiviert</Label>
+                    <p className="text-sm text-muted-foreground">Sendet Kontaktanfragen an Notion</p>
+                  </div>
+                  <Switch
+                    checked={form.notionEnabled || false}
+                    onCheckedChange={(checked) => setForm({ ...form, notionEnabled: checked })}
+                  />
+                </div>
+                {form.notionEnabled && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Notion Database ID</Label>
+                      <Input
+                        value={form.notionDatabaseId || ''}
+                        onChange={(e) => setForm({ ...form, notionDatabaseId: e.target.value })}
+                        placeholder="abc123..."
+                      />
+                    </div>
+                    <div>
+                      <Label>Notion API Key</Label>
+                      <Input
+                        type="password"
+                        value={form.notionApiKey || ''}
+                        onChange={(e) => setForm({ ...form, notionApiKey: e.target.value })}
+                        placeholder="secret_..."
+                      />
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

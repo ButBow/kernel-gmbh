@@ -44,8 +44,8 @@ import { AnalyticsEvent } from '@/contexts/AnalyticsContext';
 import { Inquiry } from '@/types/inquiry';
 
 // Version constants
-export const BACKUP_VERSION = '1.0.0';
-export const SCHEMA_VERSION = 1;
+export const BACKUP_VERSION = '2.0.0';
+export const SCHEMA_VERSION = 2;
 
 // Backup metadata
 export interface BackupMeta {
@@ -54,6 +54,8 @@ export interface BackupMeta {
   exportedAt: string;
   appName: string;
   source?: string;
+  features?: string[]; // What features are included in this backup
+  migrationNotes?: string[]; // Notes about data that was skipped during migration
 }
 
 // Complete backup data structure
@@ -132,14 +134,28 @@ type MigrationFn = (data: BackupData) => BackupData;
  * ============================================================================
  */
 const MIGRATIONS: Record<number, MigrationFn> = {
-  // Example migration from v1 to v2 (currently not needed):
-  // 2: (data) => ({
-  //   ...data,
-  //   settings: {
-  //     ...data.settings,
-  //     newField: data.settings?.newField || 'default_value'
-  //   }
-  // }),
+  // Migration from v1 to v2: Remove portfolio and blog, keep data for backward compatibility
+  2: (data) => {
+    const migrationNotes: string[] = [];
+    
+    // Note removed features but don't delete them (for backward compat)
+    if (data.projects && data.projects.length > 0) {
+      migrationNotes.push(`Portfolio: ${data.projects.length} Projekte übersprungen (Feature entfernt)`);
+    }
+    if (data.posts && data.posts.length > 0) {
+      migrationNotes.push(`Blog: ${data.posts.length} Posts übersprungen (Feature entfernt)`);
+    }
+    
+    return {
+      ...data,
+      _meta: {
+        ...data._meta,
+        migrationNotes,
+        features: ['categories', 'products', 'settings', 'themes', 'analytics', 'inquiries'],
+      },
+      // Keep projects and posts in backup for compatibility, but they won't be imported
+    };
+  },
 };
 
 /**
