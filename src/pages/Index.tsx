@@ -46,20 +46,24 @@ export default function Index() {
 
   return (
     <Layout pageTitle="Startseite" pageDescription={settings.heroSubtitle}>
-      {/* Global animated glow orbs - spread across entire page */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="glow-orb glow-orb-1" />
-        <div className="glow-orb glow-orb-2" />
-        <div className="glow-orb glow-orb-3" />
-        <div className="glow-orb glow-orb-4" />
-        <div className="glow-orb glow-orb-5" />
-      </div>
+      {/* Page wrapper with glow orbs that scroll with content */}
+      <div className="relative">
+        {/* Animated glow orbs - scroll with content, behind text */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="glow-orb glow-orb-1" />
+          <div className="glow-orb glow-orb-2" />
+          <div className="glow-orb glow-orb-3" />
+          <div className="glow-orb glow-orb-4" />
+          <div className="glow-orb glow-orb-5" />
+        </div>
 
-      {/* Hero Section - Semantic HTML for SEO/AEO */}
-      <section className="relative overflow-hidden" aria-labelledby="hero-title">
-        <div className="absolute inset-0 bg-gradient-dark" aria-hidden="true" />
+        {/* Hero Section - Semantic HTML for SEO/AEO */}
+        <section className="relative overflow-hidden" aria-labelledby="hero-title">
+          <div className="absolute inset-0 bg-gradient-dark" aria-hidden="true" />
+          {/* Large top glow effect */}
+          <div className="absolute inset-0 glow-bg" aria-hidden="true" />
         
-        <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
+          <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
           <div className="max-w-4xl mx-auto text-center">
             <h1 id="hero-title" className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight animate-fade-in">
               <span className="text-gradient">{settings.heroTitle}</span>
@@ -211,6 +215,7 @@ export default function Index() {
           </article>
         </div>
       </aside>
+      </div>
     </Layout>
   );
 }
