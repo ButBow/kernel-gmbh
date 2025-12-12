@@ -159,7 +159,8 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const [summary, setSummary] = useState<AnalyticsSummary>(calculateSummary([], defaultCookieSettings));
 
   useEffect(() => {
-    const consent = localStorage.getItem(CONSENT_KEY);
+    // Use sessionStorage for consent - resets on each new browser session
+    const consent = sessionStorage.getItem(CONSENT_KEY);
     if (consent !== null) {
       setConsentGiven(consent === 'true');
     }
@@ -175,9 +176,28 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   }, [cookieSettings, events]);
 
   const setConsent = useCallback((consent: boolean) => {
-    localStorage.setItem(CONSENT_KEY, String(consent));
+    // Use sessionStorage - consent only valid for current session
+    sessionStorage.setItem(CONSENT_KEY, String(consent));
     setConsentGiven(consent);
-  }, []);
+    
+    // Track consent event if accepted
+    if (consent) {
+      const consentEvent: AnalyticsEvent = {
+        id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type: 'page_view',
+        page: window.location.pathname,
+        data: { action: 'consent_given' },
+        timestamp: new Date().toISOString(),
+        sessionId: generateSessionId()
+      };
+      setEvents(prev => {
+        const updated = [...prev, consentEvent].slice(-1000);
+        setStorageItem(ANALYTICS_KEY, updated);
+        setSummary(calculateSummary(updated, cookieSettings));
+        return updated;
+      });
+    }
+  }, [cookieSettings]);
 
   const updateCookieSettings = useCallback((settings: CookieSettings) => {
     setCookieSettings(settings);
