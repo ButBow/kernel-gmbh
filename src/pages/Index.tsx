@@ -103,7 +103,7 @@ export default function Index() {
               const minPrice = prices.length > 0 ? Math.min(...prices) : null;
               
               return (
-                <Link key={category.id} to={`/leistungen/${category.slug}`}>
+                <Link key={category.id} to={`/leistungen?category=${category.id}`}>
                   <Card className={`h-full group transition-all duration-300 hover:shadow-lg cursor-pointer border-2 ${colors.border} hover:border-primary/50`}>
                     <CardContent className="p-6">
                       <div className={`h-12 w-12 rounded-lg ${colors.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>

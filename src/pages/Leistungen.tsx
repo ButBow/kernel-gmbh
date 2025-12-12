@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -282,7 +283,22 @@ function ExpandedCategoryHeader({
 
 export default function Leistungen() {
   const { categories, products } = useContent();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
+
+  // Check for category parameter in URL on mount
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      // Find the category by ID or slug
+      const category = categories.find(c => c.id === categoryParam || c.slug === categoryParam);
+      if (category && !category.hidden) {
+        setExpandedCategoryId(category.id);
+      }
+      // Clear the URL parameter after processing
+      setSearchParams({}, { replace: true });
+    }
+  }, [categories, searchParams, setSearchParams]);
 
   // Filter categories: only show those with active products and not hidden
   const activeCategories = categories.filter(category => {
