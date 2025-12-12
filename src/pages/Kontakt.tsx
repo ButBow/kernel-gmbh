@@ -812,6 +812,17 @@ export default function Kontakt() {
                       )}
                     </div>
 
+                    {/* Disclaimer */}
+                    <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Hinweis:</strong> Diese Anfrage ist unverbindlich und stellt keinen Auftrag dar. 
+                        {formData.selectedPackage && (
+                          <> Die Auswahl eines Produkts oder Pakets dient nur zur besseren Einschätzung Ihres Bedarfs.</>
+                        )}
+                        {" "}Nach Eingang Ihrer Nachricht melde ich mich bei Ihnen, um die Details zu besprechen.
+                      </p>
+                    </div>
+
                     <Button 
                       type="submit" 
                       size="lg" 
@@ -826,7 +837,7 @@ export default function Kontakt() {
                       ) : (
                         <>
                           <Send className="h-4 w-4 mr-2" />
-                          Nachricht senden
+                          Unverbindliche Anfrage senden
                         </>
                       )}
                     </Button>
