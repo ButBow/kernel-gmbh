@@ -40,13 +40,15 @@ export function PackageSelector({ products, categories, value, onChange, default
     }
   }, [value, defaultCollapsed]);
 
-  // Sort categories by order
+  // Sort categories by order and filter hidden ones
   const sortedCategories = useMemo(() => 
-    [...categories].sort((a, b) => a.order - b.order),
+    [...categories]
+      .filter(c => !c.hidden) // Filter out hidden categories
+      .sort((a, b) => a.order - b.order),
     [categories]
   );
 
-  // Group products by category
+  // Group products by category (only from visible categories)
   const groupedPackages: GroupedPackages[] = useMemo(() => {
     return sortedCategories
       .map(category => {
