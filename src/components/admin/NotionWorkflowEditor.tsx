@@ -536,54 +536,59 @@ export function NotionWorkflowEditor({
           <DialogHeader>
             <DialogTitle>Feld-Zuordnungen für "{editingDatabase?.name}"</DialogTitle>
           </DialogHeader>
-          {editingDatabase && (
-            <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Wähle, welche Felder an diese Datenbank gesendet werden und passe die Notion-Property-Namen an.
-              </p>
-              <div className="space-y-3">
-                {INQUIRY_FIELDS.map(field => {
-                  const isEnabled = isFieldEnabled(editingDatabase, field.id);
-                  const mapping = getFieldMapping(editingDatabase, field.id);
-                  
-                  return (
-                    <div
-                      key={field.id}
-                      className={`p-3 rounded-lg border transition-colors ${
-                        isEnabled ? 'border-primary/50 bg-primary/5' : 'border-border'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Switch
-                            checked={isEnabled}
-                            onCheckedChange={() => handleToggleField(editingDatabase.id, field.id)}
-                          />
-                          <div>
-                            <p className="font-medium text-sm">{field.label}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Typ: {field.notionType}
-                            </p>
-                          </div>
-                        </div>
-                        {isEnabled && (
-                          <div className="flex items-center gap-2">
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            <Input
-                              value={mapping?.notionProperty || field.label}
-                              onChange={(e) => handleUpdatePropertyName(editingDatabase.id, field.id, e.target.value)}
-                              className="w-40 h-8 text-sm"
-                              placeholder="Notion Property"
+          {editingDatabase && (() => {
+            // Get the current database from config to ensure we have the latest state
+            const currentDatabase = config.databases.find(db => db.id === editingDatabase.id) || editingDatabase;
+            
+            return (
+              <div className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Wähle, welche Felder an diese Datenbank gesendet werden und passe die Notion-Property-Namen an.
+                </p>
+                <div className="space-y-3">
+                  {INQUIRY_FIELDS.map(field => {
+                    const isEnabled = isFieldEnabled(currentDatabase, field.id);
+                    const mapping = getFieldMapping(currentDatabase, field.id);
+                    
+                    return (
+                      <div
+                        key={field.id}
+                        className={`p-3 rounded-lg border transition-colors ${
+                          isEnabled ? 'border-primary/50 bg-primary/5' : 'border-border'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => handleToggleField(currentDatabase.id, field.id)}
                             />
+                            <div>
+                              <p className="font-medium text-sm">{field.label}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Typ: {field.notionType}
+                              </p>
+                            </div>
                           </div>
-                        )}
+                          {isEnabled && (
+                            <div className="flex items-center gap-2">
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                              <Input
+                                value={mapping?.notionProperty || field.label}
+                                onChange={(e) => handleUpdatePropertyName(currentDatabase.id, field.id, e.target.value)}
+                                className="w-40 h-8 text-sm"
+                                placeholder="Notion Property"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
           <DialogFooter>
             <Button onClick={() => setEditingDatabase(null)}>
               Fertig
