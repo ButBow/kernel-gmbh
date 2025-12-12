@@ -1662,13 +1662,13 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║                 Kernel Website Server                   ║
 ╠════════════════════════════════════════════════════════╣
 ║  Status:  Running                                       ║
-║  URL:     http://127.0.0.1:${PORT.toString().padEnd(28)}║
+║  URL:     http://0.0.0.0:${PORT.toString().padEnd(28)}║
 ║  Mode:    Production                                    ║
 ║  Data:    ${DATA_DIR.padEnd(43)}║
 ╠════════════════════════════════════════════════════════╣
