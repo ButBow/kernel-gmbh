@@ -32,11 +32,13 @@ export default function Index() {
   const { settings, categories, products } = useContent();
   const { trackEvent } = useAnalytics();
 
-  // Get first 4 categories for service teasers
-  const serviceCategories = categories.slice(0, 4);
+  // Sorted categories for display - filter hidden and sort by order
+  const sortedCategories = [...categories]
+    .filter(c => !c.hidden)
+    .sort((a, b) => a.order - b.order);
   
-  // Sorted categories for color mapping
-  const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
+  // Get first 4 active categories for service teasers
+  const serviceCategories = sortedCategories.slice(0, 4);
 
   const handleProductClick = (productName: string) => {
     trackEvent('product_click', '/', { productName });
@@ -90,6 +92,7 @@ export default function Index() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {serviceCategories.map((category) => {
               const IconComponent = iconMap[category.icon] || Code;
+              const colors = getCategoryColors(category.id, sortedCategories);
               const categoryProducts = products.filter(p => p.categoryId === category.id && p.status === 'published');
               const prices = categoryProducts
                 .map(p => {
@@ -100,23 +103,28 @@ export default function Index() {
               const minPrice = prices.length > 0 ? Math.min(...prices) : null;
               
               return (
-                <Link key={category.id} to="/leistungen">
-                  <Card className="h-full group hover:border-primary/50 transition-all duration-300 hover:shadow-glow cursor-pointer">
+                <Link key={category.id} to={`/leistungen/${category.slug}`}>
+                  <Card className={`h-full group transition-all duration-300 hover:shadow-lg cursor-pointer border-2 ${colors.border} hover:border-primary/50`}>
                     <CardContent className="p-6">
-                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                        <IconComponent className="h-6 w-6 text-primary" />
+                      <div className={`h-12 w-12 rounded-lg ${colors.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                        <IconComponent className={`h-6 w-6 ${colors.text}`} />
                       </div>
                       <h3 className="font-display font-semibold text-lg mb-2">
                         {category.name}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-3">
-                        {category.description}
+                        {category.pageSettings?.heroSubtitle || category.description}
                       </p>
-                      {minPrice && minPrice !== Infinity && (
-                        <p className="text-sm font-medium text-primary">
-                          Ab {minPrice.toLocaleString('de-DE')} €
-                        </p>
-                      )}
+                      <div className="flex items-center justify-between">
+                        {minPrice && minPrice !== Infinity && (
+                          <p className="text-sm font-medium text-primary">
+                            Ab CHF {minPrice.toLocaleString('de-CH')}
+                          </p>
+                        )}
+                        <Badge variant="secondary" className="text-xs">
+                          {categoryProducts.length} {categoryProducts.length === 1 ? 'Leistung' : 'Leistungen'}
+                        </Badge>
+                      </div>
                     </CardContent>
                   </Card>
                 </Link>
