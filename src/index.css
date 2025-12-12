@@ -123,69 +123,79 @@
     background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.1), transparent 50%);
   }
 
-  /* Floating bubble animations */
-  .bubble {
+  /* Floating glow orbs - soft and diffused */
+  .glow-orb {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05));
-    filter: blur(1px);
+    background: radial-gradient(circle, hsl(var(--primary) / 0.12), transparent 70%);
+    filter: blur(60px);
     pointer-events: none;
+    z-index: 0;
   }
 
-  .bubble-1 {
+  .glow-orb-1 {
+    width: 500px;
+    height: 500px;
+    top: -10%;
+    left: -5%;
+    animation: glow-float-1 30s ease-in-out infinite;
+  }
+
+  .glow-orb-2 {
+    width: 400px;
+    height: 400px;
+    top: 40%;
+    right: -10%;
+    animation: glow-float-2 35s ease-in-out infinite;
+  }
+
+  .glow-orb-3 {
+    width: 350px;
+    height: 350px;
+    top: 70%;
+    left: 20%;
+    animation: glow-float-3 28s ease-in-out infinite;
+  }
+
+  .glow-orb-4 {
     width: 300px;
     height: 300px;
-    top: 10%;
-    left: 5%;
-    animation: float-1 20s ease-in-out infinite;
-  }
-
-  .bubble-2 {
-    width: 200px;
-    height: 200px;
-    top: 60%;
-    right: 10%;
-    animation: float-2 25s ease-in-out infinite;
-  }
-
-  .bubble-3 {
-    width: 150px;
-    height: 150px;
-    top: 30%;
+    bottom: 10%;
     right: 25%;
-    animation: float-3 18s ease-in-out infinite;
+    animation: glow-float-4 32s ease-in-out infinite;
   }
 
-  .bubble-4 {
-    width: 100px;
-    height: 100px;
-    bottom: 20%;
-    left: 15%;
-    animation: float-4 22s ease-in-out infinite;
+  .glow-orb-5 {
+    width: 450px;
+    height: 450px;
+    top: 25%;
+    left: 50%;
+    animation: glow-float-5 40s ease-in-out infinite;
   }
 
-  @keyframes float-1 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    25% { transform: translate(30px, -20px) scale(1.05); }
-    50% { transform: translate(-20px, 30px) scale(0.95); }
-    75% { transform: translate(20px, 20px) scale(1.02); }
+  @keyframes glow-float-1 {
+    0%, 100% { transform: translate(0, 0); opacity: 0.8; }
+    50% { transform: translate(50px, 30px); opacity: 1; }
   }
 
-  @keyframes float-2 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(-40px, -30px) scale(1.08); }
-    66% { transform: translate(25px, 15px) scale(0.92); }
+  @keyframes glow-float-2 {
+    0%, 100% { transform: translate(0, 0); opacity: 0.7; }
+    50% { transform: translate(-40px, -20px); opacity: 0.9; }
   }
 
-  @keyframes float-3 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-35px, 25px) scale(1.1); }
+  @keyframes glow-float-3 {
+    0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+    50% { transform: translate(30px, -40px); opacity: 0.85; }
   }
 
-  @keyframes float-4 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    25% { transform: translate(20px, -15px) scale(0.9); }
-    75% { transform: translate(-25px, 10px) scale(1.05); }
+  @keyframes glow-float-4 {
+    0%, 100% { transform: translate(0, 0); opacity: 0.7; }
+    50% { transform: translate(-35px, 25px); opacity: 0.95; }
+  }
+
+  @keyframes glow-float-5 {
+    0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+    50% { transform: translate(25px, -30px); opacity: 0.75; }
   }
 
   /* Mobile-optimized scrollable tabs */
