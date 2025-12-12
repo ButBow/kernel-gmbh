@@ -14,17 +14,12 @@ export interface Inquiry {
   company?: string;
   inquiryType?: string;
   budget?: string;
-  subject: string;
+  subject?: string;
   message: string;
   attachments?: InquiryAttachment[];
   createdAt: string;
   read: boolean;
   replied: boolean;
-  // Discount code fields
-  discountCode?: string;
-  discountCodeValid?: boolean;
-  discountPercent?: number;
-  discountConfirmed?: boolean; // Admin can confirm/reject the discount
 }
 
 export const INQUIRY_TYPES = [

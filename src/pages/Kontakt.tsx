@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -14,15 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { useContent } from "@/contexts/ContentContext";
 import { PackageSelector } from "@/components/PackageSelector";
-import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Paperclip, X, FileText, Image as ImageIcon, Package, Tag, CheckCircle2 } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Paperclip, X, FileText, Image as ImageIcon, Package, ChevronDown, Plus } from "lucide-react";
 import { z } from "zod";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
 import { Inquiry, InquiryAttachment, INQUIRY_TYPES, BUDGET_RANGES } from "@/types/inquiry";
-import { Promotion } from "@/types/promotion";
-import { validateDiscountCode } from "@/components/PromoBanner";
 import { 
   MAX_FILE_SIZE, 
   MAX_FILES, 
@@ -43,7 +41,6 @@ const contactSchema = z.object({
   selectedPackage: z.string().optional(),
   subject: z.string().optional(),
   message: z.string().min(10, "Nachricht muss mindestens 10 Zeichen haben").max(5000, "Nachricht darf maximal 5000 Zeichen haben"),
-  discountCode: z.string().optional()
 });
 
 /**
@@ -78,6 +75,7 @@ export default function Kontakt() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [attachments, setAttachments] = useState<InquiryAttachment[]>([]);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
   
   // Pre-filled product/package from URL params
   const prefilledProduct = searchParams.get('product');
@@ -85,6 +83,9 @@ export default function Kontakt() {
   const prefilledPackage = searchParams.get('package');
   const prefilledPackagePrice = searchParams.get('packagePrice');
   const prefilledPackageDescription = searchParams.get('packageDescription');
+  
+  // Determine if coming from product page
+  const hasPrefilledPackage = !!(prefilledProduct && (prefilledPackage || prefilledProductPrice));
   
   // Build package selection string if pre-filled
   const getPrefilledPackageString = () => {
@@ -107,13 +108,8 @@ export default function Kontakt() {
     selectedPackage: getPrefilledPackageString(),
     subject: prefilledProduct ? `Anfrage: ${prefilledProduct}${prefilledPackage ? ` - ${prefilledPackage}` : ''}` : "",
     message: "",
-    discountCode: "",
     honeypot: ""
   });
-
-  // Discount code validation
-  const [validatedPromo, setValidatedPromo] = useState<Promotion | null>(null);
-  const promotions: Promotion[] = settings.promotions || [];
 
   // Published products for PackageSelector
   const publishedProducts = products.filter(p => p.status === 'published');
@@ -258,11 +254,6 @@ export default function Kontakt() {
       createdAt: new Date().toISOString(),
       read: false,
       replied: false,
-      // Discount code info
-      discountCode: validatedPromo?.discountCode,
-      discountCodeValid: !!validatedPromo,
-      discountPercent: validatedPromo?.discountPercent,
-      discountConfirmed: false, // Admin confirms later
     };
 
     // Save locally first
@@ -349,7 +340,7 @@ export default function Kontakt() {
                 setIsSuccess(false);
                 setAttachments([]);
                 setSearchParams({});
-                setValidatedPromo(null);
+                setShowMoreDetails(false);
                 setFormData({
                   name: "",
                   email: "",
@@ -360,7 +351,6 @@ export default function Kontakt() {
                   selectedPackage: "",
                   subject: "",
                   message: "",
-                  discountCode: "",
                   honeypot: ""
                 });
               }}>
@@ -530,7 +520,7 @@ export default function Kontakt() {
                   <h2 className="font-display text-xl font-bold mb-6">Nachricht senden</h2>
                   
                   {/* Pre-filled Package Banner */}
-                  {formData.selectedPackage && (
+                  {hasPrefilledPackage && formData.selectedPackage && (
                     <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/30">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3">
@@ -566,251 +556,237 @@ export default function Kontakt() {
                       autoComplete="off"
                     />
 
-                    {/* Name & Email */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Essential Fields - Always Visible */}
+                    <div className="space-y-6">
+                      {/* Name & Email */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Name *</Label>
+                          <Input
+                            id="name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="Ihr Name"
+                            className={errors.name ? "border-destructive" : ""}
+                          />
+                          {errors.name && (
+                            <p className="text-sm text-destructive">{errors.name}</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="email">E-Mail *</Label>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="ihre@email.ch"
+                            className={errors.email ? "border-destructive" : ""}
+                          />
+                          {errors.email && (
+                            <p className="text-sm text-destructive">{errors.email}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Message */}
                       <div className="space-y-2">
-                        <Label htmlFor="name">Name *</Label>
-                        <Input
-                          id="name"
-                          name="name"
-                          value={formData.name}
+                        <Label htmlFor="message">Nachricht *</Label>
+                        <Textarea
+                          id="message"
+                          name="message"
+                          value={formData.message}
                           onChange={handleChange}
-                          placeholder="Ihr Name"
-                          className={errors.name ? "border-destructive" : ""}
+                          placeholder="Beschreiben Sie Ihr Anliegen..."
+                          rows={5}
+                          className={errors.message ? "border-destructive" : ""}
                         />
-                        {errors.name && (
-                          <p className="text-sm text-destructive">{errors.name}</p>
+                        {errors.message && (
+                          <p className="text-sm text-destructive">{errors.message}</p>
                         )}
                       </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="email">E-Mail *</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          placeholder="ihre@email.ch"
-                          className={errors.email ? "border-destructive" : ""}
-                        />
-                        {errors.email && (
-                          <p className="text-sm text-destructive">{errors.email}</p>
-                        )}
-                      </div>
                     </div>
 
-                    {/* Phone & Company */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Telefon (optional)</Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          placeholder="+41 79 123 45 67"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="company">Firma (optional)</Label>
-                        <Input
-                          id="company"
-                          name="company"
-                          value={formData.company}
-                          onChange={handleChange}
-                          placeholder="Ihre Firma"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Package Selection */}
-                    <div className="space-y-2">
-                      <Label>Produkt / Paket (optional)</Label>
-                      <PackageSelector
-                        products={publishedProducts}
-                        categories={categories}
-                        value={formData.selectedPackage}
-                        onChange={(value) => handleSelectChange('selectedPackage', value)}
-                        defaultCollapsed={!!prefilledProduct}
-                      />
-                    </div>
-
-                    {/* Inquiry Type */}
-                    <div className="space-y-2">
-                      <Label>Art der Anfrage (optional)</Label>
-                      <Select 
-                        value={formData.inquiryType} 
-                        onValueChange={(value) => handleSelectChange('inquiryType', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Bitte wählen" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {INQUIRY_TYPES.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Budget (shown if no package selected, or always visible) */}
-                    <div className="space-y-2">
-                      <Label>
-                        Budget (optional)
-                        {formData.selectedPackage && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            (automatisch vom Paket übernommen)
+                    {/* More Details Toggle */}
+                    <Collapsible open={showMoreDetails} onOpenChange={setShowMoreDetails}>
+                      <CollapsibleTrigger asChild>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="w-full justify-between"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Plus className={`h-4 w-4 transition-transform ${showMoreDetails ? 'rotate-45' : ''}`} />
+                            Weitere Details hinzufügen
                           </span>
-                        )}
-                      </Label>
-                      <Select 
-                        value={formData.budget} 
-                        onValueChange={(value) => handleSelectChange('budget', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Bitte wählen" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {BUDGET_RANGES.map((range) => (
-                            <SelectItem key={range.value} value={range.value}>
-                              {range.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                          <ChevronDown className={`h-4 w-4 transition-transform ${showMoreDetails ? 'rotate-180' : ''}`} />
+                        </Button>
+                      </CollapsibleTrigger>
+                      
+                      <CollapsibleContent className="space-y-6 pt-6">
+                        {/* Phone & Company */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <Label htmlFor="phone">Telefon</Label>
+                            <Input
+                              id="phone"
+                              name="phone"
+                              type="tel"
+                              value={formData.phone}
+                              onChange={handleChange}
+                              placeholder="+41 79 123 45 67"
+                            />
+                          </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="subject">Betreff (optional)</Label>
-                      <Input
-                        id="subject"
-                        name="subject"
-                        value={formData.subject}
-                        onChange={handleChange}
-                        placeholder="Worum geht es?"
-                      />
-                    </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="company">Firma</Label>
+                            <Input
+                              id="company"
+                              name="company"
+                              value={formData.company}
+                              onChange={handleChange}
+                              placeholder="Ihre Firma"
+                            />
+                          </div>
+                        </div>
 
-                    {/* Discount Code */}
-                    <div className="space-y-2">
-                      <Label htmlFor="discountCode" className="flex items-center gap-2">
-                        <Tag className="h-4 w-4" />
-                        Rabattcode (optional)
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="discountCode"
-                          name="discountCode"
-                          value={formData.discountCode}
-                          onChange={(e) => {
-                            handleChange(e);
-                            // Validate on change
-                            const promo = validateDiscountCode(e.target.value, promotions);
-                            setValidatedPromo(promo);
-                          }}
-                          placeholder="z.B. STUDENT40"
-                          className={validatedPromo ? "border-green-500" : ""}
-                        />
-                        {validatedPromo && (
-                          <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-md text-green-500 text-sm font-medium whitespace-nowrap">
-                            <CheckCircle2 className="h-4 w-4" />
-                            -{validatedPromo.discountPercent}%
+                        {/* Package Selection (only shown if not pre-filled) */}
+                        {!hasPrefilledPackage && (
+                          <div className="space-y-2">
+                            <Label>Produkt / Paket</Label>
+                            <PackageSelector
+                              products={publishedProducts}
+                              categories={categories}
+                              value={formData.selectedPackage}
+                              onChange={(value) => handleSelectChange('selectedPackage', value)}
+                              defaultCollapsed={false}
+                            />
                           </div>
                         )}
-                      </div>
-                      {validatedPromo && (
-                        <p className="text-sm text-green-500 flex items-center gap-1">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          {validatedPromo.name}: {validatedPromo.description}
-                        </p>
-                      )}
-                      {formData.discountCode && !validatedPromo && (
-                        <p className="text-sm text-muted-foreground">
-                          Code nicht gefunden oder abgelaufen
-                        </p>
-                      )}
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Nachricht *</Label>
-                      <Textarea
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleChange}
-                        placeholder="Beschreiben Sie Ihr Anliegen..."
-                        rows={6}
-                        className={errors.message ? "border-destructive" : ""}
-                      />
-                      {errors.message && (
-                        <p className="text-sm text-destructive">{errors.message}</p>
-                      )}
-                    </div>
-
-                    {/* File Attachments */}
-                    <div className="space-y-3">
-                      <Label>Anhänge (optional)</Label>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={attachments.length >= MAX_FILES}
-                        >
-                          <Paperclip className="h-4 w-4 mr-2" />
-                          Dateien hinzufügen
-                        </Button>
-                        <span className="text-sm text-muted-foreground">
-                          {attachments.length}/{MAX_FILES} Dateien (max. 10 MB pro Datei)
-                        </span>
-                      </div>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        accept={ALLOWED_TYPES.join(',')}
-                        onChange={handleFileSelect}
-                        className="hidden"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Erlaubte Formate: Bilder, PDF, Word, Excel, PowerPoint, Text
-                      </p>
-
-                      {/* Attachment List */}
-                      {attachments.length > 0 && (
-                        <div className="space-y-2 mt-3">
-                          {attachments.map((attachment) => (
-                            <div
-                              key={attachment.id}
-                              className="flex items-center justify-between p-3 bg-secondary rounded-lg"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                {getAttachmentIcon(attachment.type)}
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium truncate">{attachment.name}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {getFileTypeLabel(attachment.type)} • {formatFileSize(attachment.size)}
-                                  </p>
-                                </div>
-                              </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeAttachment(attachment.id)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
+                        {/* Inquiry Type */}
+                        <div className="space-y-2">
+                          <Label>Art der Anfrage</Label>
+                          <Select 
+                            value={formData.inquiryType} 
+                            onValueChange={(value) => handleSelectChange('inquiryType', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Bitte wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {INQUIRY_TYPES.map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  {type.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                      )}
-                    </div>
+
+                        {/* Budget */}
+                        <div className="space-y-2">
+                          <Label>
+                            Budget
+                            {formData.selectedPackage && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                (automatisch vom Paket übernommen)
+                              </span>
+                            )}
+                          </Label>
+                          <Select 
+                            value={formData.budget} 
+                            onValueChange={(value) => handleSelectChange('budget', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Bitte wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {BUDGET_RANGES.map((range) => (
+                                <SelectItem key={range.value} value={range.value}>
+                                  {range.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Subject */}
+                        <div className="space-y-2">
+                          <Label htmlFor="subject">Betreff</Label>
+                          <Input
+                            id="subject"
+                            name="subject"
+                            value={formData.subject}
+                            onChange={handleChange}
+                            placeholder="Worum geht es?"
+                          />
+                        </div>
+
+                        {/* File Attachments */}
+                        <div className="space-y-3">
+                          <Label>Anhänge</Label>
+                          <div className="flex items-center gap-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={attachments.length >= MAX_FILES}
+                            >
+                              <Paperclip className="h-4 w-4 mr-2" />
+                              Dateien hinzufügen
+                            </Button>
+                            <span className="text-sm text-muted-foreground">
+                              {attachments.length}/{MAX_FILES} Dateien (max. 10 MB pro Datei)
+                            </span>
+                          </div>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept={ALLOWED_TYPES.join(',')}
+                            onChange={handleFileSelect}
+                            className="hidden"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Erlaubte Formate: Bilder, PDF, Word, Excel, PowerPoint, Text
+                          </p>
+
+                          {/* Attachment List */}
+                          {attachments.length > 0 && (
+                            <div className="space-y-2 mt-3">
+                              {attachments.map((attachment) => (
+                                <div
+                                  key={attachment.id}
+                                  className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    {getAttachmentIcon(attachment.type)}
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-medium truncate">{attachment.name}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {getFileTypeLabel(attachment.type)} • {formatFileSize(attachment.size)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeAttachment(attachment.id)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
 
                     {/* Disclaimer */}
                     <div className="p-4 rounded-lg bg-secondary/50 border border-border">
