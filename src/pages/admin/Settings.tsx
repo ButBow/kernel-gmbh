@@ -13,8 +13,7 @@ import { LivePreview } from '@/components/admin/LivePreview';
 import { ThemeManager } from '@/components/admin/ThemeManager';
 import { BackupRestore } from '@/components/admin/BackupRestore';
 import { Plus, Save, Check, Zap, Lightbulb, Shield, CheckCircle, Instagram, Linkedin, Twitter, Youtube, Facebook, Trash2, Star, Eye, EyeOff, Target, Heart, Rocket, Award, User, Handshake, ExternalLink, Database, AlertCircle, CheckCircle2, Loader2, Link2, HardDrive, Tag, FileText, ChevronUp, ChevronDown, Cookie, MessageCircle, Bot } from 'lucide-react';
-import { PromotionManager } from '@/components/admin/PromotionManager';
-import { Promotion } from '@/types/promotion';
+
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
@@ -1293,13 +1292,6 @@ export default function AdminSettings() {
         </TabsContent>
 
 
-        <TabsContent value="promotions">
-          <PromotionManager
-            promotions={form.promotions || []}
-            onChange={(promotions) => setForm({ ...form, promotions })}
-          />
-        </TabsContent>
-
         <TabsContent value="chatbot">
           <div className="mobile-stack">
             <div className="space-y-6">
@@ -2072,12 +2064,6 @@ export default function AdminSettings() {
                 )}
               </CardContent>
             </Card>
-
-            {/* Promotions */}
-            <PromotionManager
-              promotions={form.promotions || []}
-              onChange={(promotions) => setForm({ ...form, promotions })}
-            />
 
             {/* Legal Section - Simplified */}
             <Card>
