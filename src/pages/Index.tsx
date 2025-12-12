@@ -49,20 +49,26 @@ export default function Index() {
       {/* Hero Section - Semantic HTML for SEO/AEO */}
       <section className="relative overflow-hidden" aria-labelledby="hero-title">
         <div className="absolute inset-0 bg-gradient-dark" aria-hidden="true" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(38_92%_50%/0.15),transparent_60%)]" aria-hidden="true" />
+        <div className="absolute inset-0 glow-bg" aria-hidden="true" />
+        
+        {/* Animated floating bubbles */}
+        <div className="bubble bubble-1" aria-hidden="true" />
+        <div className="bubble bubble-2" aria-hidden="true" />
+        <div className="bubble bubble-3" aria-hidden="true" />
+        <div className="bubble bubble-4" aria-hidden="true" />
         
         <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 id="hero-title" className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+            <h1 id="hero-title" className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight animate-fade-in">
               <span className="text-gradient">{settings.heroTitle}</span>
             </h1>
             
-            <p className="hero-description mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="hero-description mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
               {settings.heroSubtitle}
             </p>
             
-            <nav className="mt-10 flex flex-col sm:flex-row gap-4 justify-center" aria-label="Primäre Aktionen">
-              <Button size="lg" asChild>
+            <nav className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '0.2s' }} aria-label="Primäre Aktionen">
+              <Button size="lg" asChild className="hover:shadow-glow transition-shadow">
                 <Link to="/kontakt" aria-label={`${settings.heroCta} - Kontaktformular öffnen`}>
                   {settings.heroCta}
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
