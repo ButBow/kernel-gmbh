@@ -17,11 +17,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown, ChevronUp, ChevronDown, Settings2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, ChevronRight, ArrowUpDown, ChevronUp, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ImportExport } from '@/components/admin/ImportExport';
-import { CategoryPageEditor } from '@/components/admin/CategoryPageEditor';
-import type { Category, Product, Showcase, CategoryPageSettings } from '@/data/initialData';
+import type { Category, Product, Showcase } from '@/data/initialData';
 
 export default function AdminProducts() {
   const { categories, products, addCategory, updateCategory, deleteCategory, addProduct, updateProduct, deleteProduct, reorderProducts } = useContent();
@@ -30,8 +29,6 @@ export default function AdminProducts() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
-  const [pageEditorCategory, setPageEditorCategory] = useState<Category | null>(null);
-  const [pageEditorOpen, setPageEditorOpen] = useState(false);
 
   const [categoryForm, setCategoryForm] = useState({
     name: '',
@@ -203,19 +200,6 @@ export default function AdminProducts() {
   };
 
   const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
-
-  const handleEditCategoryPage = (category: Category) => {
-    setPageEditorCategory(category);
-    setPageEditorOpen(true);
-  };
-
-  const handleSaveCategoryPage = (settings: CategoryPageSettings) => {
-    if (pageEditorCategory) {
-      updateCategory(pageEditorCategory.id, { pageSettings: settings });
-    }
-    setPageEditorOpen(false);
-    setPageEditorCategory(null);
-  };
 
   return (
     <AdminLayout title="Produkte & Services">
@@ -631,15 +615,6 @@ export default function AdminProducts() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEditCategoryPage(category)}
-                      className="text-primary"
-                    >
-                      <Settings2 className="h-4 w-4 mr-1" />
-                      Seite
-                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleEditCategory(category)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -665,30 +640,6 @@ export default function AdminProducts() {
           <ImportExport />
         </TabsContent>
       </Tabs>
-
-      {/* Category Page Editor Dialog */}
-      {pageEditorOpen && pageEditorCategory && (
-        <Dialog open={pageEditorOpen} onOpenChange={(open) => {
-          if (!open) {
-            setPageEditorOpen(false);
-            setPageEditorCategory(null);
-          }
-        }}>
-          <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Seite bearbeiten: {pageEditorCategory.name}</DialogTitle>
-            </DialogHeader>
-            <CategoryPageEditor
-              category={pageEditorCategory}
-              onSave={handleSaveCategoryPage}
-              onClose={() => {
-                setPageEditorOpen(false);
-                setPageEditorCategory(null);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </AdminLayout>
   );
 }
