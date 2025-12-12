@@ -410,6 +410,15 @@ export default function AdminSettings() {
                   />
                 </div>
                 <div>
+                  <label className="text-sm font-medium">Kurzbeschreibung (Footer)</label>
+                  <Input
+                    value={form.aboutShort || ''}
+                    onChange={(e) => setForm({ ...form, aboutShort: e.target.value })}
+                    placeholder="1-2 Sätze über dich für den Footer"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Wird im Footer unter deinem Namen angezeigt</p>
+                </div>
+                <div>
                   <label className="text-sm font-medium">Mission Statement</label>
                   <Textarea
                     value={form.aboutMission || ''}
