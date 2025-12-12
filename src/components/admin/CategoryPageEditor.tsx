@@ -21,7 +21,6 @@ export function CategoryPageEditor({ category, onSave, onClose }: CategoryPageEd
   const [settings, setSettings] = useState<CategoryPageSettings>(category.pageSettings || {
     heroTitle: category.name,
     heroSubtitle: category.description,
-    showFeaturedFirst: true,
     layout: 'grid',
     columnsDesktop: 3,
     showPrices: true,
@@ -190,17 +189,6 @@ export function CategoryPageEditor({ category, onSave, onClose }: CategoryPageEd
                     <SelectItem value="4">4 Spalten</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Beliebte zuerst zeigen</Label>
-                  <p className="text-sm text-muted-foreground">Featured Produkte werden oben angezeigt</p>
-                </div>
-                <Switch
-                  checked={settings.showFeaturedFirst !== false}
-                  onCheckedChange={(checked) => setSettings({ ...settings, showFeaturedFirst: checked })}
-                />
               </div>
 
               <div className="flex items-center justify-between">

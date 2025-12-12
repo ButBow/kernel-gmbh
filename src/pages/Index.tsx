@@ -19,9 +19,7 @@ import {
   Lightbulb,
   Image,
   FileText,
-  Users,
-  Star,
-  ChevronRight
+  Users
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -39,9 +37,6 @@ export default function Index() {
   
   // Sorted categories for color mapping
   const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
-
-  // Get all featured products
-  const featuredProducts = products.filter(p => p.status === 'published' && p.featured);
 
   const handleProductClick = (productName: string) => {
     trackEvent('product_click', '/', { productName });
@@ -131,74 +126,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Featured Products Section - Semantic HTML for SEO/AEO */}
-      {featuredProducts.length > 0 && (
-        <section className="py-20 md:py-28 bg-card" aria-labelledby="featured-title">
-          <div className="container mx-auto px-4">
-            <header className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4" aria-hidden="true">
-                <Star className="h-4 w-4 fill-current" />
-                <span className="text-sm font-medium">Meist gebucht</span>
-              </div>
-              <h2 id="featured-title" className="font-display text-3xl md:text-4xl font-bold">
-                Beliebte Leistungen
-              </h2>
-              <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-                Diese Services werden von meinen Kunden am häufigsten gebucht.
-              </p>
-            </header>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProducts.map((product) => {
-                const category = categories.find(c => c.id === product.categoryId);
-                const colors = getCategoryColors(product.categoryId, sortedCategories);
-                return (
-                  <Link 
-                    key={product.id} 
-                    to="/leistungen"
-                    onClick={() => handleProductClick(product.name)}
-                  >
-                    <Card className={`h-full group transition-all duration-300 cursor-pointer border-2 ${colors.border} ${colors.glow}`}>
-                      <CardHeader>
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <Badge className="bg-primary text-primary-foreground">
-                            <Star className="h-3 w-3 mr-1 fill-current" />
-                            Beliebt
-                          </Badge>
-                          <Badge className={`${colors.bg} ${colors.text} border-0`}>{product.type}</Badge>
-                          {category && (
-                            <Badge variant="outline" className={`text-xs ${colors.border} ${colors.text}`}>
-                              {category.name}
-                            </Badge>
-                          )}
-                        </div>
-                        <CardTitle className={`font-display text-lg transition-colors ${colors.hoverText}`}>
-                          {product.name}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {product.shortDescription}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className={`font-semibold ${colors.text}`}>{product.priceText}</span>
-                          <ChevronRight className={`h-5 w-5 text-muted-foreground transition-colors ${colors.hoverText}`} />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="mt-10 text-center">
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/leistungen">Alle Leistungen ansehen</Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Benefits Section - Semantic HTML for SEO/AEO */}
       <section className="py-20 md:py-28" aria-labelledby="benefits-title">
