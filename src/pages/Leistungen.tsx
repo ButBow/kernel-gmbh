@@ -90,11 +90,12 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             <span className="text-primary font-semibold text-sm">
               {product.priceText}
             </span>
-            {product.targetAudience.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {product.targetAudience[0]}
-              </span>
-            )}
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/kontakt?product=${encodeURIComponent(product.name)}&productPrice=${encodeURIComponent(product.priceText)}`}>
+                Anfragen
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

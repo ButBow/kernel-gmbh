@@ -56,7 +56,8 @@ import {
   Image as ImageIcon,
   Link2,
   Copy,
-  Settings2
+  Settings2,
+  RefreshCw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -72,6 +73,7 @@ export default function AdminInquiries() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'list');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Get Notion workflow config from settings
   const notionWorkflow: NotionWorkflowConfig = settings.notionWorkflow || defaultNotionWorkflowConfig;
@@ -252,6 +254,25 @@ export default function AdminInquiries() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {notionWorkflow.enabled && notionWorkflow.databases.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    setIsSyncing(true);
+                    // Simulate sync delay - real implementation would call Notion API
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    setIsSyncing(false);
+                    toast({
+                      title: 'Synchronisation',
+                      description: 'Notion-Synchronisation erfordert eine Server-Implementierung. Anfragen werden aktuell nur lokal gespeichert.',
+                    });
+                  }}
+                  disabled={isSyncing}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                  {isSyncing ? 'Synchronisiere...' : 'Mit Notion synchronisieren'}
+                </Button>
+              )}
               {totalAttachments > 0 && (
                 <Button variant="outline" onClick={handleDownloadAllAttachments}>
                   <FileArchive className="h-4 w-4 mr-2" />
@@ -346,7 +367,7 @@ export default function AdminInquiries() {
 
       {/* Inquiry Detail Dialog */}
       <Dialog open={!!selectedInquiry} onOpenChange={(open) => !open && closeInquiry()}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
