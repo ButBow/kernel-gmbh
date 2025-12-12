@@ -136,29 +136,32 @@ export default function Index() {
 
 
       {/* Benefits Section - Semantic HTML for SEO/AEO */}
-      <section className="py-20 md:py-28" aria-labelledby="benefits-title">
+      <section className="py-20 md:py-28 bg-card/30" aria-labelledby="benefits-title">
         <div className="container mx-auto px-4">
           <header className="text-center mb-12">
             <h2 id="benefits-title" className="font-display text-3xl md:text-4xl font-bold">
               Warum mit mir arbeiten?
             </h2>
+            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+              Qualität, Zuverlässigkeit und Innovation – das sind meine Versprechen an Sie.
+            </p>
           </header>
 
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto list-none" role="list" aria-label="Vorteile der Zusammenarbeit">
+          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 list-none" role="list" aria-label="Vorteile der Zusammenarbeit">
             {settings.whyWorkWithMe.map((item, index) => {
               const Icon = benefitIcons[index % benefitIcons.length];
               return (
-                <li key={index} className="flex gap-4">
-                  <div className="flex-shrink-0" aria-hidden="true">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-display font-semibold mb-1">
-                      {item}
-                    </h3>
-                  </div>
+                <li key={index}>
+                  <Card className="h-full border-2 border-border hover:border-primary/30 transition-all duration-300 group">
+                    <CardContent className="p-6 text-center">
+                      <div className="mx-auto mb-4 h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all" aria-hidden="true">
+                        <Icon className="h-7 w-7 text-primary" />
+                      </div>
+                      <h3 className="font-display font-semibold text-lg">
+                        {item}
+                      </h3>
+                    </CardContent>
+                  </Card>
                 </li>
               );
             })}
@@ -167,7 +170,7 @@ export default function Index() {
           <div className="mt-12 text-center">
             <Button size="lg" asChild>
               <Link to="/kontakt">
-                Jetzt Kontakt aufnehmen
+                Unverbindliche Anfrage stellen
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
