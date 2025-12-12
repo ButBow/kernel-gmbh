@@ -39,7 +39,7 @@ export function Footer() {
               {settings.ownerName || 'Floris Kern'}
             </p>
             <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-              {settings.aboutShort || 'Experte für KI, Automatisierung & Content-Produktion.'}
+              {settings.aboutShort || 'Ich helfe Unternehmen, durch intelligente Automatisierung und KI-Lösungen effizienter zu arbeiten.'}
             </p>
             <Link 
               to="/ueber-mich" 
