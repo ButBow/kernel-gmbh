@@ -46,16 +46,18 @@ export default function Index() {
 
   return (
     <Layout pageTitle="Startseite" pageDescription={settings.heroSubtitle}>
+      {/* Global animated glow orbs - spread across entire page */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="glow-orb glow-orb-1" />
+        <div className="glow-orb glow-orb-2" />
+        <div className="glow-orb glow-orb-3" />
+        <div className="glow-orb glow-orb-4" />
+        <div className="glow-orb glow-orb-5" />
+      </div>
+
       {/* Hero Section - Semantic HTML for SEO/AEO */}
       <section className="relative overflow-hidden" aria-labelledby="hero-title">
         <div className="absolute inset-0 bg-gradient-dark" aria-hidden="true" />
-        <div className="absolute inset-0 glow-bg" aria-hidden="true" />
-        
-        {/* Animated floating bubbles */}
-        <div className="bubble bubble-1" aria-hidden="true" />
-        <div className="bubble bubble-2" aria-hidden="true" />
-        <div className="bubble bubble-3" aria-hidden="true" />
-        <div className="bubble bubble-4" aria-hidden="true" />
         
         <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
           <div className="max-w-4xl mx-auto text-center">
@@ -83,7 +85,7 @@ export default function Index() {
       </section>
 
       {/* Services Section - Semantic HTML for SEO/AEO */}
-      <section className="py-20 md:py-28" aria-labelledby="services-title">
+      <section className="relative py-20 md:py-28" aria-labelledby="services-title">
         <div className="container mx-auto px-4">
           <header className="text-center mb-12">
             <h2 id="services-title" className="font-display text-3xl md:text-4xl font-bold">
@@ -142,7 +144,7 @@ export default function Index() {
 
 
       {/* Benefits Section - Semantic HTML for SEO/AEO */}
-      <section className="py-20 md:py-28 bg-card/30" aria-labelledby="benefits-title">
+      <section className="relative py-20 md:py-28 bg-card/30" aria-labelledby="benefits-title">
         <div className="container mx-auto px-4">
           <header className="text-center mb-12">
             <h2 id="benefits-title" className="font-display text-3xl md:text-4xl font-bold">
@@ -188,7 +190,7 @@ export default function Index() {
       <PartnersSection />
 
       {/* CTA Section - Semantic HTML for SEO/AEO */}
-      <aside className="py-20 md:py-28" aria-labelledby="cta-title">
+      <aside className="relative py-20 md:py-28" aria-labelledby="cta-title">
         <div className="container mx-auto px-4">
           <article className="relative rounded-2xl overflow-hidden" role="region" aria-label="Handlungsaufforderung">
             <div className="absolute inset-0 bg-gradient-primary opacity-90" aria-hidden="true" />
