@@ -31,6 +31,7 @@ export interface Showcase {
   title: string;
   description: string;
   price: string;
+  projectId?: string; // Optional ID for Notion integration
 }
 
 export interface Product {
@@ -44,6 +45,7 @@ export interface Product {
   showcases: Showcase[];
   targetAudience: string[];
   status: 'draft' | 'published';
+  projectId?: string; // Optional ID for Notion integration
 }
 
 export interface GalleryItem {

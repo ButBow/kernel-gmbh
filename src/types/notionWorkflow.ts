@@ -16,6 +16,7 @@ export const INQUIRY_FIELDS = [
   { id: 'subject', label: 'Betreff', notionType: 'rich_text' as const },
   { id: 'message', label: 'Nachricht', notionType: 'rich_text' as const },
   { id: 'selectedPackage', label: 'Produkt/Paket', notionType: 'multi_select' as const },
+  { id: 'projectId', label: 'Projekt ID', notionType: 'rich_text' as const },
   { id: 'hasAttachments', label: 'Hat Anhänge', notionType: 'checkbox' as const },
   { id: 'inquiryLink', label: 'Anfragen-Link', notionType: 'url' as const },
   { id: 'createdAt', label: 'Eingegangen', notionType: 'date' as const },
