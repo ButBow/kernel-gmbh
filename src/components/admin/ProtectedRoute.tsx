@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -8,8 +9,20 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { session, isAdmin, isLoading } = useAuth();
   const location = useLocation();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Show toast if user is logged in but not admin
+    if (!isLoading && session && !isAdmin) {
+      toast({
+        title: 'Kein Admin-Zugriff',
+        description: 'Dein Konto hat keine Admin-Berechtigung.',
+        variant: 'destructive',
+      });
+    }
+  }, [isLoading, session, isAdmin, toast]);
 
   // Show loading while checking auth
   if (isLoading) {
@@ -20,9 +33,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!isAuthenticated) {
-    // Save the intended destination in state so login can redirect back
-    return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
+  // Not logged in - redirect to auth page
+  if (!session) {
+    return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
+  }
+
+  // Logged in but not admin - redirect to home
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
