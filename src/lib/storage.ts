@@ -1,8 +1,6 @@
 // localStorage utilities for content management with server API fallback
 
 const STORAGE_KEYS = {
-  AUTH: 'admin_auth',
-  AUTH_TOKEN: 'admin_auth_token',
   CATEGORIES: 'cms_categories',
   PRODUCTS: 'cms_products',
   PROJECTS: 'cms_projects',
@@ -17,25 +15,6 @@ function isServerAvailable(): boolean {
   // In production, API is available at same origin
   // In Lovable preview, there's no server, so we fall back to localStorage
   return typeof window !== 'undefined' && !window.location.hostname.includes('lovable');
-}
-
-// Get auth token from localStorage
-function getAuthToken(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-  } catch {
-    return null;
-  }
-}
-
-// Set auth token
-function setAuthToken(token: string): void {
-  localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-}
-
-// Remove auth token
-function removeAuthToken(): void {
-  localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
 }
 
 // Generic storage functions (localStorage fallback)
@@ -57,88 +36,7 @@ export function removeStorageItem(key: string): void {
 }
 
 // ============================================================================
-// AUTHENTICATION API
-// ============================================================================
-
-interface LoginResponse {
-  success: boolean;
-  token?: string;
-  error?: string;
-  expiresIn?: number;
-}
-
-// Server login - returns auth token
-export async function serverLogin(password: string): Promise<LoginResponse> {
-  if (!isServerAvailable()) {
-    // Fallback for Lovable preview - simple password check
-    return { success: false, error: 'Server nicht verfügbar' };
-  }
-  
-  try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    
-    const data = await response.json();
-    
-    if (data.success && data.token) {
-      setAuthToken(data.token);
-    }
-    
-    return data;
-  } catch (error) {
-    console.warn('Login request failed');
-    return { success: false, error: 'Verbindungsfehler' };
-  }
-}
-
-// Server logout
-export async function serverLogout(): Promise<void> {
-  const token = getAuthToken();
-  
-  if (isServerAvailable() && token) {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-    } catch {
-      // Ignore errors
-    }
-  }
-  
-  removeAuthToken();
-}
-
-// Verify token is still valid
-export async function verifyAuthToken(): Promise<boolean> {
-  const token = getAuthToken();
-  if (!token) return false;
-  
-  if (!isServerAvailable()) return false;
-  
-  try {
-    const response = await fetch('/api/auth/verify', {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    const data = await response.json();
-    
-    if (!data.valid) {
-      removeAuthToken();
-    }
-    
-    return data.valid;
-  } catch {
-    return false;
-  }
-}
-
-// ============================================================================
-// SERVER API FUNCTIONS (with auth)
+// SERVER API FUNCTIONS (Content Management)
 // ============================================================================
 
 interface ContentData {
@@ -152,16 +50,6 @@ interface ContentData {
 interface ThemeData {
   activeThemeId: string;
   customThemes: unknown[];
-}
-
-// Get headers with auth token
-function getAuthHeaders(): HeadersInit {
-  const headers: HeadersInit = { 'Content-Type': 'application/json' };
-  const token = getAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
 }
 
 // Fetch content from server with timeout
@@ -184,22 +72,16 @@ export async function fetchContentFromServer(): Promise<ContentData | null> {
   return null;
 }
 
-// Save content to server (requires auth)
+// Save content to server
 export async function saveContentToServer(content: ContentData): Promise<boolean> {
   if (!isServerAvailable()) return false;
   
   try {
     const response = await fetch('/api/content', {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(content),
     });
-    
-    if (response.status === 401) {
-      console.warn('Unauthorized - please login again');
-      removeAuthToken();
-      return false;
-    }
     
     return response.ok;
   } catch (error) {
@@ -228,22 +110,16 @@ export async function fetchThemeFromServer(): Promise<ThemeData | null> {
   return null;
 }
 
-// Save theme to server (requires auth)
+// Save theme to server
 export async function saveThemeToServer(theme: ThemeData): Promise<boolean> {
   if (!isServerAvailable()) return false;
   
   try {
     const response = await fetch('/api/theme', {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(theme),
     });
-    
-    if (response.status === 401) {
-      console.warn('Unauthorized - please login again');
-      removeAuthToken();
-      return false;
-    }
     
     return response.ok;
   } catch (error) {
@@ -252,19 +128,12 @@ export async function saveThemeToServer(theme: ThemeData): Promise<boolean> {
   }
 }
 
-// Fetch inquiries from server (requires auth)
+// Fetch inquiries from server
 export async function fetchInquiriesFromServer(): Promise<unknown[] | null> {
   if (!isServerAvailable()) return null;
   
   try {
-    const response = await fetch('/api/inquiries', {
-      headers: getAuthHeaders(),
-    });
-    
-    if (response.status === 401) {
-      console.warn('Unauthorized - please login again');
-      return null;
-    }
+    const response = await fetch('/api/inquiries');
     
     if (response.ok) {
       return await response.json();
@@ -292,21 +161,14 @@ export async function saveInquiryToServer(inquiry: unknown): Promise<boolean> {
   }
 }
 
-// Delete inquiry from server (requires auth)
+// Delete inquiry from server
 export async function deleteInquiryFromServer(id: string): Promise<boolean> {
   if (!isServerAvailable()) return false;
   
   try {
     const response = await fetch(`/api/inquiries/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
     });
-    
-    if (response.status === 401) {
-      console.warn('Unauthorized - please login again');
-      removeAuthToken();
-      return false;
-    }
     
     return response.ok;
   } catch (error) {
@@ -315,22 +177,16 @@ export async function deleteInquiryFromServer(id: string): Promise<boolean> {
   }
 }
 
-// Bulk save inquiries to server (requires auth)
+// Bulk save inquiries to server
 export async function saveAllInquiriesToServer(inquiries: unknown[]): Promise<boolean> {
   if (!isServerAvailable()) return false;
   
   try {
     const response = await fetch('/api/inquiries', {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(inquiries),
     });
-    
-    if (response.status === 401) {
-      console.warn('Unauthorized - please login again');
-      removeAuthToken();
-      return false;
-    }
     
     return response.ok;
   } catch (error) {
@@ -339,4 +195,4 @@ export async function saveAllInquiriesToServer(inquiries: unknown[]): Promise<bo
   }
 }
 
-export { STORAGE_KEYS, getAuthToken, setAuthToken, removeAuthToken };
+export { STORAGE_KEYS };

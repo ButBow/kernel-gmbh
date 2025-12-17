@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ContentProvider } from "@/contexts/ContentContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -25,8 +25,10 @@ const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+// Auth page
+const Auth = lazy(() => import("./pages/Auth"));
+
 // Lazy loaded admin pages (heavy, rarely accessed)
-const AdminLogin = lazy(() => import("./pages/admin/Login"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminInquiries = lazy(() => import("./pages/admin/Inquiries"));
 const AdminProducts = lazy(() => import("./pages/admin/Products"));
@@ -76,8 +78,13 @@ const App = () => (
                     <Route path="/impressum" element={<Impressum />} />
                     <Route path="/datenschutz" element={<Datenschutz />} />
                     
-                    {/* Admin routes - lazy loaded */}
-                    <Route path="/admin/login" element={<AdminLogin />} />
+                    {/* Auth route */}
+                    <Route path="/auth" element={<Auth />} />
+                    
+                    {/* Redirect old login route to new auth */}
+                    <Route path="/admin/login" element={<Navigate to="/auth" replace />} />
+                    
+                    {/* Admin routes - protected */}
                     <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
                     <Route path="/admin/inquiries" element={<ProtectedRoute><AdminInquiries /></ProtectedRoute>} />
                     <Route path="/admin/inquiries/:id" element={<ProtectedRoute><AdminInquiries /></ProtectedRoute>} />

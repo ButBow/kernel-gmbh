@@ -31,14 +31,14 @@ const navItems = [
 ];
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
-  const { logout } = useAuth();
+  const { signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/admin/login');
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
   return (
