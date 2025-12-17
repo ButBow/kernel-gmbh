@@ -7,7 +7,8 @@ interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
   isLoading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -75,19 +76,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    return { error: error ? new Error(error.message) : null };
+  };
+
+  const signUp = async (email: string, password: string) => {
     const redirectUrl = `${window.location.origin}/admin`;
     
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
       options: {
-        redirectTo: redirectUrl,
+        emailRedirectTo: redirectUrl,
       },
     });
     
-    if (error) {
-      throw error;
-    }
+    return { error: error ? new Error(error.message) : null };
   };
 
   const signOut = async () => {
@@ -106,7 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       isAdmin,
       isLoading,
-      signInWithGoogle,
+      signIn,
+      signUp,
       signOut,
     }}>
       {children}
